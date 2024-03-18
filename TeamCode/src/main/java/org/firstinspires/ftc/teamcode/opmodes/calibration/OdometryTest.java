@@ -1,24 +1,31 @@
-package org.firstinspires.ftc.teamcode.opmodes.calibration;
-
-import com.arcrobotics.ftclib.purepursuit.Path;
-import com.arcrobotics.ftclib.purepursuit.Waypoint;
-import com.arcrobotics.ftclib.purepursuit.waypoints.StartWaypoint;
+import com.arcrobotics.ftclib.geometry.Pose2d;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
+import org.firstinspires.ftc.teamcode.subsystems.OdometrySubsystem;
 
 public class OdometryTest extends LinearOpMode {
 
+    private OdometrySubsystem odometry;
+
     @Override
     public void runOpMode() throws InterruptedException {
-        Path path = new Path();
-        Waypoint waypoint = new StartWaypoint();
+        odometry = new OdometrySubsystem(hardwareMap, this);
+
+        waitForStart();
+
+        while (opModeIsActive()) {
+            odometry.update();
+            Pose2d currentPose = odometry.getPose();
+
+            telemetry.addData("Current Pose", currentPose.toString());
+            telemetry.update();
+        }
     }
 
-//    @Override
-//    public void loop() {
-//        odometry.update();
-//        Pose2d currentPose = odometry.getPose();
-//        // Use currentPose for navigation or telemetry
-//    }
-
+    //    @Override
+    //    public void loop() {
+    //        odometry.update();
+    //        Pose2d currentPose = odometry.getPose();
+    //        // Use currentPose for navigation or telemetry
+    //    }
 }
