@@ -19,8 +19,6 @@ public class HardwareRobot {
     public final MotorEx leftBack;
     public final MotorEx rightBack;
 
-
-
     public final MotorEx leftArm;
     public final MotorEx rightArm;
 
@@ -28,10 +26,8 @@ public class HardwareRobot {
     public final Servo leftClaw;
     public final Servo rightClaw;
     public final ServoImplEx wrist;
-    public final CRServo drone;
+
     public final AdafruitBNO055IMU imu;
-    public final WebcamName frontCamName;
-    public final WebcamName backCamName;
 
     public HardwareRobot(HardwareMap hardwareMap) {
         leftFront = new MotorEx(hardwareMap, "leftFront", Motor.GoBILDA.RPM_312);
@@ -44,10 +40,10 @@ public class HardwareRobot {
         leftBack.motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         rightBack.motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
-        leftFront.motor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        rightFront.motor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        leftBack.motor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        rightBack.motor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        leftFront.motor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        rightFront.motor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        leftBack.motor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        rightBack.motor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         leftFront.setRunMode(Motor.RunMode.RawPower);
         rightFront.setRunMode(Motor.RunMode.RawPower);
@@ -68,11 +64,6 @@ public class HardwareRobot {
         rightFront.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
         leftBack.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
         rightBack.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
-
-        leftFront.setPositionTolerance(10);
-        rightFront.setPositionTolerance(10);
-        leftBack.setPositionTolerance(10);
-        rightBack.setPositionTolerance(10);
 
         leftArm = new MotorEx(hardwareMap, "leftArm", Motor.GoBILDA.RPM_312);
         leftArm.motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -99,7 +90,6 @@ public class HardwareRobot {
         wrist = hardwareMap.get(ServoImplEx.class, "wrist");
         elbow = hardwareMap.get(ServoImplEx.class, "elbow");
         elbow.resetDeviceConfigurationForOpMode();
-        drone = hardwareMap.crservo.get("drone");
 
         leftClaw.scaleRange(0, 1);
         rightClaw.scaleRange(0, 1);
@@ -116,17 +106,5 @@ public class HardwareRobot {
 //        imu.resetDeviceConfigurationForOpMode();
         imu.initialize(new BNO055IMU.Parameters());
 
-
-        backCamName = hardwareMap.get(WebcamName.class, "Webcam Back");
-//        ExposureControl exposureControlBack = OpenCvCameraFactory.getInstance().createWebcam(backCamName).getExposureControl();
-//        exposureControlBack.setExposure(exposureControlBack.getMinExposure(TimeUnit.MILLISECONDS), TimeUnit.MILLISECONDS);
-//        backCam = OpenCvCameraFactory.getInstance().createWebcam(backCamName);
-//        nameToCamera.put(backCamName, backCam);
-
-        frontCamName = hardwareMap.get(WebcamName.class, "Webcam Front");
-//        ExposureControl exposureControlFront = OpenCvCameraFactory.getInstance().createWebcam(frontCamName).getExposureControl();
-//        exposureControlFront.setExposure(exposureControlFront.getMinExposure(TimeUnit.MILLISECONDS), TimeUnit.MILLISECONDS);
-//        FtcDashboard.getInstance().startCameraStream(frontCam, 0);
-//        nameToCamera.put(frontCamName, frontCam);
     }
 }

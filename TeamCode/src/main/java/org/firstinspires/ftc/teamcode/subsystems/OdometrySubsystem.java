@@ -18,18 +18,18 @@ public class OdometrySubsystem extends SubsystemBase {
     // The lateral distance between the left and right odometers
     // is called the trackwidth. This is very important for
     // determining angle for turning approximations
-    public static final double TRACK_WIDTH = 14.7; //TODO: tune
+    public static final double TRACK_WIDTH = 12.4; //TODO: tune
 
     // Center wheel offset is the distance between the
     // center of rotation of the robot and the center odometer.
     // This is to correct for the error that might occur when turning.
     // A negative offset means the odometer is closer to the back,
     // while a positive offset means it is closer to the front.
-    public static final double CENTER_WHEEL_OFFSET = -2.1; //TODO: tune
+    public static final double CENTER_WHEEL_OFFSET = 0; //TODO: tune
 
-    public static final double WHEEL_DIAMETER = 2.0; //TODO: tune/grab from gobilda documentation
+    public static final double WHEEL_DIAMETER = 1.37795;
     // if needed, one can add a gearing term here
-    public static final double TICKS_PER_REV = 8192; //TODO: tune/grab from gobilda documentation
+    public static final double TICKS_PER_REV = 4096;
     public static final double DISTANCE_PER_PULSE = Math.PI * WHEEL_DIAMETER / TICKS_PER_REV;
 
     private Encoder leftOdometer, rightOdometer, centerOdometer;
@@ -48,15 +48,19 @@ public class OdometrySubsystem extends SubsystemBase {
      */
     public OdometrySubsystem(HardwareMap hardwareMap, LinearOpMode opMode) {
 
-        MotorEx frontLeft, frontRight, backLeft;
+        MotorEx leftFront, rightFront, centerOdometerSlot;
 
-        frontLeft = new MotorEx(hardwareMap, "front_left");
-        frontRight = new MotorEx(hardwareMap, "front_right");
-        backLeft = new MotorEx(hardwareMap, "back_left");
+        leftFront = new MotorEx(hardwareMap, "leftFront");
+        rightFront = new MotorEx(hardwareMap, "rightFront");
+        centerOdometerSlot = new MotorEx(hardwareMap, "centerOdometer");
 
-        leftOdometer = frontLeft.encoder.setDistancePerPulse(DISTANCE_PER_PULSE);
-        rightOdometer = frontRight.encoder.setDistancePerPulse(DISTANCE_PER_PULSE);
-        centerOdometer = backLeft.encoder.setDistancePerPulse(DISTANCE_PER_PULSE);
+        leftOdometer = leftFront.encoder.setDistancePerPulse(DISTANCE_PER_PULSE);
+        rightOdometer = rightFront.encoder.setDistancePerPulse(DISTANCE_PER_PULSE);
+        centerOdometer = centerOdometerSlot.encoder.setDistancePerPulse(DISTANCE_PER_PULSE);
+
+        leftOdometer.reset();
+        rightOdometer.reset();
+        centerOdometer.reset();
 
         rightOdometer.setDirection(Motor.Direction.REVERSE);
 
@@ -83,12 +87,34 @@ public class OdometrySubsystem extends SubsystemBase {
     }
 
     /**
+     * @return the left odometer as an Encoder.
+     */
+    public Encoder getLeftOdometer() {
+        return leftOdometer;
+    }
+
+    /**
+     * @return the left odometer as an Encoder.
+     */
+    public Encoder getRightOdometer() {
+        return rightOdometer;
+    }
+
+    /**
+     * @return the left odometer as an Encoder.
+     */
+    public Encoder getCenterOdometer() {
+        return centerOdometer;
+    }
+
+    /**
      * Returns the current pose of the robot.
      *
      * @return The current pose as a Pose2d object.
      */
     public Pose2d getPose() {
-        return currentPose;
+        Pose2d pose = new Pose2d(currentPose.getY(), currentPose.getX(), new Rotation2d(currentPose.getHeading()));
+        return pose;
     }
 
     /**
@@ -97,7 +123,8 @@ public class OdometrySubsystem extends SubsystemBase {
      * @return The current velocity as a Pose2d object.
      */
     public Pose2d getVelocity() {
-        return currentVelocity;
+        Pose2d velocity = new Pose2d(currentVelocity.getY(), currentVelocity.getX(), new Rotation2d(currentPose.getHeading()));
+        return velocity;
     }
 
     /**
@@ -142,16 +169,16 @@ public class OdometrySubsystem extends SubsystemBase {
     }
 
     /**
-     * Normalizes a given angle to [-180,180) degrees.
+     * Normalizes a given angle to [-pi,pi) degrees.
      * @param degrees the given angle in degrees.
      * @return the normalized angle in degrees.
      */
     private double normalizeAngle(double degrees) {
         double angle = degrees;
-        while (opMode.opModeIsActive() && angle <= -180)
-            angle += 360;
-        while (opMode.opModeIsActive() && angle > 180)
-            angle -= 360;
+        while (opMode.opModeIsActive() && angle <= -Math.PI)
+            angle += 2*Math.PI;
+        while (opMode.opModeIsActive() && angle > Math.PI)
+            angle -= 2*Math.PI;
         return angle;
     }
 
