@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 package org.firstinspires.ftc.teamcode.opmodes.calibration;
 
 import com.arcrobotics.ftclib.geometry.Pose2d;
@@ -5,12 +6,18 @@ import com.arcrobotics.ftclib.geometry.Rotation2d;
 import com.arcrobotics.ftclib.purepursuit.Path;
 import com.arcrobotics.ftclib.purepursuit.Waypoint;
 import com.arcrobotics.ftclib.purepursuit.waypoints.StartWaypoint;
+=======
+import com.arcrobotics.ftclib.geometry.Pose2d;
+>>>>>>> 613908292f5b6441c4bcd757fd145390bb5bf81f
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+<<<<<<< HEAD
 import org.firstinspires.ftc.teamcode.HardwareRobot;
 import org.firstinspires.ftc.teamcode.subsystems.DriveSubsystem;
+=======
+>>>>>>> 613908292f5b6441c4bcd757fd145390bb5bf81f
 import org.firstinspires.ftc.teamcode.subsystems.OdometrySubsystem;
 
 @TeleOp(name="Odometry Test")
@@ -19,8 +26,11 @@ public class OdometryTest extends LinearOpMode {
     private OdometrySubsystem odometry;
     private final double drive_speed = 0.5;
 
+    private OdometrySubsystem odometry;
+
     @Override
     public void runOpMode() throws InterruptedException {
+<<<<<<< HEAD
         HardwareRobot hardwareRobot = new HardwareRobot(hardwareMap);
         odometry = new OdometrySubsystem(hardwareMap, this);
         drive = new DriveSubsystem(
@@ -112,3 +122,25 @@ public class OdometryTest extends LinearOpMode {
     }
 
 }
+=======
+        odometry = new OdometrySubsystem(hardwareMap, this);
+
+        waitForStart();
+
+        while (opModeIsActive()) {
+            odometry.update();
+            Pose2d currentPose = odometry.getPose();
+
+            telemetry.addData("Current Pose", currentPose.toString());
+            telemetry.update();
+        }
+    }
+
+    //    @Override
+    //    public void loop() {
+    //        odometry.update();
+    //        Pose2d currentPose = odometry.getPose();
+    //        // Use currentPose for navigation or telemetry
+    //    }
+}
+>>>>>>> 613908292f5b6441c4bcd757fd145390bb5bf81f

@@ -160,6 +160,48 @@ public class OdometrySubsystem extends SubsystemBase {
     }
 
     /**
+     * Enhanced update function for accurately updating robot's pose and velocity. Key features include:
+     * - Ensures calculations only proceed with positive time deltas to avoid division by zero.
+     * - Utilizes radians directly for angular measurements.
+     * - Calculates translational and rotational velocities by comparing current and previous poses.
+     * - Time and angle handling.
+     */
+    public void update2() {
+        // Capture the previous timestamp and pose for delta calculations
+        double prevTime = currentTime;
+        Pose2d prevPose = currentPose;
+
+        // Update the current time
+        currentTime = runtime.seconds();
+        // Ensure the odometry system is updated with the latest encoder readings
+        odometry.updatePose();
+        // Fetch the latest pose from the odometry system
+        currentPose = odometry.getPose();
+
+        // Calculate the time elapsed since the last update to determine velocities
+        deltaTime = currentTime - prevTime;
+        if (deltaTime <= 0) {
+            // Prevent calculations for non-positive time intervals
+            return;
+        }
+
+        // Calculate the change in position (delta X, delta Y) and orientation (delta Theta)
+        double deltaX = currentPose.getX() - prevPose.getX();
+        double deltaY = currentPose.getY() - prevPose.getY();
+        // Normalize the angle to ensure proper rotational velocity calculation
+        double deltaTheta = normalizeAngle(currentPose.getRotation().getRadians() - prevPose.getRotation().getRadians());
+
+        // Calculate translational and rotational velocities based on the deltas and elapsed time
+        currentVelocity = new Pose2d(
+                deltaX / deltaTime, deltaY / deltaTime, new Rotation2d(deltaTheta / deltaTime)
+        );
+
+        // Update the lastPose with the currentPose for the next cycle
+        lastPose = currentPose;
+    }
+
+
+    /**
      * Automatically updates the pose every cycle.
      */
     @Override
