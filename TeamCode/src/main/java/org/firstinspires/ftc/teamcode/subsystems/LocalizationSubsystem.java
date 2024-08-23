@@ -83,6 +83,7 @@ public class LocalizationSubsystem extends SubsystemBase {
     //////////
     private final ElapsedTime runtime;
     private double lastTime;
+    private double deltaTime;
     private Telemetry telemetry = null;
 
     /**
@@ -140,6 +141,7 @@ public class LocalizationSubsystem extends SubsystemBase {
         this.runtime = new ElapsedTime();
         this.runtime.reset();
         this.lastTime = -1;
+        this.deltaTime = 1;
 
     }
 
@@ -196,8 +198,8 @@ public class LocalizationSubsystem extends SubsystemBase {
         h = currentPose.getHeading();
 
         // Add uncertainty
-        P_translation += Q_translation;
-        P_heading += Q_heading;
+        P_translation += deltaTime * Q_translation;
+        P_heading += deltaTime * Q_heading;
 
         // Telemetry
         if (telemetry!=null) {
@@ -223,14 +225,14 @@ public class LocalizationSubsystem extends SubsystemBase {
             }
 
             // Update translation
-            double K_translation = P_translation / (P_translation + R_camera_translation);
+            double K_translation = P_translation / (P_translation + deltaTime * R_camera_translation);
             x += K_translation * ([apriltag x] - x);
             y += K_translation * ([apriltag y] - y);
             P_translation = (1 - K_translation) * P_translation;
 
             // Update heading
             double R_combined_heading = (R_imu_heading * R_camera_heading) / (R_imu_heading + R_camera_heading);
-            double K_combined_heading = P_heading / (P_heading + R_combined_heading);
+            double K_combined_heading = P_heading / (P_heading + deltaTime * R_combined_heading);
             double imu_difference_heading = normalizeAngle(getYaw() - h);
             double camera_difference_heading = normalizeAngle([apriltag h] - h);
             double combined_residual_heading =
@@ -247,7 +249,7 @@ public class LocalizationSubsystem extends SubsystemBase {
             }
 
             // Update heading
-            double K_heading = P_heading / (P_heading + R_imu_heading);
+            double K_heading = P_heading / (P_heading + deltaTime * R_imu_heading);
             h += K_heading * (normalizeAngle(getYaw() - h));
             h = normalizeAngle(h);
             P_heading = (1 - K_heading) * P_heading;
@@ -287,9 +289,6 @@ public class LocalizationSubsystem extends SubsystemBase {
         correct();
 
         // Calculate velocity
-        double currentTime = runtime.seconds();
-        double deltaTime = currentTime - lastTime;
-        lastTime = currentTime;
         if (deltaTime>0) {
             vx = (x - x_last) / deltaTime;
             vy = (y - y_last) / deltaTime;
@@ -300,6 +299,11 @@ public class LocalizationSubsystem extends SubsystemBase {
             vy = 0;
             vh = 0;
         }
+
+        // Calculate deltaTime
+        double currentTime = runtime.seconds();
+        deltaTime = currentTime - lastTime;
+        lastTime = currentTime;
 
         // Telemetry
         if (telemetry!=null) {
