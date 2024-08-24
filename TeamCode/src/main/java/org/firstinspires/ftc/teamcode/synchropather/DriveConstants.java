@@ -10,11 +10,11 @@ public final class DriveConstants {
 	/**
 	 *  Max velocity driving forward in in/s.
 	 */
-	public static final double MAX_FORWARD_SPEED = 54d;
+	public static final double MAX_FORWARD_SPEED = 54d; //TODO: TUNE
 	/**
 	 * Max velocity driving sideways in in/s.
 	 */
-	public static final double MAX_STRAFE_SPEED = 54d;
+	public static final double MAX_STRAFE_SPEED = 54d; //TODO: TUNE
 	/**
 	 * Angle of the output force vector of the robot's Mecanum wheels in radians.
 	 */
@@ -28,21 +28,16 @@ public final class DriveConstants {
 	/**
 	 *  Max acceleration of the robot in in/s^2.
 	 */
-	public static final double MAX_ACCELERATION = 54d;
+	public static final double MAX_ACCELERATION = 54d; //TODO: TUNE
 
 	/**
 	 *  Max angular velocity of the robot in rad/s.
 	 */
-	public static final double MAX_ANGULAR_VELOCITY = 4;
+	public static final double MAX_ANGULAR_VELOCITY = 4; //TODO: TUNE
 	/**
 	 *  Max angular acceleration of the robot in rad/s^2.
 	 */
-	public static final double MAX_ANGULAR_ACCELERATION = 4;
-
-	/**
-	 *  The lookahead distance of the follower program in seconds.
-	 */
-	public static final double LOOKAHEAD = 0.2;
+	public static final double MAX_ANGULAR_ACCELERATION = 4; //TODO: TUNE
 
 	/**
 	 *  Used for differentiating and integrating spline paths, between 0 and 1 (lower = more calculations, more detail).
