@@ -11,6 +11,8 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 
+import java.util.ArrayList;
+
 /**
  * Estimate robot pose with a Kalman Filter using odometry as the model, imu and camera as sensors.
  */
@@ -40,6 +42,11 @@ public class LocalizationSubsystem extends SubsystemBase {
     private double x;
     private double y;
     private double h;
+
+    // History arrays
+    private ArrayList<Double> xHistory;
+    private ArrayList<Double> yHistory;
+    private ArrayList<Double> hHistory;
 
     // Velocity
     private double vx;
@@ -84,6 +91,9 @@ public class LocalizationSubsystem extends SubsystemBase {
     private final ElapsedTime runtime;
     private double lastTime;
     private double deltaTime;
+    private ArrayList<Double> dtHistory;
+    private double averageDeltaTime;
+
     private Telemetry telemetry = null;
 
     /**
@@ -107,6 +117,12 @@ public class LocalizationSubsystem extends SubsystemBase {
         this.x = initialPose.getX();
         this.y = initialPose.getY();
         this.h = initialPose.getHeading();
+        this.xHistory = new ArrayList<>();
+        this.xHistory.add(x);
+        this.yHistory = new ArrayList<>();
+        this.yHistory.add(y);
+        this.hHistory = new ArrayList<>();
+        this.hHistory.add(h);
         this.vx = 0;
         this.vy = 0;
         this.vh = 0;
@@ -142,6 +158,9 @@ public class LocalizationSubsystem extends SubsystemBase {
         this.runtime.reset();
         this.lastTime = -1;
         this.deltaTime = 1;
+        this.dtHistory = new ArrayList<>();
+        this.dtHistory.add(1d);
+        this.averageDeltaTime = 1;
 
     }
 
@@ -172,11 +191,37 @@ public class LocalizationSubsystem extends SubsystemBase {
     }
 
 
+
+    /////////////
+    // GETTERS //
+    /////////////
+
     /**
      * @return The current pose as a Pose2d object.
      */
     public Pose2d getPose() {
         return new Pose2d(x, y, new Rotation2d(h));
+    }
+
+    /**
+     * @return The current X position in inches.
+     */
+    public double getX() {
+        return x;
+    }
+
+    /**
+     * @return The current Y position in inches.
+     */
+    public double getY() {
+        return y;
+    }
+
+    /**
+     * @return The current heading in radians.
+     */
+    public double getH() {
+        return h;
     }
 
     /**
@@ -187,9 +232,36 @@ public class LocalizationSubsystem extends SubsystemBase {
     }
 
     /**
+     * @return The current X velocity in inches/second.
+     */
+    public double getVX() {
+        return vx;
+    }
+
+    /**
+     * @return The current Y velocity in inches/second.
+     */
+    public double getVY() {
+        return vy;
+    }
+
+    /**
+     * @return The current heading velocity in radians/second.
+     */
+    public double getVH() {
+        return vh;
+    }
+
+
+
+    //////////////////////////
+    // LOCALIZATION METHODS //
+    //////////////////////////
+
+    /**
      * Prediction step of the Kalman Filter.
      */
-    private void predict() {
+    private void predictKF() {
         // Calculate model
         odometry.updatePose();
         Pose2d currentPose = odometry.getPose();
@@ -212,7 +284,7 @@ public class LocalizationSubsystem extends SubsystemBase {
     /**
      * Update step of the Kalman Filter.
      */
-    private void update() {
+    private void updateKF() {
 
         // TODO: ADD CAMERA CODE
         if ([insert whether or not apriltag is found]) {
@@ -259,9 +331,8 @@ public class LocalizationSubsystem extends SubsystemBase {
     /**
      * Corrects the pose of the odometry and yaw of the IMU with the new state estimation.
      */
-    private void correct() {
+    private void correctKF() {
         odometry.updatePose(new Pose2d(x, y, new Rotation2d(h)));
-        updateYaw(h);
 
         // Telemetry
         if (telemetry!=null) {
@@ -272,38 +343,54 @@ public class LocalizationSubsystem extends SubsystemBase {
     }
 
     /**
-     * Update the pose and velocity.
+     * @param a The process value array.
+     * @return Approximated derivative according to the Five-Point stencil.
      */
-    public void updateState() {
-        // Telemetry
-        if (telemetry!=null) telemetry.clearAll();
+    public double stencil(ArrayList<Double> a) {
+        return (-a.get(4) + 8*a.get(3) - 8*a.get(1) + a.get(0)) /
+                (12 * averageDeltaTime);
+    }
 
-        // Cache previous pose estimate
-        double x_last = x;
-        double y_last = y;
-        double h_last = h;
-
-        // Kalman Filter steps
-        predict();
-        update();
-        correct();
-
-        // Calculate velocity
-        if (deltaTime>0) {
-            vx = (x - x_last) / deltaTime;
-            vy = (y - y_last) / deltaTime;
-            vh = (h - h_last) / deltaTime;
-        }
-        else {
-            vx = 0;
-            vy = 0;
-            vh = 0;
-        }
-
+    /**
+     * Calculates the translational and rotational velocities using the Five-Point stencil.
+     */
+    private void updateVelocity() {
         // Calculate deltaTime
         double currentTime = runtime.seconds();
         deltaTime = currentTime - lastTime;
         lastTime = currentTime;
+
+        // Update history arrays
+        dtHistory.add(deltaTime);
+        xHistory.add(x);
+        yHistory.add(y);
+        hHistory.add(h);
+        while (dtHistory.size()>5) dtHistory.remove(0);
+        while (xHistory.size()>5) xHistory.remove(0);
+        while (yHistory.size()>5) yHistory.remove(0);
+        while (hHistory.size()>5) hHistory.remove(0);
+
+        // Find derivatives
+        averageDeltaTime = dtHistory.stream().mapToDouble(aa -> aa).average().orElse(0);
+        vx = stencil(xHistory);
+        vy = stencil(yHistory);
+        vh = stencil(hHistory);
+    }
+
+    /**
+     * Update the pose and velocity.
+     */
+    public void update() {
+        // Telemetry
+        if (telemetry!=null) telemetry.clearAll();
+
+        // Kalman Filter steps
+        predictKF();
+        updateKF();
+        correctKF();
+
+        // Calculate velocity
+        updateVelocity();
 
         // Telemetry
         if (telemetry!=null) {
@@ -318,24 +405,24 @@ public class LocalizationSubsystem extends SubsystemBase {
      * Reset the IMU to the given yaw in radians.
      * @param yaw The robot's yaw in radians.
      */
-    public void updateYaw(double yaw) {
+    private void updateYaw(double yaw) {
         imuBias = normalizeAngle(yaw - imu.getAngularOrientation().firstAngle);
     }
 
     /**
      * @return the IMU yaw in radians.
      */
-    public double getYaw() {
+    private double getYaw() {
         return normalizeAngle(imu.getAngularOrientation().firstAngle + imuBias);
     }
 
     /**
-     * Normalizes a given angle to [-pi,pi) radians.
+     * Normalizes a given angle to (-pi,pi] radians.
      * @param radians the given angle in radians.
      * @return the normalized angle in radians.
      */
-    private double normalizeAngle(double radians) {
-        return (radians - Math.PI) % (2*Math.PI) + Math.PI;
+    private static double normalizeAngle(double radians) {
+        return (radians + Math.PI) % (2*Math.PI) - Math.PI;
     }
 
 }

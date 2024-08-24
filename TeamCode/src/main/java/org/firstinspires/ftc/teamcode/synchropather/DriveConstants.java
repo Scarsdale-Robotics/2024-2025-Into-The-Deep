@@ -6,10 +6,25 @@ package org.firstinspires.ftc.teamcode.synchropather;
  */
 public final class DriveConstants {
 
+
 	/**
-	 *  Max velocity of the robot in in/s.
+	 *  Max velocity driving forward in in/s.
 	 */
-	public static final double MAX_VELOCITY = 54d;
+	public static final double MAX_FORWARD_SPEED = 54d;
+	/**
+	 * Max velocity driving sideways in in/s.
+	 */
+	public static final double MAX_STRAFE_SPEED = 54d;
+	/**
+	 * Angle of the output force vector of the robot's Mecanum wheels in radians.
+	 */
+	public static final double THETA_WHEEL = Math.atan2(Math.abs(MAX_FORWARD_SPEED), Math.abs(MAX_STRAFE_SPEED));
+
+
+	/**
+	 *  Max velocity of the robot used for SynchroPather in in/s.
+	 */
+	public static final double MAX_VELOCITY = Math.min(MAX_FORWARD_SPEED, MAX_STRAFE_SPEED);
 	/**
 	 *  Max acceleration of the robot in in/s^2.
 	 */

@@ -68,8 +68,20 @@ public class LinearRotation extends Movement {
 	public RotationState getVelocity(double elapsedTime) {
 		double sign = end.minus(start).sign();
 		double speed = calculator.getVelocity(elapsedTime);
-		
+
 		// scaled velocity vector
+		return new RotationState(sign * speed);
+	}
+
+	/**
+	 * @return the indicated acceleration RotationState.
+	 */
+	@Override
+	public RotationState getAcceleration(double elapsedTime) {
+		double sign = end.minus(start).sign();
+		double speed = calculator.getAcceleration(elapsedTime);
+
+		// scaled acceleration vector
 		return new RotationState(sign * speed);
 	}
 

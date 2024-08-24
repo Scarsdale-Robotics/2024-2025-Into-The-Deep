@@ -2,110 +2,127 @@ package org.firstinspires.ftc.teamcode.subsystems;
 
 import com.arcrobotics.ftclib.command.SubsystemBase;
 import com.arcrobotics.ftclib.drivebase.MecanumDrive;
+import com.arcrobotics.ftclib.drivebase.RobotDrive;
+import com.arcrobotics.ftclib.geometry.Vector2d;
 import com.arcrobotics.ftclib.hardware.motors.Motor;
-import com.qualcomm.hardware.adafruit.AdafruitBNO055IMU;
-import com.qualcomm.hardware.bosch.BNO055IMU;
-import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.util.ElapsedTime;
 
-import org.firstinspires.ftc.robotcore.external.Telemetry;
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import org.firstinspires.ftc.teamcode.synchropather.DriveConstants;
 
 public class DriveSubsystem extends SubsystemBase {
 
+    // Powers
+    public double driveSpeed;
+    public double driveTheta;
+    public double turnVelocity;
+
     private final MecanumDrive controller;
-    private final AdafruitBNO055IMU imu;
+    private final LocalizationSubsystem localization;
 
-    private final LinearOpMode opMode;
-
-    private final Motor leftFront;
-    private final Motor rightFront;
-    private final Motor leftBack;
-    private final Motor rightBack;
-
-    private Telemetry telemetry;
-
-    private double imuResetValue;
-
-    public DriveSubsystem(Motor leftFront, Motor rightFront, Motor leftBack, Motor rightBack, AdafruitBNO055IMU imu, LinearOpMode opMode, Telemetry telemetry) {
-        this.rightBack = rightBack;
-        this.leftBack = leftBack;
-        this.rightFront = rightFront;
-        this.leftFront = leftFront;
-        controller = new MecanumDrive(
+    public DriveSubsystem(Motor leftFront,
+                          Motor rightFront,
+                          Motor leftBack,
+                          Motor rightBack,
+                          LocalizationSubsystem localization) {
+        this.controller = new MecanumDrive(
                 leftFront,
                 rightFront,
                 leftBack,
                 rightBack
         );
-        this.imu = imu;
-        this.opMode = opMode;
-        this.telemetry = telemetry;
-
-        if (this.telemetry != null) {
-            this.imuResetValue = getYaw();
-            this.telemetry.addData("HEADING", getYaw());
-            this.telemetry.update();
-        }
+        this.localization = localization;
+        this.driveSpeed = 0;
+        this.driveTheta = 0;
+        this.turnVelocity = 0;
     }
 
     /**
      * Drives with directions based on robot pov.
      *
-     * @param right     How much right the robot should strafe (negative values = strafe left).
-     * @param forward   How much forward the robot should move (negative values = move backwards).
-     * @param turn      How much the robot should turn.
+     * @param theta     Direction of drive in radians.
+     * @param speed     Desired driving speed in in/s.
+     * @param turn      Desired angular velocity in rad/s.
      */
-    public void driveRobotCentric(double right, double forward, double turn) {
-        controller.driveRobotCentric(right, forward, turn);
+    public void driveRobotCentric(double theta, double speed, double turn) {
+        driveFieldCentric(theta, speed, turn, 0.0);
+    }
+
+    /**
+     * Drives based on driver pov.
+     */
+    public void driveFieldCentric() {
+        driveFieldCentric(driveTheta, driveSpeed, turnVelocity, localization.getH());
     }
 
     /**
      * Drives with directions based on driver pov.
      *
-     * @param right     How much right the robot should strafe (negative values = strafe left).
-     * @param forward   How much forward the robot should move (negative values = move backwards).
-     * @param turn      How much the robot should turn.
+     * @param theta     Direction of drive in radians.
+     * @param speed     Desired driving speed in in/s.
+     * @param turn      Desired angular velocity in rad/s.
      */
-    public void driveFieldCentric(double right, double forward, double turn) {
-        double yaw = getYaw();
-        controller.driveFieldCentric(right, forward, turn, yaw);
-    }
-
-
-
-    /**
-     * @return the current position of the robot's back left wheel in ticks.
-     */
-    public int getLBPosition() {
-        return leftBack.getCurrentPosition();
+    public void driveFieldCentric(double theta, double speed, double turn) {
+        driveFieldCentric(theta, speed, turn, localization.getH());
     }
 
     /**
-     * @return the current position of the robot's back right wheel in ticks.
+     * Corrected driving with bias based on driver pov.
+     *
+     * @param theta     Direction of drive in radians.
+     * @param speed     Desired driving speed in in/s.
+     * @param turn      Desired angular velocity in rad/s.
+     * @param gyroAngle Robot heading in radians.
      */
-    public int getRBPosition() {
-        return rightBack.getCurrentPosition();
-    }
+    private void driveFieldCentric(double theta, double speed, double turn, double gyroAngle) {
+        theta = normalizeAngle(theta-gyroAngle);
+        double maxSpeed = Math.hypot(
+                DriveConstants.MAX_STRAFE_SPEED*Math.cos(theta),
+                DriveConstants.MAX_FORWARD_SPEED*Math.sin(theta)
+        );
 
-    /**
-     * @return the current position of the robot's front left wheel in ticks.
-     */
-    public int getLFPosition() {
-        return leftFront.getCurrentPosition();
-    }
+        double L = 0;
+        double R = 0;
+        double theta_w = DriveConstants.THETA_WHEEL;
+        if (0<theta && theta<=Math.PI/2) {
+            L = 1;
+            R = -Math.sin(theta_w-theta) / Math.sin(theta_w+theta);
+        }
+        else if (Math.PI/2<theta && theta<=Math.PI) {
+            L = -Math.sin(theta_w+theta) / Math.sin(theta_w-theta);
+            R = 1;
+        }
+        else if (-Math.PI<theta && theta<=-Math.PI/2) {
+            L = -1;
+            R = Math.sin(theta_w-theta) / Math.sin(theta_w+theta);
+        }
+        else if (-Math.PI/2<theta && theta<=0) {
+            L = Math.sin(theta_w+theta) / Math.sin(theta_w-theta);
+            R = -1;
+        }
 
-    /**
-     * @return the current position of the robot's front right wheel in ticks.
-     */
-    public int getRFPosition() {
-        return rightFront.getCurrentPosition();
+        double factor = speed / maxSpeed;
+        L *= factor;
+        R *= factor;
+
+        double[] wheelSpeeds = new double[4];
+        wheelSpeeds[RobotDrive.MotorType.kFrontLeft.value] = L;
+        wheelSpeeds[RobotDrive.MotorType.kFrontRight.value] = R;
+        wheelSpeeds[RobotDrive.MotorType.kBackLeft.value] = R;
+        wheelSpeeds[RobotDrive.MotorType.kBackRight.value] = L;
+
+        turn /= DriveConstants.MAX_ANGULAR_VELOCITY;
+        wheelSpeeds[RobotDrive.MotorType.kFrontLeft.value] -= turn;
+        wheelSpeeds[RobotDrive.MotorType.kFrontRight.value] += turn;
+        wheelSpeeds[RobotDrive.MotorType.kBackLeft.value] -= turn;
+        wheelSpeeds[RobotDrive.MotorType.kBackRight.value] += turn;
+
+        normalize(wheelSpeeds);
+
+        controller.driveWithMotorPowers(
+                wheelSpeeds[RobotDrive.MotorType.kFrontLeft.value],
+                wheelSpeeds[RobotDrive.MotorType.kFrontRight.value],
+                wheelSpeeds[RobotDrive.MotorType.kBackLeft.value],
+                wheelSpeeds[RobotDrive.MotorType.kBackRight.value]
+        );
     }
 
     /**
@@ -115,32 +132,32 @@ public class DriveSubsystem extends SubsystemBase {
         controller.stop();
     }
 
-    public AdafruitBNO055IMU getIMU() {
-        return imu;
-    }
-
-    public void resetIMU() {
-        imu.resetDeviceConfigurationForOpMode();
-        imu.initialize(new BNO055IMU.Parameters());
-        imuResetValue = imu.getAngularOrientation().firstAngle * 180.0 / Math.PI; // degrees
-    }
-
-    public double getYaw() {
-        return normalizeAngle(imu.getAngularOrientation().firstAngle * 180.0 / Math.PI - imuResetValue);
+    /**
+     * Normalizes a given angle to (-pi,pi] radians.
+     * @param radians the given angle in radians.
+     * @return the normalized angle in radians.
+     */
+    private static double normalizeAngle(double radians) {
+        return (radians + Math.PI) % (2*Math.PI) - Math.PI;
     }
 
     /**
-     * Normalizes a given angle to [-180,180) degrees.
-     * @param degrees the given angle in degrees.
-     * @return the normalized angle in degrees.
+     * Normalize the wheel speeds
      */
-    private double normalizeAngle(double degrees) {
-        double angle = degrees;
-        while (opMode.opModeIsActive() && angle <= -180)
-            angle += 360;
-        while (opMode.opModeIsActive() && angle > 180)
-            angle -= 360;
-        return angle;
+    private void normalize(double[] wheelSpeeds) {
+        double maxMagnitude = Math.abs(wheelSpeeds[0]);
+        for (int i = 1; i < wheelSpeeds.length; i++) {
+            double temp = Math.abs(wheelSpeeds[i]);
+            if (maxMagnitude < temp) {
+                maxMagnitude = temp;
+            }
+        }
+        if (maxMagnitude > 1) {
+            for (int i = 0; i < wheelSpeeds.length; i++) {
+                wheelSpeeds[i] = (wheelSpeeds[i] / maxMagnitude);
+            }
+        }
+
     }
 
 }

@@ -8,11 +8,16 @@ import org.firstinspires.ftc.teamcode.HardwareRobot;
 import org.firstinspires.ftc.teamcode.subsystems.DriveSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.LocalizationSubsystem;
 
+import com.acmerobotics.dashboard.FtcDashboard;
+import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
+import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
+
 @TeleOp(name="Localization Test")
 public class LocalizationTest extends LinearOpMode {
 
     @Override
     public void runOpMode() {
+        telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
         HardwareRobot robot = new HardwareRobot(hardwareMap);
         LocalizationSubsystem localization = new LocalizationSubsystem(
                 new Pose2d(),
@@ -48,7 +53,13 @@ public class LocalizationTest extends LinearOpMode {
             drive.driveFieldCentric(drive_speed * x, drive_speed * y, drive_speed * turn);
 
             // Localize
-            localization.updateState();
+            localization.update();
+
+            // Draw robot on dashboard
+            TelemetryPacket packet = new TelemetryPacket();
+            packet.fieldOverlay().setStroke("#3F51B5");
+            Drawing.drawRobot(packet.fieldOverlay(), localization.getPose());
+            FtcDashboard.getInstance().sendTelemetryPacket(packet);
 
         }
 

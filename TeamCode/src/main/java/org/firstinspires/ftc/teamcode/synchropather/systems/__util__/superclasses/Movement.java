@@ -85,6 +85,13 @@ public abstract class Movement {
 	public abstract RobotState getVelocity(double elapsedTime);
 
 	/**
+	 * Returns the robot's desired acceleration RobotState in this Movement at the given elapsed time.
+	 * @param elapsedTime
+	 * @return the indicated acceleration RobotState.
+	 */
+	public abstract RobotState getAcceleration(double elapsedTime);
+
+	/**
 	 * @return the RobotState of this Movement at time zero.
 	 */
 	public abstract RobotState getStartState();

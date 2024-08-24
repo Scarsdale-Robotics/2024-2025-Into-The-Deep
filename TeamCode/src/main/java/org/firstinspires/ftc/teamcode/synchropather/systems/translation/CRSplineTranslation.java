@@ -64,6 +64,18 @@ public class CRSplineTranslation extends Movement {
 		return new TranslationState(speed, theta, true);
 	}
 
+	@Override
+	public TranslationState getAcceleration(double elapsedTime) {
+		// get theta
+		int n = getLocalSegment(elapsedTime);
+		double p_r = getLocalProportion(elapsedTime);
+		TranslationState secondDerivative = getSecondDerivative(n, p_r);
+
+		double speed = calculator.getVelocity(elapsedTime);
+
+		return secondDerivative.times(speed);
+	}
+
 	/**
 	 * @return the TranslationState of this Movement at the start time.
 	 */
@@ -131,7 +143,7 @@ public class CRSplineTranslation extends Movement {
 				(p3.times(q3)) 
 				.times(0.5);
 	}
-	
+
 	/**
 	 * Gets the derivative at parameter t (between 0 and 1) of the given spline segment.
 	 * @param segment
@@ -146,19 +158,78 @@ public class CRSplineTranslation extends Movement {
 		TranslationState p1 = anchors[segment];
 		TranslationState p2 = anchors[segment + 1];
 		TranslationState p3 = anchors[Math.min(getLength()-1, segment+2)];
-		
+
 		double tt = t*t;
 
 		double q0 = -3*tt + 4*t - 1;
 		double q1 = 9*tt - 10*t;
 		double q2 = -9*tt + 8*t + 1;
 		double q3 = 3*tt - 2*t;
-		
-		return (p0.times(q0)) .plus 
-				(p1.times(q1)) .plus 
-				(p2.times(q2)) .plus 
-				(p3.times(q3)) 
+
+		return (p0.times(q0)) .plus
+						(p1.times(q1)) .plus
+						(p2.times(q2)) .plus
+						(p3.times(q3))
 				.times(0.5);
+	}
+
+	/**
+	 * Gets the second derivative at parameter t (between 0 and 1) of the given spline segment.
+	 * @param segment
+	 * @param t
+	 * @return the TranslationState representation of the second derivative within the segment.
+	 */
+	public TranslationState getSecondDerivative(int segment, double t) {
+		if (segment < 0 || getLength()-2 < segment)
+			throw new RuntimeException(String.format("Segment index %s outside of [%s,%s]", segment, 0, getLength()-2));
+
+		TranslationState p0 = anchors[Math.max(0, segment-1)];
+		TranslationState p1 = anchors[segment];
+		TranslationState p2 = anchors[segment + 1];
+		TranslationState p3 = anchors[Math.min(getLength()-1, segment+2)];
+
+		double tt = t*t;
+
+		double q0p = -3*tt + 4*t - 1;
+		double q1p = 9*tt - 10*t;
+		double q2p = -9*tt + 8*t + 1;
+		double q3p = 3*tt - 2*t;
+
+		double q0pp = -6*t + 4;
+		double q1pp = 18*t - 10;
+		double q2pp = -18*t + 8;
+		double q3pp = 6*t - 2;
+
+		// First derivative
+		TranslationState fd = (p0.times(q0p)) .plus
+						(p1.times(q1p)) .plus
+						(p2.times(q2p)) .plus
+						(p3.times(q3p))
+				.times(0.5);
+		double xp = fd.getX();
+		double yp = fd.getY();
+		double v = fd.hypot();
+		if (v==0) return new TranslationState(0,0);
+		double vx = xp/v;
+		double vy = yp/v;
+
+		// Second derivative
+		TranslationState sd = (p0.times(q0pp)) .plus
+						(p1.times(q1pp)) .plus
+						(p2.times(q2pp)) .plus
+						(p3.times(q3pp))
+				.times(0.5);
+		double xpp = sd.getX();
+		double ypp = sd.getY();
+
+		return new TranslationState(
+				// X Unit Acceleration
+				(v*xpp - xp*(vx*xpp + vy*ypp)) /
+						(v*v),
+				// Y Unit Acceleration
+				(v*ypp - yp*(vx*xpp + vy*ypp)) /
+						(v*v)
+		);
 	}
 	
 	/**
