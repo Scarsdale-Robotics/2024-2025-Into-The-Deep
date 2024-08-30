@@ -287,33 +287,34 @@ public class LocalizationSubsystem extends SubsystemBase {
     private void updateKF() {
 
         // TODO: ADD CAMERA CODE
-        if ([insert whether or not apriltag is found]) {
-            // Telemetry
-            if (telemetry!=null) {
-                telemetry.addData("AprilTag X",[insert apriltag x]);
-                telemetry.addData("Apriltag Y",[insert apriltag y]);
-                telemetry.addData("Apriltag H",Math.toDegrees([insert apriltag h]));
-                telemetry.addData("IMU H", Math.toDegrees(getYaw()));
-            }
-
-            // Update translation
-            double K_translation = P_translation / (P_translation + deltaTime * R_camera_translation);
-            x += K_translation * ([apriltag x] - x);
-            y += K_translation * ([apriltag y] - y);
-            P_translation = (1 - K_translation) * P_translation;
-
-            // Update heading
-            double R_combined_heading = (R_imu_heading * R_camera_heading) / (R_imu_heading + R_camera_heading);
-            double K_combined_heading = P_heading / (P_heading + deltaTime * R_combined_heading);
-            double imu_difference_heading = normalizeAngle(getYaw() - h);
-            double camera_difference_heading = normalizeAngle([apriltag h] - h);
-            double combined_residual_heading =
-                    R_camera_heading / (R_imu_heading + R_camera_heading) * imu_difference_heading +
-                    R_imu_heading / (R_imu_heading + R_camera_heading) * camera_difference_heading;
-            h += K_combined_heading * combined_residual_heading;
-            h = normalizeAngle(h);
-            P_heading = (1 - K_combined_heading) * P_heading;
-        }
+//        if ([insert whether or not apriltag is found]) {
+//            // Telemetry
+//            if (telemetry!=null) {
+//                telemetry.addData("AprilTag X",[insert apriltag x]);
+//                telemetry.addData("Apriltag Y",[insert apriltag y]);
+//                telemetry.addData("Apriltag H",Math.toDegrees([insert apriltag h]));
+//                telemetry.addData("IMU H", Math.toDegrees(getYaw()));
+//            }
+//
+//            // Update translation
+//            double K_translation = P_translation / (P_translation + deltaTime * R_camera_translation);
+//            x += K_translation * ([apriltag x] - x);
+//            y += K_translation * ([apriltag y] - y);
+//            P_translation = (1 - K_translation) * P_translation;
+//
+//            // Update heading
+//            double R_combined_heading = (R_imu_heading * R_camera_heading) / (R_imu_heading + R_camera_heading);
+//            double K_combined_heading = P_heading / (P_heading + deltaTime * R_combined_heading);
+//            double imu_difference_heading = normalizeAngle(getYaw() - h);
+//            double camera_difference_heading = normalizeAngle([apriltag h] - h);
+//            double combined_residual_heading =
+//                    R_camera_heading / (R_imu_heading + R_camera_heading) * imu_difference_heading +
+//                    R_imu_heading / (R_imu_heading + R_camera_heading) * camera_difference_heading;
+//            h += K_combined_heading * combined_residual_heading;
+//            h = normalizeAngle(h);
+//            P_heading = (1 - K_combined_heading) * P_heading;
+//        }
+        if (false) {}
         else {
             // Telemetry
             if (telemetry!=null) {
