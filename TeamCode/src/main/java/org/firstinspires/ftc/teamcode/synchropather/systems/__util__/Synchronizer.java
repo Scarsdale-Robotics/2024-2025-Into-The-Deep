@@ -70,6 +70,22 @@ public class Synchronizer {
 	}
 
 	/**
+	 * Gets the acceleration RobotState at the given elapsedTime within the Plan of the given movementType.
+	 * @param movementType
+	 * @param elapsedTime
+	 * @return the indicated acceleration RobotState, or null if the Plan does not exist.
+	 */
+	@SuppressWarnings("unchecked")
+	public RobotState getAcceleration(MovementType movementType, double elapsedTime) {
+		for (Plan plan : plans) {
+			if (plan.movementType == movementType) {
+				return plan.getAcceleration(elapsedTime);
+			}
+		}
+		return null;
+	}
+
+	/**
 	 * @return the minimum duration needed to execute all Plans contained within this Synchronizer.
 	 */
 	public double getDuration() {

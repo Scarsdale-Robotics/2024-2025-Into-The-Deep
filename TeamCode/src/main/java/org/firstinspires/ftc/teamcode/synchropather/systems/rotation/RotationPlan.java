@@ -81,7 +81,7 @@ public class RotationPlan extends Plan<RotationState> {
 
 		// Set drive powers
 		robot.drive.turnVelocity = u;
-		robot.drive.driveFieldCentric();
+		robot.drive.driveFieldCentric(currentPose.getHeading());
 	}
 
 }

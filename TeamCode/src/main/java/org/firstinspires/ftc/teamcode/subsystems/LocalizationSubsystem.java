@@ -22,17 +22,13 @@ public class LocalizationSubsystem extends SubsystemBase {
     // KALMAN FILTER //
     ///////////////////
 
-    // Model covariance for translation
-    private static final double Q_translation = 0.62;
-    // Model covariance for heading
-    private static final double Q_heading = 1;
-    // Sensor (Camera) covariance for translation
-    private static final double R_camera_translation = 0.03875;
-    // Sensor (Camera) covariance for heading
-    private static final double R_camera_heading = 0.04;
-    // Sensor (IMU) covariance for heading
-    private static final double R_imu_heading = 0.25;
+    // Sensor toggles.
+    private boolean cameraEnabled = true;
 
+    // Model covariance for translation
+    private static final double Q_translation = 0.0625;
+    // Model covariance for heading
+    private static final double Q_heading = 0.0003;
 
     // Uncertainty
     private double P_translation;
@@ -44,9 +40,9 @@ public class LocalizationSubsystem extends SubsystemBase {
     private double h;
 
     // History arrays
-    private ArrayList<Double> xHistory;
-    private ArrayList<Double> yHistory;
-    private ArrayList<Double> hHistory;
+    private final ArrayList<Double> xHistory;
+    private final ArrayList<Double> yHistory;
+    private final ArrayList<Double> hHistory;
 
     // Velocity
     private double vx;
@@ -54,14 +50,14 @@ public class LocalizationSubsystem extends SubsystemBase {
     private double vh;
 
 
-    //////////////////////
-    // ODOMETRY (MODEL) //
-    //////////////////////
+    //////////////
+    // ODOMETRY //
+    //////////////
 
     // Distance between parallel odometers
-    private static final double TRACK_WIDTH = 12.4; //TODO: tune
+    private static final double TRACK_WIDTH = 6.649;
     // Signed distance from the point of rotation (positive=forward)
-    private static final double CENTER_WHEEL_OFFSET = 0; //TODO: tune
+    private static final double CENTER_WHEEL_OFFSET = 0;
     // Measured in inches
     private static final double WHEEL_DIAMETER = 1.37795;
     // Odometer encoder resolution
@@ -69,29 +65,24 @@ public class LocalizationSubsystem extends SubsystemBase {
     // Circumference divided by encoder resolution [inches/tick]
     private static final double DISTANCE_PER_PULSE = (Math.PI * WHEEL_DIAMETER) / TICKS_PER_REV;
 
-    // Encoders
-    private final Encoder leftOdometer;
-    private final Encoder rightOdometer;
-    private final Encoder centerOdometer;
-
     // Inbuilt odometry object
     private final HolonomicOdometry odometry;
+    private Pose2d lastOdometryPose;
 
 
-    //////////////////
-    // IMU (SENSOR) //
-    //////////////////
-    private final AdafruitBNO055IMU imu;
-    private double imuBias;
+    ////////////
+    // CAMERA //
+    ////////////
+    private final CVSubsystem cv;
 
 
     //////////
     // MISC //
     //////////
+    private final ArrayList<Double> dtHistory;
     private final ElapsedTime runtime;
     private double lastTime;
     private double deltaTime;
-    private ArrayList<Double> dtHistory;
     private double averageDeltaTime;
 
     private Telemetry telemetry = null;
@@ -102,14 +93,14 @@ public class LocalizationSubsystem extends SubsystemBase {
      * @param leftOdometer Encoder object.
      * @param rightOdometer Encoder object.
      * @param centerOdometer Encoder object.
-     * @param imu AdafruitBNO055 object.
+     * @param cv The CVSubsystem of the robot.
      */
     public LocalizationSubsystem(
             Pose2d initialPose,
             Encoder leftOdometer,
             Encoder rightOdometer,
             Encoder centerOdometer,
-            AdafruitBNO055IMU imu) {
+            CVSubsystem cv) {
 
         // Init KF
         this.P_translation = 0;
@@ -129,28 +120,28 @@ public class LocalizationSubsystem extends SubsystemBase {
 
 
         // Init odometry
-        this.leftOdometer = leftOdometer.setDistancePerPulse(DISTANCE_PER_PULSE);
-        this.rightOdometer = rightOdometer.setDistancePerPulse(DISTANCE_PER_PULSE);
-        this.centerOdometer = centerOdometer.setDistancePerPulse(DISTANCE_PER_PULSE);
+        // Encoders
+        leftOdometer.setDistancePerPulse(DISTANCE_PER_PULSE);
+        rightOdometer.setDistancePerPulse(DISTANCE_PER_PULSE);
+        centerOdometer.setDistancePerPulse(DISTANCE_PER_PULSE);
 
-        this.leftOdometer.reset();
-        this.rightOdometer.reset();
-        this.centerOdometer.reset();
+        leftOdometer.reset();
+        rightOdometer.reset();
+        centerOdometer.reset();
 
-        this.rightOdometer.setDirection(Motor.Direction.REVERSE);
         this.odometry = new HolonomicOdometry(
                 leftOdometer::getDistance,
                 rightOdometer::getDistance,
                 centerOdometer::getDistance,
                 TRACK_WIDTH, CENTER_WHEEL_OFFSET
         );
-        this.odometry.updatePose(initialPose);
+        this.lastOdometryPose = new Pose2d(0,0,new Rotation2d(0));
+        this.odometry.updatePose(lastOdometryPose);
 
 
-        // Init IMU
-        this.imu = imu;
-        this.imuBias = 0;
-        updateYaw(this.h);
+        // Store camera
+        this.cv = cv;
+        enableCamera();
 
 
         // Init time
@@ -162,6 +153,9 @@ public class LocalizationSubsystem extends SubsystemBase {
         this.dtHistory.add(1d);
         this.averageDeltaTime = 1;
 
+        // Init telemetry
+        this.telemetry = null;
+
     }
 
     /**
@@ -170,7 +164,7 @@ public class LocalizationSubsystem extends SubsystemBase {
      * @param leftOdometer Encoder object.
      * @param rightOdometer Encoder object.
      * @param centerOdometer Encoder object.
-     * @param imu AdafruitBNO055 object.
+     * @param cv The CVSubsystem of the robot.
      * @param telemetry The opmode's Telemetry object.
      */
     public LocalizationSubsystem(
@@ -178,16 +172,60 @@ public class LocalizationSubsystem extends SubsystemBase {
             Encoder leftOdometer,
             Encoder rightOdometer,
             Encoder centerOdometer,
-            AdafruitBNO055IMU imu,
+            CVSubsystem cv,
             Telemetry telemetry) {
         this(
                 initialPose,
                 leftOdometer,
                 rightOdometer,
                 centerOdometer,
-                imu
+                cv
         );
         this.telemetry = telemetry;
+    }
+
+    /**
+     * Creates a new LocalizationSubsystem object with the given parameters.
+     * @param initialPose The robot's starting pose.
+     * @param leftOdometer Encoder object.
+     * @param rightOdometer Encoder object.
+     * @param centerOdometer Encoder object.
+     * @param telemetry The opmode's Telemetry object.
+     */
+    public LocalizationSubsystem(
+            Pose2d initialPose,
+            Encoder leftOdometer,
+            Encoder rightOdometer,
+            Encoder centerOdometer,
+            Telemetry telemetry) {
+        this(
+                initialPose,
+                leftOdometer,
+                rightOdometer,
+                centerOdometer,
+                (CVSubsystem) null
+        );
+        this.telemetry = telemetry;
+        disableCamera();
+    }
+
+
+    ////////////////////
+    // SENSOR TOGGLES //
+    ////////////////////
+
+    /**
+     * Disables the camera/AprilTag sensor.
+     */
+    public void disableCamera() {
+        cameraEnabled = false;
+    }
+
+    /**
+     * Enables the camera/AprilTag sensor.
+     */
+    public void enableCamera() {
+        cameraEnabled = true;
     }
 
 
@@ -262,12 +300,16 @@ public class LocalizationSubsystem extends SubsystemBase {
      * Prediction step of the Kalman Filter.
      */
     private void predictKF() {
-        // Calculate model
+        // Get odometry pose
         odometry.updatePose();
         Pose2d currentPose = odometry.getPose();
-        x = currentPose.getX();
-        y = currentPose.getY();
-        h = currentPose.getHeading();
+        currentPose = new Pose2d(-currentPose.getY(), currentPose.getX(), currentPose.getRotation());
+
+        // Calculate model
+        x += currentPose.getX() - lastOdometryPose.getX();
+        y += currentPose.getY() - lastOdometryPose.getY();
+        h += normalizeAngle(currentPose.getHeading() - lastOdometryPose.getHeading());
+        lastOdometryPose = currentPose;
 
         // Add uncertainty
         P_translation += deltaTime * Q_translation;
@@ -277,7 +319,7 @@ public class LocalizationSubsystem extends SubsystemBase {
         if (telemetry!=null) {
             telemetry.addData("Odom X", x);
             telemetry.addData("Odom Y", y);
-            telemetry.addData("Odom H", Math.toDegrees(h));
+            telemetry.addData("Odom H", Math.toDegrees(h)+"°");
         }
     }
 
@@ -285,61 +327,32 @@ public class LocalizationSubsystem extends SubsystemBase {
      * Update step of the Kalman Filter.
      */
     private void updateKF() {
+        CVSubsystem.PoseEstimation cameraEstimation = null;
+        if (cameraEnabled) cameraEstimation = cv.getBestPoseEstimation();
 
-        // TODO: ADD CAMERA CODE
-//        if ([insert whether or not apriltag is found]) {
-//            // Telemetry
-//            if (telemetry!=null) {
-//                telemetry.addData("AprilTag X",[insert apriltag x]);
-//                telemetry.addData("Apriltag Y",[insert apriltag y]);
-//                telemetry.addData("Apriltag H",Math.toDegrees([insert apriltag h]));
-//                telemetry.addData("IMU H", Math.toDegrees(getYaw()));
-//            }
-//
-//            // Update translation
-//            double K_translation = P_translation / (P_translation + deltaTime * R_camera_translation);
-//            x += K_translation * ([apriltag x] - x);
-//            y += K_translation * ([apriltag y] - y);
-//            P_translation = (1 - K_translation) * P_translation;
-//
-//            // Update heading
-//            double R_combined_heading = (R_imu_heading * R_camera_heading) / (R_imu_heading + R_camera_heading);
-//            double K_combined_heading = P_heading / (P_heading + deltaTime * R_combined_heading);
-//            double imu_difference_heading = normalizeAngle(getYaw() - h);
-//            double camera_difference_heading = normalizeAngle([apriltag h] - h);
-//            double combined_residual_heading =
-//                    R_camera_heading / (R_imu_heading + R_camera_heading) * imu_difference_heading +
-//                    R_imu_heading / (R_imu_heading + R_camera_heading) * camera_difference_heading;
-//            h += K_combined_heading * combined_residual_heading;
-//            h = normalizeAngle(h);
-//            P_heading = (1 - K_combined_heading) * P_heading;
-//        }
-        if (false) {}
-        else {
-            // Telemetry
-            if (telemetry!=null) {
-                telemetry.addData("IMU H", Math.toDegrees(getYaw()));
-            }
+        if (cameraEstimation !=null) {
+            Pose2d cameraPose = cameraEstimation.pose;
+
+            // Update translation
+            double R_camera_translation = cameraEstimation.translationCovariance;
+            double K_translation = P_translation / (P_translation + deltaTime * R_camera_translation);
+            x += K_translation * (cameraPose.getX() - x);
+            y += K_translation * (cameraPose.getY() - y);
+            P_translation = (1 - K_translation) * P_translation;
 
             // Update heading
-            double K_heading = P_heading / (P_heading + deltaTime * R_imu_heading);
-            h += K_heading * (normalizeAngle(getYaw() - h));
+            double R_camera_heading = cameraEstimation.headingCovariance;
+            double K_heading = P_heading / (P_heading + deltaTime * R_camera_heading);
+            h += K_heading * (normalizeAngle(cameraPose.getHeading() - h));
             h = normalizeAngle(h);
             P_heading = (1 - K_heading) * P_heading;
-        }
-    }
 
-    /**
-     * Corrects the pose of the odometry and yaw of the IMU with the new state estimation.
-     */
-    private void correctKF() {
-        odometry.updatePose(new Pose2d(x, y, new Rotation2d(h)));
-
-        // Telemetry
-        if (telemetry!=null) {
-            telemetry.addData("Filtered X", x);
-            telemetry.addData("Filtered Y", y);
-            telemetry.addData("Filtered H", Math.toDegrees(h));
+            // Telemetry
+            if (telemetry!=null) {
+                telemetry.addData("AprilTag X", cameraPose.getX());
+                telemetry.addData("Apriltag Y", cameraPose.getY());
+                telemetry.addData("Apriltag H", Math.toDegrees(cameraPose.getHeading())+"°");
+            }
         }
     }
 
@@ -373,48 +386,33 @@ public class LocalizationSubsystem extends SubsystemBase {
 
         // Find derivatives
         averageDeltaTime = dtHistory.stream().mapToDouble(aa -> aa).average().orElse(0);
-        vx = stencil(xHistory);
-        vy = stencil(yHistory);
-        vh = stencil(hHistory);
+        if (xHistory.size()==5) vx = stencil(xHistory);
+        if (yHistory.size()==5) vy = stencil(yHistory);
+        if (hHistory.size()==5) vh = stencil(hHistory);
     }
 
     /**
      * Update the pose and velocity.
      */
     public void update() {
-        // Telemetry
-        if (telemetry!=null) telemetry.clearAll();
 
         // Kalman Filter steps
         predictKF();
         updateKF();
-        correctKF();
 
         // Calculate velocity
         updateVelocity();
 
         // Telemetry
         if (telemetry!=null) {
-            telemetry.addData("VX", vx);
-            telemetry.addData("VY", vy);
-            telemetry.addData("VH", Math.toDegrees(vh));
+            telemetry.addData("X", x);
+            telemetry.addData("Y", y);
+            telemetry.addData("H", Math.toDegrees(h)+"°");
+            telemetry.addData("VX", vx+"in/s");
+            telemetry.addData("VY", vy+"in/s");
+            telemetry.addData("VH", Math.toDegrees(vh)+"°/s");
             telemetry.update();
         }
-    }
-
-    /**
-     * Reset the IMU to the given yaw in radians.
-     * @param yaw The robot's yaw in radians.
-     */
-    private void updateYaw(double yaw) {
-        imuBias = normalizeAngle(yaw - imu.getAngularOrientation().firstAngle);
-    }
-
-    /**
-     * @return the IMU yaw in radians.
-     */
-    private double getYaw() {
-        return normalizeAngle(imu.getAngularOrientation().firstAngle + imuBias);
     }
 
     /**

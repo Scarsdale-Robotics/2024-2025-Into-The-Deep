@@ -10,30 +10,64 @@ import org.firstinspires.ftc.teamcode.synchropather.DriveConstants;
 
 public class DriveSubsystem extends SubsystemBase {
 
-    // Powers
+    /// MOTORS ///
+    private final Motor leftFront;
+    private final Motor rightFront;
+    private final Motor leftBack;
+    private final Motor rightBack;
+    private final MecanumDrive controller;
+
+    /// POWERS ///
     public double driveSpeed;
     public double driveTheta;
     public double turnVelocity;
 
-    private final MecanumDrive controller;
-    private final LocalizationSubsystem localization;
-
     public DriveSubsystem(Motor leftFront,
                           Motor rightFront,
                           Motor leftBack,
-                          Motor rightBack,
-                          LocalizationSubsystem localization) {
+                          Motor rightBack) {
+        this.leftFront = leftFront;
+        this.rightFront = rightFront;
+        this.leftBack = leftBack;
+        this.rightBack = rightBack;
         this.controller = new MecanumDrive(
                 leftFront,
                 rightFront,
                 leftBack,
                 rightBack
         );
-        this.localization = localization;
         this.driveSpeed = 0;
         this.driveTheta = 0;
         this.turnVelocity = 0;
     }
+
+
+
+    /////////////
+    // GETTERS //
+    /////////////
+
+    public double getLeftFrontPosition() {
+        return -leftFront.getCurrentPosition();
+    }
+
+    public double getRightFrontPosition() {
+        return -rightFront.getCurrentPosition();
+    }
+
+    public double getLeftBackPosition() {
+        return -leftBack.getCurrentPosition();
+    }
+
+    public double getRightBackPosition() {
+        return -rightBack.getCurrentPosition();
+    }
+
+
+
+    ///////////////////
+    // DRIVE METHODS //
+    ///////////////////
 
     /**
      * Drives with directions based on robot pov.
@@ -48,20 +82,10 @@ public class DriveSubsystem extends SubsystemBase {
 
     /**
      * Drives based on driver pov.
+     * @param gyroAngle Robot heading in radians.
      */
-    public void driveFieldCentric() {
-        driveFieldCentric(driveTheta, driveSpeed, turnVelocity, localization.getH());
-    }
-
-    /**
-     * Drives with directions based on driver pov.
-     *
-     * @param theta     Direction of drive in radians.
-     * @param speed     Desired driving speed in in/s.
-     * @param turn      Desired angular velocity in rad/s.
-     */
-    public void driveFieldCentric(double theta, double speed, double turn) {
-        driveFieldCentric(theta, speed, turn, localization.getH());
+    public void driveFieldCentric(double gyroAngle) {
+        driveFieldCentric(driveTheta, driveSpeed, turnVelocity, gyroAngle);
     }
 
     /**
@@ -72,7 +96,7 @@ public class DriveSubsystem extends SubsystemBase {
      * @param turn      Desired angular velocity in rad/s.
      * @param gyroAngle Robot heading in radians.
      */
-    private void driveFieldCentric(double theta, double speed, double turn, double gyroAngle) {
+    public void driveFieldCentric(double theta, double speed, double turn, double gyroAngle) {
         theta = normalizeAngle(theta-gyroAngle);
         double maxSpeed = Math.hypot(
                 DriveConstants.MAX_STRAFE_SPEED*Math.cos(theta),

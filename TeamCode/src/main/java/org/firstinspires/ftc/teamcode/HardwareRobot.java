@@ -20,7 +20,7 @@ public class HardwareRobot {
     public final Encoder rightOdometer;
     public final Encoder centerOdometer;
 
-    public final AdafruitBNO055IMU imu;
+    public final WebcamName cameraName;
 
     public HardwareRobot(HardwareMap hardwareMap) {
 
@@ -47,10 +47,10 @@ public class HardwareRobot {
         leftBack.setRunMode(Motor.RunMode.RawPower);
         rightBack.setRunMode(Motor.RunMode.RawPower);
 
-        leftFront.setInverted(false);
-        rightFront.setInverted(false);
-        leftBack.setInverted(false);
-        rightBack.setInverted(false);
+        leftFront.setInverted(true);
+        rightFront.setInverted(true);
+        leftBack.setInverted(true);
+        rightBack.setInverted(true);
 
         leftFront.motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         rightFront.motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -63,21 +63,21 @@ public class HardwareRobot {
         rightBack.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
 
 
-
         //////////////
         // ODOMETRY //
         //////////////
-        leftOdometer = leftFront.encoder;
-        rightOdometer = rightFront.encoder;
-        centerOdometer = new MotorEx(hardwareMap, "centerOdometer").encoder;
+        leftOdometer = rightFront.encoder;
+        rightOdometer = leftFront.encoder;
+        centerOdometer = leftBack.encoder;
+
+        rightOdometer.setDirection(Motor.Direction.REVERSE);
 
 
-
-        /////////
-        // IMU //
-        /////////
-        imu = hardwareMap.get(AdafruitBNO055IMU.class, "imu");
-        imu.initialize(new BNO055IMU.Parameters());
+        ////////////
+        // CAMERA //
+        ////////////
+//        cameraName = hardwareMap.get(WebcamName.class, "Webcam 1");
+        cameraName = null;
 
     }
 }

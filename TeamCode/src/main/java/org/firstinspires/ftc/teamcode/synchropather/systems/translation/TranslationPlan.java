@@ -94,7 +94,7 @@ public class TranslationPlan extends Plan<TranslationState> {
 		TranslationState ut = new TranslationState(ux, uy);
 		robot.drive.driveTheta = ut.theta();
 		robot.drive.driveSpeed = ut.hypot();
-		robot.drive.driveFieldCentric();
+		robot.drive.driveFieldCentric(currentPose.getHeading());
 	}
 
 }
