@@ -56,7 +56,7 @@ public class DriveSubsystem extends SubsystemBase {
     }
 
     public double getLeftBackPosition() {
-        return -leftBack.getCurrentPosition();
+        return leftBack.getCurrentPosition();
     }
 
     public double getRightBackPosition() {
