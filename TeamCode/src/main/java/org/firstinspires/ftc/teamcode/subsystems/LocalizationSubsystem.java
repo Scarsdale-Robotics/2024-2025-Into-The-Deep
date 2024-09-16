@@ -3,10 +3,8 @@ package org.firstinspires.ftc.teamcode.subsystems;
 import com.arcrobotics.ftclib.command.SubsystemBase;
 import com.arcrobotics.ftclib.geometry.Pose2d;
 import com.arcrobotics.ftclib.geometry.Rotation2d;
-import com.arcrobotics.ftclib.hardware.motors.Motor;
 import com.arcrobotics.ftclib.hardware.motors.Motor.Encoder;
 import com.arcrobotics.ftclib.kinematics.HolonomicOdometry;
-import com.qualcomm.hardware.adafruit.AdafruitBNO055IMU;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
@@ -328,7 +326,7 @@ public class LocalizationSubsystem extends SubsystemBase {
      */
     private void updateKF() {
         CVSubsystem.PoseEstimation cameraEstimation = null;
-        if (cameraEnabled) cameraEstimation = cv.getBestPoseEstimation();
+        if (cameraEnabled) cameraEstimation = cv.getPoseEstimation();
 
         if (cameraEstimation !=null) {
             Pose2d cameraPose = cameraEstimation.pose;

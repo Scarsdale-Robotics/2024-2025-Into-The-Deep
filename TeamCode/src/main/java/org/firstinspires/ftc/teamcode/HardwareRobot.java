@@ -5,6 +5,7 @@ import com.arcrobotics.ftclib.hardware.motors.Motor.Encoder;
 import com.arcrobotics.ftclib.hardware.motors.MotorEx;
 import com.qualcomm.hardware.adafruit.AdafruitBNO055IMU;
 import com.qualcomm.hardware.bosch.BNO055IMU;
+import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
@@ -20,7 +21,7 @@ public class HardwareRobot {
     public final Encoder rightOdometer;
     public final Encoder centerOdometer;
 
-    public final WebcamName cameraName;
+    public final Limelight3A limelight;
 
     public HardwareRobot(HardwareMap hardwareMap) {
 
@@ -77,7 +78,7 @@ public class HardwareRobot {
         // CAMERA //
         ////////////
 //        cameraName = hardwareMap.get(WebcamName.class, "Webcam 1");
-        cameraName = null;
+        limelight = hardwareMap.get(Limelight3A.class, "limelight");
 
     }
 }

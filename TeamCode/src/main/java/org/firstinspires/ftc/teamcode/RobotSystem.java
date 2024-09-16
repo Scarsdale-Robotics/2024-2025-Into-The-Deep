@@ -26,7 +26,7 @@ public class RobotSystem {
         this.telemetry = new MultipleTelemetry(opMode.telemetry, FtcDashboard.getInstance().getTelemetry());
         HardwareRobot hardwareRobot = new HardwareRobot(hardwareMap);
         this.cv = new CVSubsystem(
-                hardwareRobot.cameraName,
+                hardwareRobot.limelight,
                 telemetry
         );
         this.localization = new LocalizationSubsystem(
