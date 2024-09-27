@@ -39,6 +39,7 @@ public class LiftPlan extends Plan<LiftState> {
 
         // Current state
         Pose2d currentPose = robot.localization.getPose();
+        lift subsystem get height here instead
         LiftState currentState = new LiftState(currentPose.getHeight());
 
         // State error
