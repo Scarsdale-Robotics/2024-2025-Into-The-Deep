@@ -20,17 +20,18 @@ public class InDepSubsystem extends SubsystemBase {
         executeTasks();
     }
 
+    // TODO: add a way to vary the speed at which an item executs
     public void executeTasks() {
         while (OP_MODE.opModeIsActive()) {
             InDepTask currentTask = getCurrentTask();
             if (currentTask == null) continue;
 
-            setClawPosition(currentTask.CLAW_POSITION);
+            setClawUDPosition(currentTask.CLAW_POSITION);
             setElbowPosition(currentTask.ELBOW_POSITION);
             setLiftPosition(currentTask.LIFT_POSITION);
 
             if (
-                HARDWARE_ROBOT.claw.getPosition() == currentTask.CLAW_POSITION.SERVO_POSITION &&
+                HARDWARE_ROBOT.clawUD.getPosition() == currentTask.CLAW_POSITION.SERVO_POSITION &&
                 HARDWARE_ROBOT.elbow.getPosition() == currentTask.ELBOW_POSITION.SERVO_POSITION &&
                 HARDWARE_ROBOT.lift.atTargetPosition()
             ) {
@@ -39,25 +40,44 @@ public class InDepSubsystem extends SubsystemBase {
         }
     }
 
-    //////////
-    // CLAW //
-    //////////
-    public enum ClawPosition {
+    ///////////////
+    // CLAW (OC) //
+    ///////////////
+    public enum ClawOCPosition {
+        CLOSED(0),
+        OPEN(1);
+
+        public final double SERVO_POSITION;
+        private ClawOCPosition(double servoPosition) {
+            SERVO_POSITION = servoPosition;
+        }
+    }
+    public void setClawOCPosition(ClawOCPosition position) {
+        setClawOCPosition(position.SERVO_POSITION);
+    }
+    public void setClawOCPosition(double position) {
+        HARDWARE_ROBOT.clawOC.setPosition(position);
+    }
+
+    ///////////////
+    // CLAW (UD) //
+    ///////////////
+    public enum ClawUDPosition {
         DOWN(0),
         CENTER(0.5),
         UP(1);
 
         public final double SERVO_POSITION;
 
-        private ClawPosition(double servoPosition) {
+        private ClawUDPosition(double servoPosition) {
             SERVO_POSITION = servoPosition;
         }
     }
-    public void setClawPosition(ClawPosition position) {
-        setClawPosition(position.SERVO_POSITION);
+    public void setClawUDPosition(ClawUDPosition position) {
+        setClawUDPosition(position.SERVO_POSITION);
     }
-    public void setClawPosition(double position) {
-        HARDWARE_ROBOT.claw.setPosition(position);
+    public void setClawUDPosition(double position) {
+        HARDWARE_ROBOT.clawUD.setPosition(position);
     }
 
     ///////////
@@ -110,20 +130,20 @@ public class InDepSubsystem extends SubsystemBase {
         Collections.singletonList(InDepTask.INIT)
     );
     public enum InDepTask {
-        INIT(ClawPosition.UP, ElbowPosition.UP, LiftPosition.LOW),
-        INTAKE(ClawPosition.DOWN, ElbowPosition.CENTER, LiftPosition.LOW),
-        EE_SUB(ClawPosition.CENTER, ElbowPosition.CENTER, LiftPosition.LOW),
-        DEP_HP(ClawPosition.DOWN, ElbowPosition.CENTER, LiftPosition.LOW),
-        PRE_DEP_HB(ClawPosition.CENTER, ElbowPosition.CENTER, LiftPosition.ABV_SPC),
-        PST_DEP_HB(ClawPosition.CENTER, ElbowPosition.CENTER, LiftPosition.BLW_SPC),
-        DEP_BSK(ClawPosition.CENTER, ElbowPosition.UPPER_CENTER, LiftPosition.BSK),
-        HANG(ClawPosition.UP, ElbowPosition.UP, LiftPosition.HANG);
+        INIT(ClawUDPosition.UP, ElbowPosition.UP, LiftPosition.LOW),
+        INTAKE(ClawUDPosition.DOWN, ElbowPosition.CENTER, LiftPosition.LOW),
+        EE_SUB(ClawUDPosition.CENTER, ElbowPosition.CENTER, LiftPosition.LOW),
+        DEP_HP(ClawUDPosition.DOWN, ElbowPosition.CENTER, LiftPosition.LOW),
+        PRE_DEP_HB(ClawUDPosition.CENTER, ElbowPosition.CENTER, LiftPosition.ABV_SPC),
+        PST_DEP_HB(ClawUDPosition.CENTER, ElbowPosition.CENTER, LiftPosition.BLW_SPC),
+        DEP_BSK(ClawUDPosition.CENTER, ElbowPosition.UPPER_CENTER, LiftPosition.BSK),
+        HANG(ClawUDPosition.UP, ElbowPosition.UP, LiftPosition.HANG);
 
-        public final ClawPosition CLAW_POSITION;
+        public final ClawUDPosition CLAW_POSITION;
         public final ElbowPosition ELBOW_POSITION;
         public final LiftPosition LIFT_POSITION;
         private InDepTask(
-            ClawPosition clawPosition,
+            ClawUDPosition clawPosition,
             ElbowPosition elbowPosition,
             LiftPosition liftPosition
         ) {
