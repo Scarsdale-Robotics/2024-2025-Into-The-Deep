@@ -24,7 +24,7 @@ public class EncoderLogger extends LinearOpMode {
 
         waitForStart();
 
-        double speed = 0.3;
+        double speed = 0.75;
         while (opModeIsActive()) {
             /// TELEOP ///
             double forward = -speed * gamepad1.left_stick_y;
