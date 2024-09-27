@@ -4,8 +4,7 @@ import org.firstinspires.ftc.teamcode.synchropather.systems.MovementType;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.TimeSpan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.calculators.StretchedDisplacementCalculator;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.superclasses.Movement;
-import org.firstinspires.ftc.teamcode.synchropather.DriveConstants;
-import org.firstinspires.ftc.teamcode.synchropather.systems.rotation.RotationState;
+import org.firstinspires.ftc.teamcode.DriveConstants;
 
 public class LinearLift extends Movement {
     private double distance, minDuration;
@@ -99,8 +98,8 @@ public class LinearLift extends Movement {
     private void init(boolean startTimeConstructor, double startTime) {
         distance = end.minus(start).abs();
 
-        double MAV = DriveConstants.MAX_ANGULAR_VELOCITY;
-        double MAA = DriveConstants.MAX_ANGULAR_ACCELERATION;
+        double MAV = LiftConstants.MAX_VELOCITY;
+        double MAA = LiftConstants.MAX_ACCELERATION;
 
         if (startTimeConstructor) {
             minDuration = StretchedDisplacementCalculator.findMinDuration(distance, MAV, MAA);
