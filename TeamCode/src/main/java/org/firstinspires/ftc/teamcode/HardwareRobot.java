@@ -7,6 +7,8 @@ import com.qualcomm.hardware.adafruit.AdafruitBNO055IMU;
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.ServoImplEx;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 
@@ -15,10 +17,14 @@ public class HardwareRobot {
     public final MotorEx rightFront;
     public final MotorEx leftBack;
     public final MotorEx rightBack;
+    public final MotorEx linearSlide;
 
     public final Encoder leftOdometer;
     public final Encoder rightOdometer;
     public final Encoder centerOdometer;
+
+    public final Servo elbow;
+    public final Servo claw;
 
     public final WebcamName cameraName;
 
@@ -31,6 +37,7 @@ public class HardwareRobot {
         rightFront = new MotorEx(hardwareMap, "rightFront", Motor.GoBILDA.RPM_312);
         leftBack = new MotorEx(hardwareMap, "leftBack", Motor.GoBILDA.RPM_312);
         rightBack = new MotorEx(hardwareMap, "rightBack", Motor.GoBILDA.RPM_312);
+        linearSlide = new MotorEx(hardwareMap, "linearSlide", Motor.GoBILDA.RPM_312);
 
         leftFront.motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         rightFront.motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -71,6 +78,14 @@ public class HardwareRobot {
         centerOdometer = leftBack.encoder;
 
         rightOdometer.setDirection(Motor.Direction.REVERSE);
+
+
+
+        ////////////
+        // SERVOS //
+        ////////////
+        elbow = hardwareMap.get(ServoImplEx.class, "elbow");
+        claw = hardwareMap.get(ServoImplEx.class, "claw");
 
 
         ////////////
