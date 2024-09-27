@@ -134,19 +134,35 @@ public class InDepSubsystem extends SubsystemBase {
     );
     public enum InDepTask {
         INIT(ClawUDPosition.UP, ClawOCPosition.CLOSED, ElbowPosition.UP, LiftPosition.LOW),
+
+        // ABV_INTAKE: When gripping the sample from above by inserting our claw into the sample's
+        //             triangular prism-shaped inset and pushing "out"
         PRE_ABV_INTAKE(ClawUDPosition.DOWN, ClawOCPosition.CLOSED, ElbowPosition.CENTER, LiftPosition.LOW),
         PST_ABV_INTAKE(ClawUDPosition.DOWN, ClawOCPosition.OPEN, ElbowPosition.CENTER, LiftPosition.LOW),
+
+        // ARD_INTAKE: The preferred intake method when possible (unless engineering says otherwise),
+        //             involves wrapping the claw's grippers around the sample's two sides that are
+        //             the most perpendicular to the ground
         PRE_ARD_INTAKE(ClawUDPosition.DOWN, ClawOCPosition.OPEN, ElbowPosition.CENTER, LiftPosition.LOW),
         PST_ARD_INTAKE(ClawUDPosition.DOWN, ClawOCPosition.CLOSED, ElbowPosition.CENTER, LiftPosition.LOW),
+
+        // ENTER_SUB, EXIT_SUB: Entering and exiting the submersible
         ENTER_SUB(ClawUDPosition.CENTER, ClawOCPosition.CLOSED, ElbowPosition.CENTER, LiftPosition.LOW),
         EXIT_SUB(ClawUDPosition.CENTER, ClawOCPosition.CLOSED, ElbowPosition.CENTER, LiftPosition.LOW),
+
+        // DEP_HP: Deposit to the human player (in the observation zone)
         PRE_DEP_HP(ClawUDPosition.DOWN, ClawOCPosition.CLOSED, ElbowPosition.CENTER, LiftPosition.LOW),
         PST_DEP_HP(ClawUDPosition.DOWN, ClawOCPosition.OPEN, ElbowPosition.CENTER, LiftPosition.LOW),
+
+        // DEP_SPC: Deposit on the high chamber (specimen)
         PRE_DEP_SPC(ClawUDPosition.CENTER, ClawOCPosition.CLOSED, ElbowPosition.CENTER, LiftPosition.ABV_SPC),
         PST_DEP_SPC(ClawUDPosition.CENTER, ClawOCPosition.PARTIAL, ElbowPosition.CENTER, LiftPosition.BLW_SPC),
+
+        // DEP_BSK: Deposit into the high basket (sample)
         PRE_DEP_BSK(ClawUDPosition.CENTER, ClawOCPosition.CLOSED, ElbowPosition.UPPER_CENTER, LiftPosition.BSK),
         PST_DEP_BSK(ClawUDPosition.CENTER, ClawOCPosition.CLOSED, ElbowPosition.UPPER_CENTER, LiftPosition.BSK),
-        HANG(ClawUDPosition.UP, ClawOCPosition.CLOSED, ElbowPosition.UP, LiftPosition.HANG);
+
+        LOW_HANG(ClawUDPosition.UP, ClawOCPosition.CLOSED, ElbowPosition.UP, LiftPosition.HANG);
 
         public final ClawUDPosition CLAW_UD_POSITION;
         public final ClawOCPosition CLAW_OC_POSITION;
