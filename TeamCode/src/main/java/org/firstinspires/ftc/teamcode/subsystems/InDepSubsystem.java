@@ -20,20 +20,18 @@ public class InDepSubsystem extends SubsystemBase {
         executeTasks();
     }
 
-    // TODO: add a way to vary the speed at which an item executes
+    // TODO: add a way to vary the speed at which a task executes
     public void executeTasks() {
         while (OP_MODE.opModeIsActive()) {
             InDepTask currentTask = getCurrentTask();
             if (currentTask == null) continue;
 
-            setClawUDPosition(currentTask.CLAW_UD_POSITION);
-            setClawOCPosition(currentTask.CLAW_OC_POSITION);
+            setClawPosition(currentTask.CLAW_POSITION);
             setElbowPosition(currentTask.ELBOW_POSITION);
             setLiftPosition(currentTask.LIFT_POSITION);
 
             if (
-                HARDWARE_ROBOT.clawUD.getPosition() == currentTask.CLAW_UD_POSITION.SERVO_POSITION &&
-                HARDWARE_ROBOT.clawOC.getPosition() == currentTask.CLAW_OC_POSITION.SERVO_POSITION &&
+                HARDWARE_ROBOT.claw.getPosition() == currentTask.CLAW_POSITION.SERVO_POSITION &&
                 HARDWARE_ROBOT.elbow.getPosition() == currentTask.ELBOW_POSITION.SERVO_POSITION &&
                 HARDWARE_ROBOT.lift.atTargetPosition()
             ) {
@@ -45,42 +43,21 @@ public class InDepSubsystem extends SubsystemBase {
     ///////////////
     // CLAW (OC) //
     ///////////////
-    public enum ClawOCPosition {
+    public enum ClawPosition {
         CLOSED(0),
         PARTIAL(0.5),
         OPEN(1);
 
         public final double SERVO_POSITION;
-        private ClawOCPosition(double servoPosition) {
+        private ClawPosition(double servoPosition) {
             SERVO_POSITION = servoPosition;
         }
     }
-    public void setClawOCPosition(ClawOCPosition position) {
-        setClawOCPosition(position.SERVO_POSITION);
+    public void setClawPosition(ClawPosition position) {
+        setClawPosition(position.SERVO_POSITION);
     }
-    public void setClawOCPosition(double position) {
-        HARDWARE_ROBOT.clawOC.setPosition(position);
-    }
-
-    ///////////////
-    // CLAW (UD) //
-    ///////////////
-    public enum ClawUDPosition {
-        DOWN(0),
-        CENTER(0.5),
-        UP(1);
-
-        public final double SERVO_POSITION;
-
-        private ClawUDPosition(double servoPosition) {
-            SERVO_POSITION = servoPosition;
-        }
-    }
-    public void setClawUDPosition(ClawUDPosition position) {
-        setClawUDPosition(position.SERVO_POSITION);
-    }
-    public void setClawUDPosition(double position) {
-        HARDWARE_ROBOT.clawUD.setPosition(position);
+    public void setClawPosition(double position) {
+        HARDWARE_ROBOT.claw.setPosition(position);
     }
 
     ///////////
@@ -133,49 +110,46 @@ public class InDepSubsystem extends SubsystemBase {
         Collections.singletonList(InDepTask.INIT)
     );
     public enum InDepTask {
-        INIT(ClawUDPosition.UP, ClawOCPosition.CLOSED, ElbowPosition.UP, LiftPosition.LOW),
+        INIT(ClawPosition.CLOSED, ElbowPosition.UP, LiftPosition.LOW),
 
         // ABV_INTAKE: When gripping the sample from above by inserting our claw into the sample's
         //             triangular prism-shaped inset and pushing "out"
-        PRE_ABV_INTAKE(ClawUDPosition.DOWN, ClawOCPosition.CLOSED, ElbowPosition.CENTER, LiftPosition.LOW),
-        PST_ABV_INTAKE(ClawUDPosition.DOWN, ClawOCPosition.OPEN, ElbowPosition.CENTER, LiftPosition.LOW),
+        PRE_ABV_INTAKE(ClawPosition.CLOSED, ElbowPosition.CENTER, LiftPosition.LOW),
+        PST_ABV_INTAKE(ClawPosition.OPEN, ElbowPosition.CENTER, LiftPosition.LOW),
 
         // ARD_INTAKE: The preferred intake method when possible (unless engineering says otherwise),
         //             involves wrapping the claw's grippers around the sample's two sides that are
         //             the most perpendicular to the ground
-        PRE_ARD_INTAKE(ClawUDPosition.DOWN, ClawOCPosition.OPEN, ElbowPosition.CENTER, LiftPosition.LOW),
-        PST_ARD_INTAKE(ClawUDPosition.DOWN, ClawOCPosition.CLOSED, ElbowPosition.CENTER, LiftPosition.LOW),
+        PRE_ARD_INTAKE(ClawPosition.OPEN, ElbowPosition.CENTER, LiftPosition.LOW),
+        PST_ARD_INTAKE(ClawPosition.CLOSED, ElbowPosition.CENTER, LiftPosition.LOW),
 
         // ENTER_SUB, EXIT_SUB: Entering and exiting the submersible
-        ENTER_SUB(ClawUDPosition.CENTER, ClawOCPosition.CLOSED, ElbowPosition.CENTER, LiftPosition.LOW),
-        EXIT_SUB(ClawUDPosition.CENTER, ClawOCPosition.CLOSED, ElbowPosition.CENTER, LiftPosition.LOW),
+        ENTER_SUB(ClawPosition.CLOSED, ElbowPosition.CENTER, LiftPosition.LOW),
+        EXIT_SUB(ClawPosition.CLOSED, ElbowPosition.CENTER, LiftPosition.LOW),
 
         // DEP_HP: Deposit to the human player (in the observation zone)
-        PRE_DEP_HP(ClawUDPosition.DOWN, ClawOCPosition.CLOSED, ElbowPosition.CENTER, LiftPosition.LOW),
-        PST_DEP_HP(ClawUDPosition.DOWN, ClawOCPosition.OPEN, ElbowPosition.CENTER, LiftPosition.LOW),
+        PRE_DEP_HP(ClawPosition.CLOSED, ElbowPosition.CENTER, LiftPosition.LOW),
+        PST_DEP_HP(ClawPosition.OPEN, ElbowPosition.CENTER, LiftPosition.LOW),
 
         // DEP_SPC: Deposit on the high chamber (specimen)
-        PRE_DEP_SPC(ClawUDPosition.CENTER, ClawOCPosition.CLOSED, ElbowPosition.CENTER, LiftPosition.ABV_SPC),
-        PST_DEP_SPC(ClawUDPosition.CENTER, ClawOCPosition.PARTIAL, ElbowPosition.CENTER, LiftPosition.BLW_SPC),
+        PRE_DEP_SPC(ClawPosition.CLOSED, ElbowPosition.UP, LiftPosition.ABV_SPC),
+        PST_DEP_SPC(ClawPosition.PARTIAL, ElbowPosition.UP, LiftPosition.BLW_SPC),
 
         // DEP_BSK: Deposit into the high basket (sample)
-        PRE_DEP_BSK(ClawUDPosition.CENTER, ClawOCPosition.CLOSED, ElbowPosition.UPPER_CENTER, LiftPosition.BSK),
-        PST_DEP_BSK(ClawUDPosition.CENTER, ClawOCPosition.CLOSED, ElbowPosition.UPPER_CENTER, LiftPosition.BSK),
+        PRE_DEP_BSK(ClawPosition.CLOSED, ElbowPosition.UPPER_CENTER, LiftPosition.BSK),
+        PST_DEP_BSK(ClawPosition.CLOSED, ElbowPosition.UPPER_CENTER, LiftPosition.BSK),
 
-        LOW_HANG(ClawUDPosition.UP, ClawOCPosition.CLOSED, ElbowPosition.UP, LiftPosition.HANG);
+        LOW_HANG(ClawPosition.CLOSED, ElbowPosition.UP, LiftPosition.HANG);
 
-        public final ClawUDPosition CLAW_UD_POSITION;
-        public final ClawOCPosition CLAW_OC_POSITION;
+        public final ClawPosition CLAW_POSITION;
         public final ElbowPosition ELBOW_POSITION;
         public final LiftPosition LIFT_POSITION;
         private InDepTask(
-            ClawUDPosition clawUDPosition,
-            ClawOCPosition clawOCPosition,
+            ClawPosition clawPosition,
             ElbowPosition elbowPosition,
             LiftPosition liftPosition
         ) {
-            CLAW_UD_POSITION = clawUDPosition;
-            CLAW_OC_POSITION = clawOCPosition;
+            CLAW_POSITION = clawPosition;
             ELBOW_POSITION = elbowPosition;
             LIFT_POSITION = liftPosition;
         }

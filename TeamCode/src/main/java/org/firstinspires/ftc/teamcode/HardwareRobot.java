@@ -22,8 +22,7 @@ public class HardwareRobot {
     public final Encoder centerOdometer;
 
     public final Servo elbow;
-    public final Servo clawUD;  // claw up/down servo
-    public final Servo clawOC;  // claw open/close servo
+    public final Servo claw;  // claw open/close servo
 
     public final WebcamName cameraName;
 
@@ -84,8 +83,7 @@ public class HardwareRobot {
         // SERVOS //
         ////////////
         elbow = hardwareMap.get(ServoImplEx.class, "elbow");
-        clawUD = hardwareMap.get(ServoImplEx.class, "clawUD");
-        clawOC = hardwareMap.get(ServoImplEx.class, "clawOC");
+        claw = hardwareMap.get(ServoImplEx.class, "clawOC");
 
 
         ////////////
