@@ -83,7 +83,7 @@ public class HardwareRobot {
         // SERVOS //
         ////////////
         elbow = hardwareMap.get(ServoImplEx.class, "elbow");
-        claw = hardwareMap.get(ServoImplEx.class, "clawOC");
+        claw = hardwareMap.get(ServoImplEx.class, "claw");
 
 
         ////////////

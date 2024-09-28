@@ -40,9 +40,9 @@ public class InDepSubsystem extends SubsystemBase {
         }
     }
 
-    ///////////////
-    // CLAW (OC) //
-    ///////////////
+    //////////
+    // CLAW //
+    //////////
     public enum ClawPosition {
         CLOSED(0),
         PARTIAL(0.5),
