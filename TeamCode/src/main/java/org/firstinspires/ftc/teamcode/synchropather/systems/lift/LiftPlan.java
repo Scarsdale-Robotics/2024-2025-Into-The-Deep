@@ -38,9 +38,9 @@ public class LiftPlan extends Plan<LiftState> {
         double da = desiredAcceleration.getHeight();
 
         // Current state
-        Pose2d currentPose = robot.localization.getPose();
-        lift subsystem get height here instead
-        LiftState currentState = new LiftState(currentPose.getHeight());
+        double currentPosition = robot.inDep.getLiftPosition();
+        // lift subsystem get height here instead
+        LiftState currentState = new LiftState(currentPosition); // motor position --> height idk
 
         // State error
         LiftState error = desiredState.minus(currentState);
@@ -50,12 +50,12 @@ public class LiftPlan extends Plan<LiftState> {
         double dedt = 0;
         eHistory.add(e);
         if (eHistory.size()>5) eHistory.remove(0);
-        if (eHistory.size()==5) dedt = robot.localization.stencil(eHistory);
+        if (eHistory.size()==5) dedt = robot.localization.stencil(eHistory); // this is pos2D but still works (same formula)
 
         // Control output
         double u = 0;
 
-        // Rotational PD
+        // Lift PD
         u += kP*e + kD*dedt;
 
         // Feedforward
@@ -66,6 +66,6 @@ public class LiftPlan extends Plan<LiftState> {
         // Set drive powers
 //        robot.drive.turnVelocity = u;
 //        robot.drive.driveFieldCentric(currentPose.getHeading());
-        add motor stuff here
+        robot.inDep.setLiftPower(u);
     }
 }
