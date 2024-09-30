@@ -45,13 +45,15 @@ public class InDepSubsystem extends SubsystemBase {
     //////////
     // TODO: Tune all servo values
     public enum ClawPosition {
-        CLOSED(0),
-        PARTIAL(0.5),
-        OPEN(1);
+        CLOSED(0, "Closed"),
+        PARTIAL(0.5, "Partial"),
+        OPEN(1, "Open");
 
         public final double SERVO_POSITION;
-        private ClawPosition(double servoPosition) {
+        public final String NAME;
+        private ClawPosition(double servoPosition, String name) {
             SERVO_POSITION = servoPosition;
+            NAME = name;
         }
     }
     public void setClawPosition(ClawPosition position) {
@@ -65,14 +67,16 @@ public class InDepSubsystem extends SubsystemBase {
     // ELBOW //
     ///////////
     public enum ElbowPosition {
-        CENTER(0.5),
-        UPPER_CENTER(0.75),
-        UP(1);
+        CENTER(0.5, "Center"),
+        UPPER_CENTER(0.75, "Upper center"),
+        UP(1, "Up");
 
         public final double SERVO_POSITION;
+        public final String NAME;
 
-        private ElbowPosition(double servoPosition) {
+        private ElbowPosition(double servoPosition, String name) {
             SERVO_POSITION = servoPosition;
+            NAME = name;
         }
     }
     public void setElbowPosition(ElbowPosition position) {

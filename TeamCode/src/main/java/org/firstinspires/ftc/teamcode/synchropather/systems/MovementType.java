@@ -17,7 +17,15 @@ public enum MovementType {
 		/**
 		 * A Movement involving the global lift height.
 		 */
-		LIFT();
+		LIFT(),
+		/**
+		 * A Movement involving the elbow.
+		 */
+		ELBOW(),
+		/**
+		 * A Movement involving the elbow.
+		 */
+		CLAW();
 
 		MovementType() {};
 }
