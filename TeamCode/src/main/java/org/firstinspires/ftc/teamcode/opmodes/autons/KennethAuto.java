@@ -12,6 +12,9 @@ import org.firstinspires.ftc.teamcode.HardwareRobot;
 import org.firstinspires.ftc.teamcode.RobotSystem;
 import org.firstinspires.ftc.teamcode.subsystems.DriveSubsystem;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.Synchronizer;
+import org.firstinspires.ftc.teamcode.synchropather.systems.lift.LiftPlan;
+import org.firstinspires.ftc.teamcode.synchropather.systems.lift.LiftState;
+import org.firstinspires.ftc.teamcode.synchropather.systems.lift.LinearLift;
 import org.firstinspires.ftc.teamcode.synchropather.systems.rotation.LinearRotation;
 import org.firstinspires.ftc.teamcode.synchropather.systems.rotation.RotationPlan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.rotation.RotationState;
@@ -156,10 +159,22 @@ public class KennethAuto extends LinearOpMode {
         );
 
 
+        // Lift plan
+        LinearLift lift1 = new LinearLift(0,
+                new LiftState(0),
+                new LiftState(500)
+        );
+
+        LiftPlan liftPlan = new LiftPlan(robot,
+                lift1
+        );
+
+
         // put all the Plans into a Synchronizer
         Synchronizer synchronizer = new Synchronizer(
                 translationPlan,
-                rotationPlan // initializes the plans here
+                rotationPlan, // initializes the plans here
+                liftPlan
         );
 
         // put the MovementSequence into a visualizer object, with timeFactor between 0 and 1 representing the speed of the visualizer

@@ -43,6 +43,7 @@ public class InDepSubsystem extends SubsystemBase {
     //////////
     // CLAW //
     //////////
+    // TODO: Tune all servo values
     public enum ClawPosition {
         CLOSED(0),
         PARTIAL(0.5),
@@ -99,9 +100,19 @@ public class InDepSubsystem extends SubsystemBase {
     public void setLiftPosition(LiftPosition position) {
         setLiftPosition(position.ENCODER_TICKS);
     }
+
     public void setLiftPosition(int position) {
         HARDWARE_ROBOT.lift.setTargetPosition(position);
+        // ew, use synchropather liftplan pid instead
+
     }
+    public int getLiftPosition() {
+        return HARDWARE_ROBOT.lift.getCurrentPosition();
+    }
+    public void setLiftPower(double power) {
+        HARDWARE_ROBOT.lift.motor.setPower(power);
+    }
+
 
     //////////////////////////
     // GENERAL IN-DEP TASKS //
