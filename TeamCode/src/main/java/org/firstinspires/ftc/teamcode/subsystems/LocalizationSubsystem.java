@@ -101,8 +101,8 @@ public class LocalizationSubsystem extends SubsystemBase {
             CVSubsystem cv) {
 
         // Init KF
-        this.P_translation = 0;
-        this.P_heading = 0;
+        this.P_translation = 2;
+        this.P_heading = 0.1;
         this.x = initialPose.getX();
         this.y = initialPose.getY();
         this.h = initialPose.getHeading();

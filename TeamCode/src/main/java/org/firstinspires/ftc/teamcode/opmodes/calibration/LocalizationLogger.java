@@ -13,7 +13,7 @@ public class LocalizationLogger extends LinearOpMode {
 
     @Override
     public void runOpMode() {
-        RobotSystem robot = new RobotSystem(hardwareMap, this);
+        RobotSystem robot = new RobotSystem(hardwareMap, 0, this);
 
         robot.localization.disableCamera();
 
