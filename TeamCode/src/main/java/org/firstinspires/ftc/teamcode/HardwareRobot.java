@@ -71,6 +71,7 @@ public class HardwareRobot {
         rightOdometer = leftFront.encoder;
         centerOdometer = leftBack.encoder;
 
+        leftOdometer.setDirection(Motor.Direction.REVERSE);
         rightOdometer.setDirection(Motor.Direction.REVERSE);
 
 

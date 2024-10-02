@@ -10,11 +10,11 @@ public final class DriveConstants {
 	/**
 	 *  Max velocity driving forward in in/s.
 	 */
-	public static final double MAX_FORWARD_SPEED = 54d; //TODO: TUNE
+	public static final double MAX_FORWARD_SPEED = 60d; //TODO: TUNE
 	/**
 	 * Max velocity driving sideways in in/s.
 	 */
-	public static final double MAX_STRAFE_SPEED = 54d; //TODO: TUNE
+	public static final double MAX_STRAFE_SPEED = 40d; //TODO: TUNE
 	/**
 	 * Angle of the output force vector of the robot's Mecanum wheels in radians.
 	 */

@@ -53,9 +53,9 @@ public class LocalizationSubsystem extends SubsystemBase {
     //////////////
 
     // Distance between parallel odometers
-    private static final double TRACK_WIDTH = 6.649;
+    private static final double TRACK_WIDTH = 11.3386;
     // Signed distance from the point of rotation (positive=forward)
-    private static final double CENTER_WHEEL_OFFSET = 0;
+    private static final double CENTER_WHEEL_OFFSET = 0.944882;
     // Measured in inches
     private static final double WHEEL_DIAMETER = 1.37795;
     // Odometer encoder resolution
@@ -64,6 +64,9 @@ public class LocalizationSubsystem extends SubsystemBase {
     private static final double DISTANCE_PER_PULSE = (Math.PI * WHEEL_DIAMETER) / TICKS_PER_REV;
 
     // Inbuilt odometry object
+    private final Encoder leftOdometer;
+    private final Encoder rightOdometer;
+    private final Encoder centerOdometer;
     private final HolonomicOdometry odometry;
     private Pose2d lastOdometryPose;
 
@@ -119,22 +122,20 @@ public class LocalizationSubsystem extends SubsystemBase {
 
         // Init odometry
         // Encoders
-        leftOdometer.setDistancePerPulse(DISTANCE_PER_PULSE);
-        rightOdometer.setDistancePerPulse(DISTANCE_PER_PULSE);
-        centerOdometer.setDistancePerPulse(DISTANCE_PER_PULSE);
+        this.leftOdometer = leftOdometer.setDistancePerPulse(DISTANCE_PER_PULSE);
+        this.rightOdometer = rightOdometer.setDistancePerPulse(DISTANCE_PER_PULSE);
+        this.centerOdometer = centerOdometer.setDistancePerPulse(DISTANCE_PER_PULSE);
 
-        leftOdometer.reset();
-        rightOdometer.reset();
-        centerOdometer.reset();
-
+        this.leftOdometer.reset();
+        this.rightOdometer.reset();
+        this.centerOdometer.reset();
         this.odometry = new HolonomicOdometry(
-                leftOdometer::getDistance,
-                rightOdometer::getDistance,
-                centerOdometer::getDistance,
+                this.leftOdometer::getDistance,
+                this.rightOdometer::getDistance,
+                this.centerOdometer::getDistance,
                 TRACK_WIDTH, CENTER_WHEEL_OFFSET
         );
         this.lastOdometryPose = new Pose2d(0,0,new Rotation2d(0));
-        this.odometry.updatePose(lastOdometryPose);
 
 
         // Store camera
@@ -301,23 +302,34 @@ public class LocalizationSubsystem extends SubsystemBase {
         // Get odometry pose
         odometry.updatePose();
         Pose2d currentPose = odometry.getPose();
-        currentPose = new Pose2d(-currentPose.getY(), currentPose.getX(), currentPose.getRotation());
+        currentPose = new Pose2d(currentPose.getX(), currentPose.getY(), new Rotation2d(-currentPose.getHeading()));
 
         // Calculate model
-        x += currentPose.getX() - lastOdometryPose.getX();
-        y += currentPose.getY() - lastOdometryPose.getY();
-        h += normalizeAngle(currentPose.getHeading() - lastOdometryPose.getHeading());
+        // rotate odometry displacement by h-lastOdometryPose.getHeading()
+        double odom_dx = currentPose.getX() - lastOdometryPose.getX();
+        double odom_dy = currentPose.getY() - lastOdometryPose.getY();
+        double beta = normalizeAngle(h - lastOdometryPose.getHeading());
+        double dx = odom_dx*Math.cos(beta) - odom_dy*Math.sin(beta);
+        double dy = odom_dx*Math.sin(beta) + odom_dy*Math.cos(beta);
+        x += dx;
+        y += dy;
         lastOdometryPose = currentPose;
 
+        double odom_dh = normalizeAngle(currentPose.getHeading() - lastOdometryPose.getHeading());
+        h = normalizeAngle(h + odom_dh);
+
         // Add uncertainty
-        P_translation += deltaTime * Q_translation;
-        P_heading += deltaTime * Q_heading;
+        // TODO: TUNE
+        P_translation += Math.hypot(dx, dy) * Q_translation;
+        P_heading += Math.abs(odom_dh) * Q_heading;
 
         // Telemetry
         if (telemetry!=null) {
             telemetry.addData("Odom X", x);
             telemetry.addData("Odom Y", y);
             telemetry.addData("Odom H", Math.toDegrees(h)+"°");
+            telemetry.addData("P_translation", P_translation);
+            telemetry.addData("P_heading", P_heading);
         }
     }
 
@@ -333,14 +345,14 @@ public class LocalizationSubsystem extends SubsystemBase {
 
             // Update translation
             double R_camera_translation = cameraEstimation.translationCovariance;
-            double K_translation = P_translation / (P_translation + deltaTime * R_camera_translation);
+            double K_translation = P_translation / (P_translation + R_camera_translation);
             x += K_translation * (cameraPose.getX() - x);
             y += K_translation * (cameraPose.getY() - y);
             P_translation = (1 - K_translation) * P_translation;
 
             // Update heading
             double R_camera_heading = cameraEstimation.headingCovariance;
-            double K_heading = P_heading / (P_heading + deltaTime * R_camera_heading);
+            double K_heading = P_heading / (P_heading + R_camera_heading);
             h += K_heading * (normalizeAngle(cameraPose.getHeading() - h));
             h = normalizeAngle(h);
             P_heading = (1 - K_heading) * P_heading;
@@ -352,6 +364,13 @@ public class LocalizationSubsystem extends SubsystemBase {
                 telemetry.addData("Apriltag H", Math.toDegrees(cameraPose.getHeading())+"°");
             }
         }
+    }
+
+    /**
+     * Correct MT2 heading.
+     */
+    private void correctKF() {
+        cv.updateHeading(h);
     }
 
     /**
@@ -396,6 +415,7 @@ public class LocalizationSubsystem extends SubsystemBase {
 
         // Kalman Filter steps
         predictKF();
+        correctKF();
         updateKF();
 
         // Calculate velocity
