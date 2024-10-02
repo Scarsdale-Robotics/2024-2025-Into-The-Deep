@@ -11,7 +11,14 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import org.firstinspires.ftc.teamcode.HardwareRobot;
 import org.firstinspires.ftc.teamcode.RobotSystem;
 import org.firstinspires.ftc.teamcode.subsystems.DriveSubsystem;
+import org.firstinspires.ftc.teamcode.subsystems.InDepSubsystem;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.Synchronizer;
+import org.firstinspires.ftc.teamcode.synchropather.systems.claw.ClawPlan;
+import org.firstinspires.ftc.teamcode.synchropather.systems.claw.ClawState;
+import org.firstinspires.ftc.teamcode.synchropather.systems.claw.MoveClaw;
+import org.firstinspires.ftc.teamcode.synchropather.systems.elbow.ElbowPlan;
+import org.firstinspires.ftc.teamcode.synchropather.systems.elbow.ElbowState;
+import org.firstinspires.ftc.teamcode.synchropather.systems.elbow.MoveElbow;
 import org.firstinspires.ftc.teamcode.synchropather.systems.lift.LiftPlan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.lift.LiftState;
 import org.firstinspires.ftc.teamcode.synchropather.systems.lift.LinearLift;
@@ -170,11 +177,31 @@ public class KennethAuto extends LinearOpMode {
         );
 
 
+
+        // Elbow plan
+        MoveElbow elbow1 = new MoveElbow(5,
+                new ElbowState(InDepSubsystem.ElbowPosition.CENTER),
+                new ElbowState(InDepSubsystem.ElbowPosition.UP)
+        );
+
+        ElbowPlan elbowPlan = new ElbowPlan(robot,
+                elbow1
+        );
+
+        MoveClaw claw1 = new MoveClaw(6,
+                new ClawState(InDepSubsystem.ClawPosition.CLOSED),
+                new ClawState(InDepSubsystem.ClawPosition.OPEN)
+        );
+        ClawPlan clawPlan = new ClawPlan(robot, claw1);
+
+
         // put all the Plans into a Synchronizer
         Synchronizer synchronizer = new Synchronizer(
                 translationPlan,
                 rotationPlan, // initializes the plans here
-                liftPlan
+                liftPlan,
+                elbowPlan,
+                clawPlan
         );
 
         // put the MovementSequence into a visualizer object, with timeFactor between 0 and 1 representing the speed of the visualizer
