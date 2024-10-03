@@ -334,43 +334,53 @@ public class LocalizationSubsystem extends SubsystemBase {
     }
 
     /**
-     * Update step of the Kalman Filter.
+     * Update step for the heading Kalman Filter.
      */
-    private void updateKF() {
+    private void updateHeadingKF() {
         CVSubsystem.PoseEstimation cameraEstimation = null;
         if (cameraEnabled) cameraEstimation = cv.getPoseEstimation();
+        if (cameraEstimation ==null) return;
 
-        if (cameraEstimation !=null) {
-            Pose2d cameraPose = cameraEstimation.pose;
+        Pose2d cameraPose = cameraEstimation.pose;
 
-            // Update translation
-            double R_camera_translation = cameraEstimation.translationCovariance;
-            double K_translation = P_translation / (P_translation + R_camera_translation);
-            x += K_translation * (cameraPose.getX() - x);
-            y += K_translation * (cameraPose.getY() - y);
-            P_translation = (1 - K_translation) * P_translation;
+        // Update heading
+        double R_camera_heading = cameraEstimation.headingCovariance;
+        double K_heading = P_heading / (P_heading + R_camera_heading);
+        h += K_heading * (normalizeAngle(cameraPose.getHeading() - h));
+        h = normalizeAngle(h);
+        P_heading = (1 - K_heading) * P_heading;
 
-            // Update heading
-            double R_camera_heading = cameraEstimation.headingCovariance;
-            double K_heading = P_heading / (P_heading + R_camera_heading);
-            h += K_heading * (normalizeAngle(cameraPose.getHeading() - h));
-            h = normalizeAngle(h);
-            P_heading = (1 - K_heading) * P_heading;
-
-            // Telemetry
-            if (telemetry!=null) {
-                telemetry.addData("AprilTag X", cameraPose.getX());
-                telemetry.addData("Apriltag Y", cameraPose.getY());
-                telemetry.addData("Apriltag H", Math.toDegrees(cameraPose.getHeading())+"°");
-            }
+        // Telemetry
+        if (telemetry!=null) {
+            telemetry.addData("Apriltag H", Math.toDegrees(cameraPose.getHeading()) + "°");
         }
+
+        // Update MT2 heading.
+        cv.updateHeading(h);
     }
 
     /**
-     * Correct MT2 heading.
+     * Update step for the translation Kalman Filter.
      */
-    private void correctKF() {
-        cv.updateHeading(h);
+    private void updateTranslationKF() {
+        CVSubsystem.PoseEstimation cameraEstimation = null;
+        if (cameraEnabled) cameraEstimation = cv.getPoseEstimation();
+        if (cameraEstimation ==null) return;
+
+        Pose2d cameraPose = cameraEstimation.pose;
+
+        // Update translation
+        double R_camera_translation = cameraEstimation.translationCovariance;
+        double K_translation = P_translation / (P_translation + R_camera_translation);
+        x += K_translation * (cameraPose.getX() - x);
+        y += K_translation * (cameraPose.getY() - y);
+        P_translation = (1 - K_translation) * P_translation;
+
+        // Telemetry
+        if (telemetry!=null) {
+            telemetry.addData("AprilTag X", cameraPose.getX());
+            telemetry.addData("Apriltag Y", cameraPose.getY());
+        }
     }
 
     /**
@@ -415,8 +425,8 @@ public class LocalizationSubsystem extends SubsystemBase {
 
         // Kalman Filter steps
         predictKF();
-        correctKF();
-        updateKF();
+        updateHeadingKF();
+        updateTranslationKF();
 
         // Calculate velocity
         updateVelocity();

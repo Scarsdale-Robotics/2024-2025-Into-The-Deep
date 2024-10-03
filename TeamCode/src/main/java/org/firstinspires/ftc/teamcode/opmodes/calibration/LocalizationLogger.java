@@ -41,7 +41,7 @@ public class LocalizationLogger extends LinearOpMode {
 
             telemetry.addData("LocalizationLogger X", currentPose.getX());
             telemetry.addData("LocalizationLogger Y", currentPose.getY());
-            telemetry.addData("LocalizationLogger H", currentPose.getHeading());
+            telemetry.addData("LocalizationLogger H", Math.toDegrees(currentPose.getHeading()) + "°");
             telemetry.update();
 
             double forward = -speed*gamepad1.left_stick_y;
