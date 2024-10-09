@@ -302,21 +302,30 @@ public class LocalizationSubsystem extends SubsystemBase {
         // Get odometry pose
         odometry.updatePose();
         Pose2d currentPose = odometry.getPose();
-        currentPose = new Pose2d(currentPose.getX(), currentPose.getY(), new Rotation2d(-currentPose.getHeading()));
+        currentPose = new Pose2d(currentPose.getX(), -currentPose.getY(), new Rotation2d(-currentPose.getHeading()));
 
         // Calculate model
         // rotate odometry displacement by h-lastOdometryPose.getHeading()
         double odom_dx = currentPose.getX() - lastOdometryPose.getX();
         double odom_dy = currentPose.getY() - lastOdometryPose.getY();
         double beta = normalizeAngle(h - lastOdometryPose.getHeading());
+        telemetry.addData("_DX", odom_dx);
+        telemetry.addData("_DY", odom_dy);
+        telemetry.addData("_BETA", beta);
         double dx = odom_dx*Math.cos(beta) - odom_dy*Math.sin(beta);
         double dy = odom_dx*Math.sin(beta) + odom_dy*Math.cos(beta);
         x += dx;
         y += dy;
-        lastOdometryPose = currentPose;
 
         double odom_dh = normalizeAngle(currentPose.getHeading() - lastOdometryPose.getHeading());
+        telemetry.addData("_DH", odom_dh);
         h = normalizeAngle(h + odom_dh);
+        telemetry.addData("_PREDICT_H", h);
+
+        lastOdometryPose = currentPose;
+
+
+        telemetry.update();
 
         // Add uncertainty
         // TODO: TUNE
@@ -342,6 +351,10 @@ public class LocalizationSubsystem extends SubsystemBase {
         if (cameraEstimation ==null) return;
 
         Pose2d cameraPose = cameraEstimation.pose;
+        telemetry.addData("heading covariance original", cameraEstimation.headingCovariance);
+        telemetry.addData("heading covariance increase", Math.pow(normalizeAngle(cameraPose.getHeading() - h), 2));
+        telemetry.update();
+        cameraEstimation.headingCovariance += Math.pow(normalizeAngle(cameraPose.getHeading() - h), 2);
 
         // Update heading
         double R_camera_heading = cameraEstimation.headingCovariance;
@@ -368,6 +381,7 @@ public class LocalizationSubsystem extends SubsystemBase {
         if (cameraEstimation ==null) return;
 
         Pose2d cameraPose = cameraEstimation.pose;
+        cameraEstimation.translationCovariance += Math.pow(Math.hypot(cameraPose.getX() - x, cameraPose.getY() - y), 2);
 
         // Update translation
         double R_camera_translation = cameraEstimation.translationCovariance;
@@ -449,7 +463,9 @@ public class LocalizationSubsystem extends SubsystemBase {
      * @return the normalized angle in radians.
      */
     private static double normalizeAngle(double radians) {
-        return (radians + Math.PI) % (2*Math.PI) - Math.PI;
+        while (radians > Math.PI) radians -= 2*Math.PI;
+        while (radians <= -Math.PI) radians += 2*Math.PI;
+        return radians;
     }
 
 }

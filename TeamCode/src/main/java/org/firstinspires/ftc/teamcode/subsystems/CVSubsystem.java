@@ -75,12 +75,18 @@ public class CVSubsystem extends SubsystemBase {
         // Correct for constant error
         double heading = orientation.getYaw(AngleUnit.RADIANS);
         double distanceToTag = Double.MAX_VALUE;
+        double tagYaw = -1;
+        double tagSkew = -69;
         for (LLResultTypes.FiducialResult fiducialResult : result.getFiducialResults()) {
             Position tagPosition = fiducialResult.getRobotPoseTargetSpace().getPosition().toUnit(DistanceUnit.INCH);
             double distance = Math.hypot(tagPosition.x, Math.hypot(tagPosition.y, tagPosition.z));
             distanceToTag = Math.min(distanceToTag, distance);
+            tagYaw = fiducialResult.getRobotPoseTargetSpace().getOrientation().getPitch();
+            tagSkew = fiducialResult.getSkew();
         }
         telemetry.addData("distanceToTag", distanceToTag);
+        telemetry.addData("tagYaw", tagYaw);
+        telemetry.addData("tagSkew", tagSkew);
         double estimatedError = 3.67e-3*distanceToTag + 1.34;
 
         double dx = estimatedError * Math.cos(heading);
@@ -96,7 +102,8 @@ public class CVSubsystem extends SubsystemBase {
         translationCovariance *= translationCovariance;
 
         double rotationCovariance = Double.MAX_VALUE;
-        if (distanceToTag <= 36) rotationCovariance = 0.006 + 1.07e-4*Math.exp(0.266*distanceToTag);
+        double yawThreshold = 45; // Degrees
+        if (distanceToTag <= 36 && Math.abs(tagYaw) < yawThreshold) rotationCovariance = 0.006 + 1.07e-4*Math.exp(0.266*distanceToTag);
         rotationCovariance *= rotationCovariance;
 
         return new PoseEstimation(pose, translationCovariance, rotationCovariance);
