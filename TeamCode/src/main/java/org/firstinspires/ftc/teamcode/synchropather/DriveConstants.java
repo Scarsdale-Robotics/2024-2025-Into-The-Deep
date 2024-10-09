@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode;
+package org.firstinspires.ftc.teamcode.synchropather;
 
 
 /**
@@ -22,7 +22,7 @@ public final class DriveConstants {
 
 
 	/**
-	 *  Max velocity of the robot used for SynchroPather in in/s.
+	 *  Max velocity of the robot in in/s.
 	 */
 	public static final double MAX_VELOCITY = Math.min(MAX_FORWARD_SPEED, MAX_STRAFE_SPEED);
 	/**

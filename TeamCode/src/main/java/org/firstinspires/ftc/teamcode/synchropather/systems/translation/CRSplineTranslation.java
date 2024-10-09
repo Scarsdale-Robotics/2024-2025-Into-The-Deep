@@ -1,6 +1,6 @@
 package org.firstinspires.ftc.teamcode.synchropather.systems.translation;
 
-import org.firstinspires.ftc.teamcode.DriveConstants;
+import org.firstinspires.ftc.teamcode.synchropather.DriveConstants;
 import org.firstinspires.ftc.teamcode.synchropather.systems.MovementType;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.TimeSpan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.calculators.StretchedDisplacementCalculator;
@@ -294,8 +294,8 @@ public class CRSplineTranslation extends Movement {
 			lengths[i] = length;
 		}
 
-		double MV = DriveConstants.MAX_VELOCITY;
-		double MA = DriveConstants.MAX_ACCELERATION;
+		double MV = TranslationConstants.MAX_VELOCITY;
+		double MA = TranslationConstants.MAX_ACCELERATION;
 
 		if (startTimeConstructor) {
 			minDuration = StretchedDisplacementCalculator.findMinDuration(distance, MV, MA);

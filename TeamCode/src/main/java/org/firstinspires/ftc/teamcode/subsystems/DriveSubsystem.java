@@ -5,7 +5,8 @@ import com.arcrobotics.ftclib.drivebase.MecanumDrive;
 import com.arcrobotics.ftclib.drivebase.RobotDrive;
 import com.arcrobotics.ftclib.hardware.motors.Motor;
 
-import org.firstinspires.ftc.teamcode.DriveConstants;
+import org.firstinspires.ftc.teamcode.synchropather.DriveConstants;
+import org.firstinspires.ftc.teamcode.synchropather.systems.rotation.RotationConstants;
 
 public class DriveSubsystem extends SubsystemBase {
 
@@ -81,7 +82,7 @@ public class DriveSubsystem extends SubsystemBase {
         if (speed==0) theta = 0;
         else theta = Math.atan2(forward, strafe);
 
-        driveFieldCentric(theta, speed, -turn * DriveConstants.MAX_ANGULAR_VELOCITY, 0.0);
+        driveFieldCentric(theta, speed, -turn * RotationConstants.MAX_ANGULAR_VELOCITY, 0.0);
     }
 
     /**
@@ -148,7 +149,7 @@ public class DriveSubsystem extends SubsystemBase {
         wheelSpeeds[RobotDrive.MotorType.kBackLeft.value] = R;
         wheelSpeeds[RobotDrive.MotorType.kBackRight.value] = L;
 
-        turn /= DriveConstants.MAX_ANGULAR_VELOCITY;
+        turn /= RotationConstants.MAX_ANGULAR_VELOCITY;
         turn = Math.max(-1, Math.min(1, turn));
         wheelSpeeds[RobotDrive.MotorType.kFrontLeft.value] -= turn;
         wheelSpeeds[RobotDrive.MotorType.kFrontRight.value] += turn;

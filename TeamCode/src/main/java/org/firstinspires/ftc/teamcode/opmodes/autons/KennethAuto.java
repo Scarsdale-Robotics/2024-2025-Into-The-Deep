@@ -205,31 +205,10 @@ public class KennethAuto extends LinearOpMode {
                 clawPlan
         );
 
-        // put the MovementSequence into a visualizer object, with timeFactor between 0 and 1 representing the speed of the visualizer
-        double timeFactor = 3;
-//        Visualizer visualizer = new Visualizer(synchronizer, timeFactor);
-
-        // start visualizer
-//        visualizer.start();
-
-        // main visualizer loop with an example telemetry function
-//        double targetFPS = 144;
-//        while (visualizer.loop()) {
-////			generateTelemetry(visualizer, timeFactor);
-//            Thread.sleep((int)(1000/targetFPS));
-//        }
-
-        double speed = 0.15;
-        ElapsedTime runtime = new ElapsedTime(0);
-        while (opModeIsActive()) {
-
-            synchronizer.setTarget(runtime.seconds());
-            synchronizer.loop();
-
-            // get Position
-            robot.localization.getPose();
-
-
-        }
+        synchronizer.start();
+        while (opModeIsActive() && synchronizer.update()) {
+            telemetry.addData("ELAPSED TIME", synchronizer)
+        };
+        synchronizer.stop();
     }
 }

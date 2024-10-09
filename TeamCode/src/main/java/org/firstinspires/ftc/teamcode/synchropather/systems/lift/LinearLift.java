@@ -4,7 +4,6 @@ import org.firstinspires.ftc.teamcode.synchropather.systems.MovementType;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.TimeSpan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.calculators.StretchedDisplacementCalculator;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.superclasses.Movement;
-import org.firstinspires.ftc.teamcode.DriveConstants;
 
 public class LinearLift extends Movement {
     private double distance, minDuration;
