@@ -1,6 +1,6 @@
 package org.firstinspires.ftc.teamcode.synchropather.systems.translation;
 
-import org.firstinspires.ftc.teamcode.synchropather.DriveConstants;
+import org.firstinspires.ftc.teamcode.DriveConstants;
 import org.firstinspires.ftc.teamcode.synchropather.systems.MovementType;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.TimeSpan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.calculators.StretchedDisplacementCalculator;
@@ -256,7 +256,7 @@ public class CRSplineTranslation extends Movement {
 		double dx = calculator.getDisplacement(elapsedTime);
 		int n = getLocalSegment(elapsedTime);
 		
-		double delta_t = DriveConstants.delta_t;
+		double delta_t = TranslationConstants.delta_t;
 		double p_r = 0;
 		double localDisplacement = 0;
 		TranslationState lastPose = getState(n,0);
@@ -279,7 +279,7 @@ public class CRSplineTranslation extends Movement {
 
 		// calculate distance
 		distance = 0;
-		double delta_t = DriveConstants.delta_t;
+		double delta_t = TranslationConstants.delta_t;
 		TranslationState prevState = anchors[0];
 		for (int i = 0; i < getLength()-1; i++) {
 			double length = 0;

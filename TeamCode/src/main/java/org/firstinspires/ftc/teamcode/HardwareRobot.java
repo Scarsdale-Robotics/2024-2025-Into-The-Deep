@@ -3,25 +3,28 @@ package org.firstinspires.ftc.teamcode;
 import com.arcrobotics.ftclib.hardware.motors.Motor;
 import com.arcrobotics.ftclib.hardware.motors.Motor.Encoder;
 import com.arcrobotics.ftclib.hardware.motors.MotorEx;
-import com.qualcomm.hardware.adafruit.AdafruitBNO055IMU;
-import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
-
-import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
+import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.ServoImplEx;
 
 public class HardwareRobot {
     public final MotorEx leftFront;
     public final MotorEx rightFront;
     public final MotorEx leftBack;
     public final MotorEx rightBack;
+    public final MotorEx lift;
 
     public final Encoder leftOdometer;
     public final Encoder rightOdometer;
     public final Encoder centerOdometer;
 
     public final Limelight3A limelight;
+
+    public final Servo elbow;
+    public final Servo claw;  // claw open/close servo
+
 
     public HardwareRobot(HardwareMap hardwareMap) {
 
@@ -32,6 +35,7 @@ public class HardwareRobot {
         rightFront = new MotorEx(hardwareMap, "rightFront", Motor.GoBILDA.RPM_312);
         leftBack = new MotorEx(hardwareMap, "leftBack", Motor.GoBILDA.RPM_312);
         rightBack = new MotorEx(hardwareMap, "rightBack", Motor.GoBILDA.RPM_312);
+        lift = new MotorEx(hardwareMap, "linearSlide", Motor.GoBILDA.RPM_312);
 
         leftFront.motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         rightFront.motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -75,10 +79,17 @@ public class HardwareRobot {
         rightOdometer.setDirection(Motor.Direction.REVERSE);
 
 
+
+        ////////////
+        // SERVOS //
+        ////////////
+        elbow = hardwareMap.get(ServoImplEx.class, "elbow");
+        claw = hardwareMap.get(ServoImplEx.class, "claw");
+
+
         ////////////
         // CAMERA //
         ////////////
-//        cameraName = hardwareMap.get(WebcamName.class, "Webcam 1");
         limelight = hardwareMap.get(Limelight3A.class, "limelight");
 
     }

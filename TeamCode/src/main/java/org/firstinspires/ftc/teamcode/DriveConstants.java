@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.synchropather;
+package org.firstinspires.ftc.teamcode;
 
 
 /**
@@ -38,10 +38,5 @@ public final class DriveConstants {
 	 *  Max angular acceleration of the robot in rad/s^2.
 	 */
 	public static final double MAX_ANGULAR_ACCELERATION = 4; //TODO: TUNE
-
-	/**
-	 *  Used for differentiating and integrating spline paths, between 0 and 1 (lower = more calculations, more detail).
-	 */
-	public static final double delta_t = 0.005;
 	
 }

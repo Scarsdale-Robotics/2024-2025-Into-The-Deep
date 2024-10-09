@@ -4,24 +4,27 @@ import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.arcrobotics.ftclib.geometry.Pose2d;
 import com.arcrobotics.ftclib.geometry.Rotation2d;
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.subsystems.CVSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.DriveSubsystem;
+import org.firstinspires.ftc.teamcode.subsystems.InDepSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.LocalizationSubsystem;
 
 public class RobotSystem {
 
-    public final OpMode opMode;
+    public final LinearOpMode opMode;
     public final Telemetry telemetry;
 
     public final DriveSubsystem drive;
     public final CVSubsystem cv;
     public final LocalizationSubsystem localization;
+    public final InDepSubsystem inDep;
 
-    public RobotSystem(HardwareMap hardwareMap, Pose2d initialPose, OpMode opMode) {
+    public RobotSystem(HardwareMap hardwareMap, Pose2d initialPose, LinearOpMode opMode) {
         this.opMode = opMode;
         this.telemetry = new MultipleTelemetry(opMode.telemetry, FtcDashboard.getInstance().getTelemetry());
         HardwareRobot hardwareRobot = new HardwareRobot(hardwareMap);
@@ -44,7 +47,10 @@ public class RobotSystem {
                 hardwareRobot.leftBack,
                 hardwareRobot.rightBack
         );
-
+        this.inDep = new InDepSubsystem(
+                hardwareRobot,
+                opMode
+        );
     }
 
 }
