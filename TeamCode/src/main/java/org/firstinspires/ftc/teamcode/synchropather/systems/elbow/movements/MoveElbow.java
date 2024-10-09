@@ -1,16 +1,17 @@
-package org.firstinspires.ftc.teamcode.synchropather.systems.claw;
+package org.firstinspires.ftc.teamcode.synchropather.systems.elbow.movements;
 
 import org.firstinspires.ftc.teamcode.synchropather.systems.MovementType;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.TimeSpan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.superclasses.Movement;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.superclasses.RobotState;
+import org.firstinspires.ftc.teamcode.synchropather.systems.elbow.ElbowState;
 
-public class MoveClaw extends Movement {
+public class MoveElbow extends Movement {
 
     private TimeSpan timeSpan;
-    private ClawState startState, endState;
+    private ElbowState startState, endState;
 
-    public MoveClaw(double startTime, ClawState startState, ClawState endState) {
+    public MoveElbow(double startTime, ElbowState startState, ElbowState endState) {
         super(new TimeSpan(startTime, startTime), MovementType.ELBOW);
         this.startState = startState;
         this.endState = endState;
@@ -48,6 +49,6 @@ public class MoveClaw extends Movement {
 
     @Override
     public String getDisplayName() {
-        return "MoveClaw";
+        return "MoveElbow";
     }
 }

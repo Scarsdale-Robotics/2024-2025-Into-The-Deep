@@ -3,31 +3,27 @@ package org.firstinspires.ftc.teamcode.opmodes.autons;
 
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
-import com.arcrobotics.ftclib.drivebase.MecanumDrive;
 import com.arcrobotics.ftclib.geometry.Pose2d;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.util.ElapsedTime;
 
-import org.firstinspires.ftc.teamcode.HardwareRobot;
 import org.firstinspires.ftc.teamcode.RobotSystem;
-import org.firstinspires.ftc.teamcode.subsystems.DriveSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.InDepSubsystem;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.Synchronizer;
 import org.firstinspires.ftc.teamcode.synchropather.systems.claw.ClawPlan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.claw.ClawState;
-import org.firstinspires.ftc.teamcode.synchropather.systems.claw.MoveClaw;
+import org.firstinspires.ftc.teamcode.synchropather.systems.claw.movements.MoveClaw;
 import org.firstinspires.ftc.teamcode.synchropather.systems.elbow.ElbowPlan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.elbow.ElbowState;
-import org.firstinspires.ftc.teamcode.synchropather.systems.elbow.MoveElbow;
+import org.firstinspires.ftc.teamcode.synchropather.systems.elbow.movements.MoveElbow;
 import org.firstinspires.ftc.teamcode.synchropather.systems.lift.LiftPlan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.lift.LiftState;
-import org.firstinspires.ftc.teamcode.synchropather.systems.lift.LinearLift;
-import org.firstinspires.ftc.teamcode.synchropather.systems.rotation.LinearRotation;
+import org.firstinspires.ftc.teamcode.synchropather.systems.lift.movements.LinearLift;
+import org.firstinspires.ftc.teamcode.synchropather.systems.rotation.movements.LinearRotation;
 import org.firstinspires.ftc.teamcode.synchropather.systems.rotation.RotationPlan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.rotation.RotationState;
-import org.firstinspires.ftc.teamcode.synchropather.systems.translation.CRSplineTranslation;
-import org.firstinspires.ftc.teamcode.synchropather.systems.translation.LinearTranslation;
+import org.firstinspires.ftc.teamcode.synchropather.systems.translation.movements.CRSplineTranslation;
+import org.firstinspires.ftc.teamcode.synchropather.systems.translation.movements.LinearTranslation;
 import org.firstinspires.ftc.teamcode.synchropather.systems.translation.TranslationPlan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.translation.TranslationState;
 

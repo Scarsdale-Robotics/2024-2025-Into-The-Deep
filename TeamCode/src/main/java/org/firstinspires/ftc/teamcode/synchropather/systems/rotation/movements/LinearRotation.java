@@ -1,10 +1,11 @@
-package org.firstinspires.ftc.teamcode.synchropather.systems.rotation;
+package org.firstinspires.ftc.teamcode.synchropather.systems.rotation.movements;
 
-import org.firstinspires.ftc.teamcode.synchropather.DriveConstants;
 import org.firstinspires.ftc.teamcode.synchropather.systems.MovementType;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.TimeSpan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.calculators.StretchedDisplacementCalculator;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.superclasses.Movement;
+import org.firstinspires.ftc.teamcode.synchropather.systems.rotation.RotationConstants;
+import org.firstinspires.ftc.teamcode.synchropather.systems.rotation.RotationState;
 
 /**
  * Movement for planning a linear rotation.
