@@ -207,7 +207,7 @@ public class KennethAuto extends LinearOpMode {
 
         synchronizer.start();
         while (opModeIsActive() && synchronizer.update()) {
-            telemetry.addData("ELAPSED TIME", synchronizer)
+            telemetry.addData("ELAPSED TIME", synchronizer.getElapsedTime());
         };
         synchronizer.stop();
     }

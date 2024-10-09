@@ -76,8 +76,12 @@ public class Synchronizer {
 		return elapsedTime < getDuration();
 	}
 
+	/**
+	 * @return the current elapsed time if this Synchronizer is running.
+	 */
 	public double getElapsedTime() {
-		if (!running) throw new RuntimeException("Synchronizer: tried calling update() before calling start()!");
+		if (!running) throw new RuntimeException("Synchronizer: tried calling getElapsedTime() before calling start()!");
+		return runtime.seconds() - startTime;
 	}
 
 	/**
