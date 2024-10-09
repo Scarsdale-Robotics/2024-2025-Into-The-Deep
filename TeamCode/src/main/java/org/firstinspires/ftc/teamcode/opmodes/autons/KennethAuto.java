@@ -4,6 +4,7 @@ package org.firstinspires.ftc.teamcode.opmodes.autons;
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.arcrobotics.ftclib.drivebase.MecanumDrive;
+import com.arcrobotics.ftclib.geometry.Pose2d;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -52,7 +53,7 @@ public class KennethAuto extends LinearOpMode {
 //        runtime.reset();
 
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
-        RobotSystem robot = new RobotSystem(hardwareMap, this);
+        RobotSystem robot = new RobotSystem(hardwareMap, new Pose2d(), this);
 
 
 

@@ -5,6 +5,7 @@ import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.arcrobotics.ftclib.geometry.Pose2d;
 import com.arcrobotics.ftclib.geometry.Rotation2d;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
@@ -23,16 +24,17 @@ public class RobotSystem {
     public final LocalizationSubsystem localization;
     public final InDepSubsystem inDep;
 
-    public RobotSystem(HardwareMap hardwareMap, LinearOpMode opMode) {
+    public RobotSystem(HardwareMap hardwareMap, Pose2d initialPose, LinearOpMode opMode) {
         this.opMode = opMode;
         this.telemetry = new MultipleTelemetry(opMode.telemetry, FtcDashboard.getInstance().getTelemetry());
         HardwareRobot hardwareRobot = new HardwareRobot(hardwareMap);
         this.cv = new CVSubsystem(
-                hardwareRobot.cameraName,
+                hardwareRobot.limelight,
+                initialPose.getHeading(),
                 telemetry
         );
         this.localization = new LocalizationSubsystem(
-                new Pose2d(0, 0, new Rotation2d(0)),
+                initialPose,
                 hardwareRobot.leftOdometer,
                 hardwareRobot.rightOdometer,
                 hardwareRobot.centerOdometer,

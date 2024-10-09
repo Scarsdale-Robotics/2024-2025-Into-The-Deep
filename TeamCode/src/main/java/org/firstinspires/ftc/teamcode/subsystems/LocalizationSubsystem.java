@@ -3,10 +3,8 @@ package org.firstinspires.ftc.teamcode.subsystems;
 import com.arcrobotics.ftclib.command.SubsystemBase;
 import com.arcrobotics.ftclib.geometry.Pose2d;
 import com.arcrobotics.ftclib.geometry.Rotation2d;
-import com.arcrobotics.ftclib.hardware.motors.Motor;
 import com.arcrobotics.ftclib.hardware.motors.Motor.Encoder;
 import com.arcrobotics.ftclib.kinematics.HolonomicOdometry;
-import com.qualcomm.hardware.adafruit.AdafruitBNO055IMU;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
@@ -55,9 +53,9 @@ public class LocalizationSubsystem extends SubsystemBase {
     //////////////
 
     // Distance between parallel odometers
-    private static final double TRACK_WIDTH = 6.649;
+    private static final double TRACK_WIDTH = 11.3386;
     // Signed distance from the point of rotation (positive=forward)
-    private static final double CENTER_WHEEL_OFFSET = 0;
+    private static final double CENTER_WHEEL_OFFSET = 0.944882;
     // Measured in inches
     private static final double WHEEL_DIAMETER = 1.37795;
     // Odometer encoder resolution
@@ -66,6 +64,9 @@ public class LocalizationSubsystem extends SubsystemBase {
     private static final double DISTANCE_PER_PULSE = (Math.PI * WHEEL_DIAMETER) / TICKS_PER_REV;
 
     // Inbuilt odometry object
+    private final Encoder leftOdometer;
+    private final Encoder rightOdometer;
+    private final Encoder centerOdometer;
     private final HolonomicOdometry odometry;
     private Pose2d lastOdometryPose;
 
@@ -103,8 +104,8 @@ public class LocalizationSubsystem extends SubsystemBase {
             CVSubsystem cv) {
 
         // Init KF
-        this.P_translation = 0;
-        this.P_heading = 0;
+        this.P_translation = 2;
+        this.P_heading = 0.1;
         this.x = initialPose.getX();
         this.y = initialPose.getY();
         this.h = initialPose.getHeading();
@@ -121,22 +122,20 @@ public class LocalizationSubsystem extends SubsystemBase {
 
         // Init odometry
         // Encoders
-        leftOdometer.setDistancePerPulse(DISTANCE_PER_PULSE);
-        rightOdometer.setDistancePerPulse(DISTANCE_PER_PULSE);
-        centerOdometer.setDistancePerPulse(DISTANCE_PER_PULSE);
+        this.leftOdometer = leftOdometer.setDistancePerPulse(DISTANCE_PER_PULSE);
+        this.rightOdometer = rightOdometer.setDistancePerPulse(DISTANCE_PER_PULSE);
+        this.centerOdometer = centerOdometer.setDistancePerPulse(DISTANCE_PER_PULSE);
 
-        leftOdometer.reset();
-        rightOdometer.reset();
-        centerOdometer.reset();
-
+        this.leftOdometer.reset();
+        this.rightOdometer.reset();
+        this.centerOdometer.reset();
         this.odometry = new HolonomicOdometry(
-                leftOdometer::getDistance,
-                rightOdometer::getDistance,
-                centerOdometer::getDistance,
+                this.leftOdometer::getDistance,
+                this.rightOdometer::getDistance,
+                this.centerOdometer::getDistance,
                 TRACK_WIDTH, CENTER_WHEEL_OFFSET
         );
         this.lastOdometryPose = new Pose2d(0,0,new Rotation2d(0));
-        this.odometry.updatePose(lastOdometryPose);
 
 
         // Store camera
@@ -303,56 +302,98 @@ public class LocalizationSubsystem extends SubsystemBase {
         // Get odometry pose
         odometry.updatePose();
         Pose2d currentPose = odometry.getPose();
-        currentPose = new Pose2d(-currentPose.getY(), currentPose.getX(), currentPose.getRotation());
+        currentPose = new Pose2d(currentPose.getX(), -currentPose.getY(), new Rotation2d(-currentPose.getHeading()));
 
         // Calculate model
-        x += currentPose.getX() - lastOdometryPose.getX();
-        y += currentPose.getY() - lastOdometryPose.getY();
-        h += normalizeAngle(currentPose.getHeading() - lastOdometryPose.getHeading());
+        // rotate odometry displacement by h-lastOdometryPose.getHeading()
+        double odom_dx = currentPose.getX() - lastOdometryPose.getX();
+        double odom_dy = currentPose.getY() - lastOdometryPose.getY();
+        double beta = normalizeAngle(h - lastOdometryPose.getHeading());
+        telemetry.addData("_DX", odom_dx);
+        telemetry.addData("_DY", odom_dy);
+        telemetry.addData("_BETA", beta);
+        double dx = odom_dx*Math.cos(beta) - odom_dy*Math.sin(beta);
+        double dy = odom_dx*Math.sin(beta) + odom_dy*Math.cos(beta);
+        x += dx;
+        y += dy;
+
+        double odom_dh = normalizeAngle(currentPose.getHeading() - lastOdometryPose.getHeading());
+        telemetry.addData("_DH", odom_dh);
+        h = normalizeAngle(h + odom_dh);
+        telemetry.addData("_PREDICT_H", h);
+
         lastOdometryPose = currentPose;
 
+
+        telemetry.update();
+
         // Add uncertainty
-        P_translation += deltaTime * Q_translation;
-        P_heading += deltaTime * Q_heading;
+        // TODO: TUNE
+        P_translation += Math.hypot(dx, dy) * Q_translation;
+        P_heading += Math.abs(odom_dh) * Q_heading;
 
         // Telemetry
         if (telemetry!=null) {
             telemetry.addData("Odom X", x);
             telemetry.addData("Odom Y", y);
             telemetry.addData("Odom H", Math.toDegrees(h)+"°");
+            telemetry.addData("P_translation", P_translation);
+            telemetry.addData("P_heading", P_heading);
         }
     }
 
     /**
-     * Update step of the Kalman Filter.
+     * Update step for the heading Kalman Filter.
      */
-    private void updateKF() {
+    private void updateHeadingKF() {
         CVSubsystem.PoseEstimation cameraEstimation = null;
-        if (cameraEnabled) cameraEstimation = cv.getBestPoseEstimation();
+        if (cameraEnabled) cameraEstimation = cv.getPoseEstimation();
+        if (cameraEstimation ==null) return;
 
-        if (cameraEstimation !=null) {
-            Pose2d cameraPose = cameraEstimation.pose;
+        Pose2d cameraPose = cameraEstimation.pose;
+        telemetry.addData("heading covariance original", cameraEstimation.headingCovariance);
+        telemetry.addData("heading covariance increase", Math.pow(normalizeAngle(cameraPose.getHeading() - h), 2));
+        telemetry.update();
+        cameraEstimation.headingCovariance += Math.pow(normalizeAngle(cameraPose.getHeading() - h), 2);
 
-            // Update translation
-            double R_camera_translation = cameraEstimation.translationCovariance;
-            double K_translation = P_translation / (P_translation + deltaTime * R_camera_translation);
-            x += K_translation * (cameraPose.getX() - x);
-            y += K_translation * (cameraPose.getY() - y);
-            P_translation = (1 - K_translation) * P_translation;
+        // Update heading
+        double R_camera_heading = cameraEstimation.headingCovariance;
+        double K_heading = P_heading / (P_heading + R_camera_heading);
+        h += K_heading * (normalizeAngle(cameraPose.getHeading() - h));
+        h = normalizeAngle(h);
+        P_heading = (1 - K_heading) * P_heading;
 
-            // Update heading
-            double R_camera_heading = cameraEstimation.headingCovariance;
-            double K_heading = P_heading / (P_heading + deltaTime * R_camera_heading);
-            h += K_heading * (normalizeAngle(cameraPose.getHeading() - h));
-            h = normalizeAngle(h);
-            P_heading = (1 - K_heading) * P_heading;
+        // Telemetry
+        if (telemetry!=null) {
+            telemetry.addData("Apriltag H", Math.toDegrees(cameraPose.getHeading()) + "°");
+        }
 
-            // Telemetry
-            if (telemetry!=null) {
-                telemetry.addData("AprilTag X", cameraPose.getX());
-                telemetry.addData("Apriltag Y", cameraPose.getY());
-                telemetry.addData("Apriltag H", Math.toDegrees(cameraPose.getHeading())+"°");
-            }
+        // Update MT2 heading.
+        cv.updateHeading(h);
+    }
+
+    /**
+     * Update step for the translation Kalman Filter.
+     */
+    private void updateTranslationKF() {
+        CVSubsystem.PoseEstimation cameraEstimation = null;
+        if (cameraEnabled) cameraEstimation = cv.getPoseEstimation();
+        if (cameraEstimation ==null) return;
+
+        Pose2d cameraPose = cameraEstimation.pose;
+        cameraEstimation.translationCovariance += Math.pow(Math.hypot(cameraPose.getX() - x, cameraPose.getY() - y), 2);
+
+        // Update translation
+        double R_camera_translation = cameraEstimation.translationCovariance;
+        double K_translation = P_translation / (P_translation + R_camera_translation);
+        x += K_translation * (cameraPose.getX() - x);
+        y += K_translation * (cameraPose.getY() - y);
+        P_translation = (1 - K_translation) * P_translation;
+
+        // Telemetry
+        if (telemetry!=null) {
+            telemetry.addData("AprilTag X", cameraPose.getX());
+            telemetry.addData("Apriltag Y", cameraPose.getY());
         }
     }
 
@@ -398,7 +439,8 @@ public class LocalizationSubsystem extends SubsystemBase {
 
         // Kalman Filter steps
         predictKF();
-        updateKF();
+        updateHeadingKF();
+        updateTranslationKF();
 
         // Calculate velocity
         updateVelocity();
@@ -421,7 +463,9 @@ public class LocalizationSubsystem extends SubsystemBase {
      * @return the normalized angle in radians.
      */
     private static double normalizeAngle(double radians) {
-        return (radians + Math.PI) % (2*Math.PI) - Math.PI;
+        while (radians > Math.PI) radians -= 2*Math.PI;
+        while (radians <= -Math.PI) radians += 2*Math.PI;
+        return radians;
     }
 
 }
