@@ -20,7 +20,7 @@ public class LocalizationLogger extends LinearOpMode {
 //        RobotSystem robot = new RobotSystem(hardwareMap, new Pose2d(60, 24, new Rotation2d(Math.PI/2)), this);
         RobotSystem robot = new RobotSystem(hardwareMap, new Pose2d(0, 0, new Rotation2d(0)), this);
 
-//        robot.localization.disableCamera();
+        robot.localization.disableCamera();
 
         waitForStart();
 

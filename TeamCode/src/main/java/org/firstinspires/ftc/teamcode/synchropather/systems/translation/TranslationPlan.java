@@ -1,8 +1,14 @@
 package org.firstinspires.ftc.teamcode.synchropather.systems.translation;
 
+import com.acmerobotics.dashboard.FtcDashboard;
+import com.acmerobotics.dashboard.config.Config;
+import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.arcrobotics.ftclib.geometry.Pose2d;
+import com.arcrobotics.ftclib.geometry.Rotation2d;
 
 import org.firstinspires.ftc.teamcode.RobotSystem;
+import org.firstinspires.ftc.teamcode.opmodes.calibration.Drawing;
+import org.firstinspires.ftc.teamcode.synchropather.DriveConstants;
 import org.firstinspires.ftc.teamcode.synchropather.systems.MovementType;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.superclasses.Movement;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.superclasses.Plan;
@@ -12,22 +18,23 @@ import java.util.ArrayList;
 /**
  * Object containing a sequence of Movements for translational drive.
  */
+@Config
 public class TranslationPlan extends Plan<TranslationState> {
 
 	// Feedforward constants
 	//TODO: TUNE
-	private static final double kS = 0;
-	private static final double kV = 1;
-	private static final double kA = 0;
+	public static double kS = 0;
+	public static double kV = 1;
+	public static double kA = 0.175;
 
 	// Positional PD constants
 	//TODO: TUNE
-	private static final double kP = 1;
-	private static final double kD = 0;
+	public static double kP = 8;
+	public static double kD = 1;
 
 	// Error history array
-	private ArrayList<Double> exHistory;
-	private ArrayList<Double> eyHistory;
+	private final ArrayList<Double> exHistory;
+	private final ArrayList<Double> eyHistory;
 
 	private RobotSystem robot;
 
@@ -39,6 +46,17 @@ public class TranslationPlan extends Plan<TranslationState> {
 	public TranslationPlan(RobotSystem robot, Movement... movements) {
 		super(MovementType.TRANSLATION, movements);
 		this.robot = robot;
+		this.exHistory = new ArrayList<>();
+		this.eyHistory = new ArrayList<>();
+
+		robot.telemetry.addData("[SYNCHROPATHER] Translation desiredVelocity.getX()", 0);
+		robot.telemetry.addData("[SYNCHROPATHER] Translation desiredVelocity.getY()", 0);
+		robot.telemetry.addData("[SYNCHROPATHER] Translation ut.getX()", 0);
+		robot.telemetry.addData("[SYNCHROPATHER] Translation ut.getY()", 0);
+		robot.telemetry.addData("[SYNCHROPATHER] robot.drive.driveTheta", 0);
+		robot.telemetry.addData("[SYNCHROPATHER] robot.drive.driveSpeed", 0);
+		robot.telemetry.addData("[SYNCHROPATHER] currentPose.getHeading()", 0);
+		robot.telemetry.update();
 	}
 
 	/**
@@ -83,16 +101,34 @@ public class TranslationPlan extends Plan<TranslationState> {
 		uy += kP*ey + kD*deydt;
 
 		// Feedforward
-		if (error.hypot() < 6) {
-			ux += kS * Math.signum(dxv) + kV * dxv + kA * dxa;
-			uy += kS * Math.signum(dyv) + kV * dyv + kA * dya;
-		}
+		ux += kS * Math.signum(dxv) + kV * dxv + kA * dxa;
+		uy += kS * Math.signum(dyv) + kV * dyv + kA * dya;
 
 		// Set drive parameters
 		TranslationState ut = new TranslationState(ux, uy);
+		TranslationState u_static = new TranslationState(kS, ut.theta(), true);
+		ut = ut.plus(u_static);
 		robot.drive.driveTheta = ut.theta();
 		robot.drive.driveSpeed = ut.hypot();
 		robot.drive.driveFieldCentric(currentPose.getHeading());
+		robot.drive.targetX = desiredState.getX();
+		robot.drive.targetY = desiredState.getY();
+
+		robot.telemetry.addData("[SYNCHROPATHER] Translation desiredVelocity.getX()", desiredVelocity.getX());
+		robot.telemetry.addData("[SYNCHROPATHER] Translation desiredVelocity.getY()", desiredVelocity.getY());
+		robot.telemetry.addData("[SYNCHROPATHER] Translation ut.getX()", ut.getX());
+		robot.telemetry.addData("[SYNCHROPATHER] Translation ut.getY()", ut.getY());
+		robot.telemetry.addData("[SYNCHROPATHER] robot.drive.driveTheta", robot.drive.driveTheta);
+		robot.telemetry.addData("[SYNCHROPATHER] robot.drive.driveSpeed", robot.drive.driveSpeed);
+		robot.telemetry.addData("[SYNCHROPATHER] currentPose.getHeading()", currentPose.getHeading());
+
+	}
+
+	@Override
+	public void stop() {
+		robot.drive.driveTheta = 0;
+		robot.drive.driveSpeed = 0;
+		robot.drive.stopController();
 	}
 
 }

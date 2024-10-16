@@ -33,7 +33,7 @@ public class BasicTeleop extends LinearOpMode {
 
         waitForStart();
 
-        double speed = 0.3;
+        double speed = 1;
         while (opModeIsActive()) {
             double forward = -speed*gamepad1.left_stick_y;
             double strafe = speed*gamepad1.left_stick_x;

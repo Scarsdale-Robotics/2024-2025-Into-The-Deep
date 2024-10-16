@@ -14,7 +14,8 @@ public class HardwareRobot {
     public final MotorEx rightFront;
     public final MotorEx leftBack;
     public final MotorEx rightBack;
-    public final MotorEx lift;
+    public final MotorEx leftLift;
+    public final MotorEx rightLift;
 
     public final Encoder leftOdometer;
     public final Encoder rightOdometer;
@@ -35,7 +36,6 @@ public class HardwareRobot {
         rightFront = new MotorEx(hardwareMap, "rightFront", Motor.GoBILDA.RPM_312);
         leftBack = new MotorEx(hardwareMap, "leftBack", Motor.GoBILDA.RPM_312);
         rightBack = new MotorEx(hardwareMap, "rightBack", Motor.GoBILDA.RPM_312);
-        lift = new MotorEx(hardwareMap, "linearSlide", Motor.GoBILDA.RPM_312);
 
         leftFront.motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         rightFront.motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -66,6 +66,25 @@ public class HardwareRobot {
         rightFront.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
         leftBack.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
         rightBack.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
+
+        //////////
+        // LIFT //
+        //////////
+
+        leftLift = new MotorEx(hardwareMap, "leftLift", Motor.GoBILDA.RPM_312);
+        leftLift.motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        leftLift.motor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        leftLift.setRunMode(Motor.RunMode.RawPower);
+        leftLift.motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        leftLift.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
+        leftLift.setInverted(true);
+
+        rightLift = new MotorEx(hardwareMap, "rightLift", Motor.GoBILDA.RPM_312);
+        rightLift.motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightLift.motor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        rightLift.setRunMode(Motor.RunMode.RawPower);
+        rightLift.motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        rightLift.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
 
 
         //////////////

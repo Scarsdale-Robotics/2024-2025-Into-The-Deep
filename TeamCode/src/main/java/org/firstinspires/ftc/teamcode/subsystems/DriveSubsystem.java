@@ -22,6 +22,11 @@ public class DriveSubsystem extends SubsystemBase {
     public double driveTheta;
     public double turnVelocity;
 
+    // TARGET POSE ///
+    public double targetX;
+    public double targetY;
+    public double targetH;
+
     public DriveSubsystem(Motor leftFront,
                           Motor rightFront,
                           Motor leftBack,
@@ -39,6 +44,9 @@ public class DriveSubsystem extends SubsystemBase {
         this.driveSpeed = 0;
         this.driveTheta = 0;
         this.turnVelocity = 0;
+        this.targetX = 0;
+        this.targetY = 0;
+        this.targetH = 0;
     }
 
 
@@ -113,7 +121,7 @@ public class DriveSubsystem extends SubsystemBase {
      * @param gyroAngle Robot heading in radians.
      */
     public void driveFieldCentric(double theta, double speed, double turn, double gyroAngle) {
-        theta = normalizeAngle(theta-gyroAngle);
+        theta = normalizeAngle(Math.PI/2 + (theta-gyroAngle));
         double maxSpeed = Math.hypot(
                 DriveConstants.MAX_STRAFE_SPEED*Math.cos(theta),
                 DriveConstants.MAX_FORWARD_SPEED*Math.sin(theta)

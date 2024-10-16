@@ -26,4 +26,9 @@ public class ElbowPlan extends Plan<ElbowState> {
 
         robot.inDep.setElbowPosition(desiredState.getPosition());
     }
+
+    @Override
+    public void stop() {
+
+    }
 }

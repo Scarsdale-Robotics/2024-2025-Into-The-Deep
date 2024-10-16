@@ -33,7 +33,7 @@ public class InDepSubsystem extends SubsystemBase {
             if (
                 HARDWARE_ROBOT.claw.getPosition() == currentTask.CLAW_POSITION.SERVO_POSITION &&
                 HARDWARE_ROBOT.elbow.getPosition() == currentTask.ELBOW_POSITION.SERVO_POSITION &&
-                HARDWARE_ROBOT.lift.atTargetPosition()
+                HARDWARE_ROBOT.leftLift.atTargetPosition()
             ) {
                 completeCurrentTask();
             }
@@ -106,15 +106,15 @@ public class InDepSubsystem extends SubsystemBase {
     }
 
     public void setLiftPosition(int position) {
-        HARDWARE_ROBOT.lift.setTargetPosition(position);
+        HARDWARE_ROBOT.leftLift.setTargetPosition(position);
         // ew, use synchropather liftplan pid instead
 
     }
     public int getLiftPosition() {
-        return HARDWARE_ROBOT.lift.getCurrentPosition();
+        return HARDWARE_ROBOT.leftLift.getCurrentPosition();
     }
     public void setLiftPower(double power) {
-        HARDWARE_ROBOT.lift.motor.setPower(power);
+        HARDWARE_ROBOT.leftLift.motor.setPower(power);
     }
 
 

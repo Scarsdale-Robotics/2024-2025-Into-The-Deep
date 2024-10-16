@@ -22,11 +22,13 @@ public class LiftPlan extends Plan<LiftState> {
     private static final double kP = 1;
     private static final double kD = 0;
 
-    private ArrayList<Double> eHistory;
+    private final ArrayList<Double> eHistory;
     private RobotSystem robot;
+
     public LiftPlan(RobotSystem robot, Movement... movements) {
         super(MovementType.LIFT, movements);
         this.robot = robot;
+        this.eHistory = new ArrayList<>();
     }
 
     public void loop() {
@@ -67,5 +69,10 @@ public class LiftPlan extends Plan<LiftState> {
 //        robot.drive.turnVelocity = u;
 //        robot.drive.driveFieldCentric(currentPose.getHeading());
         robot.inDep.setLiftPower(u);
+    }
+
+    @Override
+    public void stop() {
+        robot.inDep.setLiftPower(0);
     }
 }

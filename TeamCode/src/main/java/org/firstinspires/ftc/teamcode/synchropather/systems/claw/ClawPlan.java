@@ -27,4 +27,9 @@ public class ClawPlan extends Plan<ClawState> {
 
         robot.inDep.setClawPosition(desiredState.getPosition());
     }
+
+    @Override
+    public void stop() {
+
+    }
 }

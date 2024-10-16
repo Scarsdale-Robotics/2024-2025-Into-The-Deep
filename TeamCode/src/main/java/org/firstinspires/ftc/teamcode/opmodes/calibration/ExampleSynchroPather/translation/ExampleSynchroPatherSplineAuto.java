@@ -1,6 +1,7 @@
-package org.firstinspires.ftc.teamcode.opmodes.autons;
+package org.firstinspires.ftc.teamcode.opmodes.calibration.ExampleSynchroPather.translation;
 
 import com.arcrobotics.ftclib.geometry.Pose2d;
+import com.arcrobotics.ftclib.geometry.Rotation2d;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
@@ -13,46 +14,54 @@ import org.firstinspires.ftc.teamcode.synchropather.systems.rotation.movements.L
 import org.firstinspires.ftc.teamcode.synchropather.systems.translation.TranslationPlan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.translation.TranslationState;
 import org.firstinspires.ftc.teamcode.synchropather.systems.translation.movements.CRSplineTranslation;
-import org.firstinspires.ftc.teamcode.synchropather.systems.translation.movements.LinearTranslation;
 
-@Autonomous(name="Example SynchroPather Auto")
-public class ExampleSynchroPatherAuto extends LinearOpMode {
+@Autonomous(name="Example SynchroPather Spline Auto")
+public class ExampleSynchroPatherSplineAuto extends LinearOpMode {
 
     RobotSystem robot;
     Synchronizer synchronizer;
 
     @Override
     public void runOpMode() throws InterruptedException {
-        this.robot = new RobotSystem(hardwareMap, new Pose2d(), this);
+        this.robot = new RobotSystem(hardwareMap, new Pose2d(0, 0, new Rotation2d(0)), this);
         initSynchronizer();
 
         waitForStart();
 
-        synchronizer.start();
-        while (opModeIsActive() && !synchronizer.update());
-        synchronizer.stop();
+        while (opModeIsActive()) {
+            while (opModeIsActive() && !gamepad1.square);
+            synchronizer.start();
+            while (opModeIsActive() && synchronizer.update()) {
+                robot.localization.update();
+            }
+            synchronizer.stop();
+        }
     }
 
 
     private void initSynchronizer() {
         // Translation plan
-        LinearTranslation line1 = new LinearTranslation(0,
+        CRSplineTranslation spline1 = new CRSplineTranslation(0,
                 new TranslationState(0, 0),
-                new TranslationState(24, 0)
+                new TranslationState(12, 6),
+                new TranslationState(12, 18),
+                new TranslationState(24, 24)
         );
-        LinearTranslation line2 = new LinearTranslation(0,
-                new TranslationState(24, 0),
+        CRSplineTranslation spline2 = new CRSplineTranslation(spline1.getEndTime(),
+                new TranslationState(24, 24),
+                new TranslationState(12, 18),
+                new TranslationState(12, 6),
                 new TranslationState(0, 0)
         );
         TranslationPlan translationPlan = new TranslationPlan(robot,
-                line1,
-                line2
+                spline1,
+                spline2
         );
 
         // Rotation plan
-        LinearRotation rotation = new LinearRotation(new TimeSpan(0, line2.getEndTime()),
+        LinearRotation rotation = new LinearRotation(new TimeSpan(0, spline2.getEndTime()),
                 new RotationState(Math.toRadians(0)),
-                new RotationState(Math.toRadians(360))
+                new RotationState(Math.toRadians(0))
         );
         RotationPlan rotationPlan = new RotationPlan(robot,
                 rotation
@@ -60,8 +69,8 @@ public class ExampleSynchroPatherAuto extends LinearOpMode {
 
         // Synchronizer
         this.synchronizer = new Synchronizer(
-                translationPlan,
-                rotationPlan
+                translationPlan
+//                ,rotationPlan
         );
     }
 
