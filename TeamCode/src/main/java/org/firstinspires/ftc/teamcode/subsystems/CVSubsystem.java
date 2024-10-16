@@ -41,15 +41,20 @@ public class CVSubsystem extends SubsystemBase {
 
     private final Telemetry telemetry;
 
+    private SampleColor currentTargetColor;
+
+    public final Size CAM_SZ = new Size(640, 480);
 
     //////////////////
     // INIT METHODS //
     //////////////////
 
-    public CVSubsystem(WebcamName cameraName, Telemetry telemetry) {
+    public CVSubsystem(WebcamName cameraName, boolean isRedTeam, Telemetry telemetry) {
         this.telemetry = telemetry;
 
         this.cameraName = cameraName;
+
+        currentTargetColor = isRedTeam ? SampleColor.RY : SampleColor.BY;
 
         // Construct AprilTag locations map.
         initAprilTagLocations();
@@ -86,7 +91,7 @@ public class CVSubsystem extends SubsystemBase {
         // Create the vision portal by using a builder.
         VisionPortal.Builder builder = new VisionPortal.Builder();
         builder.setCamera(cameraName);
-        builder.setCameraResolution(new Size(640, 480));
+        builder.setCameraResolution(CAM_SZ);
         builder.addProcessors(aprilTag);
 
         // Build the Vision Portal, using the above settings.
@@ -229,6 +234,24 @@ public class CVSubsystem extends SubsystemBase {
             this.translationCovariance = translationCovariance;
             this.headingCovariance = headingCovariance;
         }
+    }
+
+    public enum SampleColor {
+        RED,
+        YELLOW,
+        BLUE,
+        BY,
+        RY
+    }
+    public void switchTargetedSampleColor(SampleColor newColor) {
+        currentTargetColor = newColor;
+    }
+
+    /**
+     * Returns the (x, y) offset of the center of the current targeted color from the top left corner
+     */
+    public Point getSampleOffset() {
+        // TODO: IMPLEMENT
     }
 
 }

@@ -15,7 +15,8 @@ public class HardwareRobot {
     public final MotorEx rightFront;
     public final MotorEx leftBack;
     public final MotorEx rightBack;
-    public final MotorEx lift;
+    public final MotorEx lift1;
+    public final MotorEx lift2;
 
     public final Encoder leftOdometer;
     public final Encoder rightOdometer;
@@ -35,7 +36,8 @@ public class HardwareRobot {
         rightFront = new MotorEx(hardwareMap, "rightFront", Motor.GoBILDA.RPM_312);
         leftBack = new MotorEx(hardwareMap, "leftBack", Motor.GoBILDA.RPM_312);
         rightBack = new MotorEx(hardwareMap, "rightBack", Motor.GoBILDA.RPM_312);
-        lift = new MotorEx(hardwareMap, "linearSlide", Motor.GoBILDA.RPM_312);
+        lift1 = new MotorEx(hardwareMap, "leftLift", Motor.GoBILDA.RPM_312);
+        lift2 = new MotorEx(hardwareMap, "rightLift", Motor.GoBILDA.RPM_312);
 
         leftFront.motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         rightFront.motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);

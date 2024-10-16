@@ -4,6 +4,7 @@ import com.arcrobotics.ftclib.command.SubsystemBase;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 import org.firstinspires.ftc.teamcode.HardwareRobot;
+import org.opencv.core.Point;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -12,31 +13,85 @@ public class InDepSubsystem extends SubsystemBase {
 
     private final HardwareRobot HARDWARE_ROBOT;
     private final LinearOpMode OP_MODE;
+    private final DriveSubsystem DRIVE;
+    private final CVSubsystem CV;
 
-    public InDepSubsystem(HardwareRobot hardwareRobot, LinearOpMode opMode) {
+    public final double ABV_INTAKE_ALIGN_TGT_X = 0.5;  // percentage of width
+    public final double ABV_INTAKE_ALIGN_TGT_Y = 0.5;  // percentage of height
+    public final double ARD_INTAKE_ALIGN_TGT_X = 0.5;  // percentage of width
+    public final double ARD_INTAKE_ALIGN_TGT_Y = 0.5;  // percentage of height
+
+    public final int ABV_INTAKE_ALIGN_ERR_THRESH_X = 6;  // in pixels
+    public final int ABV_INTAKE_ALIGN_ERR_THRESH_Y = 6;  // in pixels
+    public final int ARD_INTAKE_ALIGN_ERR_THRESH_X = 30;  // in pixels
+    public final int ARD_INTAKE_ALIGN_ERR_THRESH_Y = 30;  // in pixels
+
+    public InDepSubsystem(
+            HardwareRobot hardwareRobot,
+            LinearOpMode opMode,
+            DriveSubsystem driveSubsystem,
+            CVSubsystem cvSubsystem
+    ) {
         HARDWARE_ROBOT = hardwareRobot;
         OP_MODE = opMode;
-
-        executeTasks();
+        DRIVE = driveSubsystem;
+        CV = cvSubsystem;
     }
 
-    // TODO: add a way to vary the speed at which a task executes
     public void executeTasks() {
-        while (OP_MODE.opModeIsActive()) {
-            InDepTask currentTask = getCurrentTask();
-            if (currentTask == null) continue;
+        InDepTask currentTask = getCurrentTask();
+        if (currentTask == null) return;
 
-            setClawPosition(currentTask.CLAW_POSITION);
-            setElbowPosition(currentTask.ELBOW_POSITION);
-            setLiftPosition(currentTask.LIFT_POSITION);
+        setClawPosition(currentTask.CLAW_POSITION);
+        setElbowPosition(currentTask.ELBOW_POSITION);
+        setLiftPosition(currentTask.LIFT_POSITION);
 
-            if (
-                HARDWARE_ROBOT.claw.getPosition() == currentTask.CLAW_POSITION.SERVO_POSITION &&
-                HARDWARE_ROBOT.elbow.getPosition() == currentTask.ELBOW_POSITION.SERVO_POSITION &&
-                HARDWARE_ROBOT.lift.atTargetPosition()
-            ) {
-                completeCurrentTask();
+        // alignment and other task-specific commands
+        boolean taskPossiblyComplete = false;
+        Point error;
+        switch (currentTask) {
+            case PRE_ABV_INTAKE:
+                error = CV.getSampleOffset();
+                error.x -= CV.CAM_SZ.getWidth() * ABV_INTAKE_ALIGN_TGT_X;
+                error.y -= CV.CAM_SZ.getHeight() * ABV_INTAKE_ALIGN_TGT_Y;
+                DRIVE.stepTowards2DPoint(error);
+                if (
+                        Math.abs(error.x) <= ABV_INTAKE_ALIGN_ERR_THRESH_X &&
+                        Math.abs(error.y) <= ABV_INTAKE_ALIGN_ERR_THRESH_Y
+                ) {
+                    taskPossiblyComplete = true;
+                }
+                break;
+            case PRE_ARD_INTAKE:
+                error = CV.getSampleOffset();
+                error.x -= CV.CAM_SZ.getWidth() * ARD_INTAKE_ALIGN_TGT_X;
+                error.y -= CV.CAM_SZ.getHeight() * ARD_INTAKE_ALIGN_TGT_Y;
+                DRIVE.stepTowards2DPoint(error);
+                if (
+                        Math.abs(error.x) <= ARD_INTAKE_ALIGN_ERR_THRESH_X &&
+                        Math.abs(error.y) <= ARD_INTAKE_ALIGN_ERR_THRESH_Y
+                ) {
+                    taskPossiblyComplete = true;
+                }
+                break;
+        }
+
+        if (
+            HARDWARE_ROBOT.claw.getPosition() == currentTask.CLAW_POSITION.SERVO_POSITION &&
+            HARDWARE_ROBOT.elbow.getPosition() == currentTask.ELBOW_POSITION.SERVO_POSITION &&
+            HARDWARE_ROBOT.lift.atTargetPosition() && taskPossiblyComplete
+        ) {
+            // Update tasks
+            switch (currentTask) {
+                case PRE_ABV_INTAKE:
+                    addTask(InDepTask.PST_ABV_INTAKE, TaskInsertionPosition.NEXT);
+                    break;
+                case PRE_ARD_INTAKE:
+                    addTask(InDepTask.PRE_ARD_INTAKE, TaskInsertionPosition.NEXT);
+                    break;
             }
+
+            completeCurrentTask();
         }
     }
 
@@ -49,7 +104,7 @@ public class InDepSubsystem extends SubsystemBase {
         OPEN(1);
 
         public final double SERVO_POSITION;
-        private ClawPosition(double servoPosition) {
+        ClawPosition(double servoPosition) {
             SERVO_POSITION = servoPosition;
         }
     }
@@ -65,12 +120,13 @@ public class InDepSubsystem extends SubsystemBase {
     ///////////
     public enum ElbowPosition {
         CENTER(0.5),
+        LOWER_UPPER_CENTER(0.6),
         UPPER_CENTER(0.75),
         UP(1);
 
         public final double SERVO_POSITION;
 
-        private ElbowPosition(double servoPosition) {
+        ElbowPosition(double servoPosition) {
             SERVO_POSITION = servoPosition;
         }
     }
@@ -92,7 +148,7 @@ public class InDepSubsystem extends SubsystemBase {
         HANG(2500);
 
         public final int ENCODER_TICKS;
-        private LiftPosition(int encoderTicks) {
+        LiftPosition(int encoderTicks) {
             ENCODER_TICKS = encoderTicks;
         }
     }
@@ -100,12 +156,13 @@ public class InDepSubsystem extends SubsystemBase {
         setLiftPosition(position.ENCODER_TICKS);
     }
     public void setLiftPosition(int position) {
-        HARDWARE_ROBOT.lift.setTargetPosition(position);
+        HARDWARE_ROBOT.lift1.setTargetPosition(position);
+        HARDWARE_ROBOT.lift2.setTargetPosition(position);
     }
 
-    //////////////////////////
-    // GENERAL IN-DEP TASKS //
-    //////////////////////////
+    /////////////////////
+    // TASK MANAGEMENT //
+    /////////////////////
     private final ArrayList<InDepTask> TASK_LIST = new ArrayList<>(
         Collections.singletonList(InDepTask.INIT)
     );
@@ -114,18 +171,18 @@ public class InDepSubsystem extends SubsystemBase {
 
         // ABV_INTAKE: When gripping the sample from above by inserting our claw into the sample's
         //             triangular prism-shaped inset and pushing "out"
-        PRE_ABV_INTAKE(ClawPosition.CLOSED, ElbowPosition.CENTER, LiftPosition.LOW),
-        PST_ABV_INTAKE(ClawPosition.OPEN, ElbowPosition.CENTER, LiftPosition.LOW),
+        PRE_ABV_INTAKE(ClawPosition.CLOSED, ElbowPosition.LOWER_UPPER_CENTER, LiftPosition.LOW),
+        PST_ABV_INTAKE(ClawPosition.OPEN, ElbowPosition.LOWER_UPPER_CENTER, LiftPosition.LOW),
 
         // ARD_INTAKE: The preferred intake method when possible (unless engineering says otherwise),
         //             involves wrapping the claw's grippers around the sample's two sides that are
         //             the most perpendicular to the ground
-        PRE_ARD_INTAKE(ClawPosition.OPEN, ElbowPosition.CENTER, LiftPosition.LOW),
+        PRE_ARD_INTAKE(ClawPosition.OPEN, ElbowPosition.LOWER_UPPER_CENTER, LiftPosition.LOW),
         PST_ARD_INTAKE(ClawPosition.CLOSED, ElbowPosition.CENTER, LiftPosition.LOW),
 
         // ENTER_SUB, EXIT_SUB: Entering and exiting the submersible
-        ENTER_SUB(ClawPosition.CLOSED, ElbowPosition.CENTER, LiftPosition.LOW),
-        EXIT_SUB(ClawPosition.CLOSED, ElbowPosition.CENTER, LiftPosition.LOW),
+        ENTER_SUB(ClawPosition.CLOSED, ElbowPosition.LOWER_UPPER_CENTER, LiftPosition.LOW),
+        EXIT_SUB(ClawPosition.CLOSED, ElbowPosition.LOWER_UPPER_CENTER, LiftPosition.LOW),
 
         // DEP_HP: Deposit to the human player (in the observation zone)
         PRE_DEP_HP(ClawPosition.CLOSED, ElbowPosition.CENTER, LiftPosition.LOW),
@@ -144,10 +201,10 @@ public class InDepSubsystem extends SubsystemBase {
         public final ClawPosition CLAW_POSITION;
         public final ElbowPosition ELBOW_POSITION;
         public final LiftPosition LIFT_POSITION;
-        private InDepTask(
-            ClawPosition clawPosition,
-            ElbowPosition elbowPosition,
-            LiftPosition liftPosition
+        InDepTask(
+                ClawPosition clawPosition,
+                ElbowPosition elbowPosition,
+                LiftPosition liftPosition
         ) {
             CLAW_POSITION = clawPosition;
             ELBOW_POSITION = elbowPosition;
@@ -163,7 +220,7 @@ public class InDepSubsystem extends SubsystemBase {
         LAST(-1);
 
         public final int ARRAY_IX;
-        private TaskInsertionPosition(int arrayIX) {
+        TaskInsertionPosition(int arrayIX) {
             ARRAY_IX = arrayIX;
         }
     }

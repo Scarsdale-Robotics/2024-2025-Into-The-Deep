@@ -21,7 +21,7 @@ public class AprilTagLogger extends LinearOpMode {
                 robot.leftBack,
                 robot.rightBack
         );
-        CVSubsystem cv = new CVSubsystem(robot.cameraName, telemetry);
+        CVSubsystem cv = new CVSubsystem(robot.cameraName, true, telemetry);
 
         waitForStart();
 
