@@ -110,11 +110,19 @@ public class InDepSubsystem extends SubsystemBase {
         // ew, use synchropather liftplan pid instead
 
     }
-    public int getLiftPosition() {
+    public int getLeftLiftPosition() {
         return HARDWARE_ROBOT.leftLift.getCurrentPosition();
     }
-    public void setLiftPower(double power) {
+    public int getRightLiftPosition() {
+        return HARDWARE_ROBOT.rightLift.getCurrentPosition();
+    }
+
+    public void setLeftLiftPower(double power) {
         HARDWARE_ROBOT.leftLift.motor.setPower(power);
+    }
+
+    public void setRightLiftPower(double power) {
+        HARDWARE_ROBOT.rightLift.motor.setPower(power);
     }
 
 

@@ -1,12 +1,9 @@
 package org.firstinspires.ftc.teamcode.synchropather.systems.lift;
 
-import com.arcrobotics.ftclib.geometry.Pose2d;
-
 import org.firstinspires.ftc.teamcode.RobotSystem;
 import org.firstinspires.ftc.teamcode.synchropather.systems.MovementType;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.superclasses.Movement;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.superclasses.Plan;
-import org.firstinspires.ftc.teamcode.synchropather.systems.rotation.RotationState;
 
 import java.util.ArrayList;
 
@@ -22,13 +19,15 @@ public class LiftPlan extends Plan<LiftState> {
     private static final double kP = 1;
     private static final double kD = 0;
 
-    private final ArrayList<Double> eHistory;
+    private final ArrayList<Double> leHistory;
+    private final ArrayList<Double> reHistory;
     private RobotSystem robot;
 
     public LiftPlan(RobotSystem robot, Movement... movements) {
         super(MovementType.LIFT, movements);
         this.robot = robot;
-        this.eHistory = new ArrayList<>();
+        this.leHistory = new ArrayList<>();
+        this.reHistory = new ArrayList<>();
     }
 
     public void loop() {
@@ -40,39 +39,49 @@ public class LiftPlan extends Plan<LiftState> {
         double da = desiredAcceleration.getHeight();
 
         // Current state
-        double currentPosition = robot.inDep.getLiftPosition();
+        double leftHeight = robot.inDep.getLeftLiftPosition();
+        double rightHeight = robot.inDep.getRightLiftPosition();
         // lift subsystem get height here instead
-        LiftState currentState = new LiftState(currentPosition); // motor position --> height idk
+        LiftState currentLeftState = new LiftState(leftHeight); // motor position --> height idk
+        LiftState currentRightState = new LiftState(rightHeight); // motor position --> height idk
 
         // State error
-        LiftState error = desiredState.minus(currentState);
-        double e = error.getHeight();
+        LiftState leftError = desiredState.minus(currentLeftState);
+        LiftState rightError = desiredState.minus(currentRightState);
+        double le = leftError.getHeight();
+        double re = rightError.getHeight();
 
         // Error derivatives
-        double dedt = 0;
-        eHistory.add(e);
-        if (eHistory.size()>5) eHistory.remove(0);
-        if (eHistory.size()==5) dedt = robot.localization.stencil(eHistory); // this is pos2D but still works (same formula)
+        double ldedt = 0;
+        double rdedt = 0;
+        leHistory.add(le);
+        reHistory.add(re);
+        if (leHistory.size()>5) leHistory.remove(0);
+        if (reHistory.size()>5) reHistory.remove(0);
+        if (leHistory.size()==5) ldedt = robot.localization.stencil(leHistory); // this is pos2D but still works (same formula)
+        if (reHistory.size()==5) rdedt = robot.localization.stencil(reHistory); // this is pos2D but still works (same formula)
 
         // Control output
-        double u = 0;
+        double lu = 0;
+        double ru = 0;
 
         // Lift PD
-        u += kP*e + kD*dedt;
+        lu += kP*le + kD*ldedt;
+        ru += kP*re + kD*rdedt;
 
         // Feedforward
-        if (error.abs() < Math.PI/18) {
-            u += kS*Math.signum(dv) + kV*dv + kA*da;
-        }
+        double fu = kS*Math.signum(dv) + kV*dv + kA*da;
+        lu += fu;
+        ru += fu;
 
         // Set drive powers
-//        robot.drive.turnVelocity = u;
-//        robot.drive.driveFieldCentric(currentPose.getHeading());
-        robot.inDep.setLiftPower(u);
+        robot.inDep.setLeftLiftPower(lu);
+        robot.inDep.setRightLiftPower(ru);
     }
 
     @Override
     public void stop() {
-        robot.inDep.setLiftPower(0);
+        robot.inDep.setLeftLiftPower(0);
+        robot.inDep.setRightLiftPower(0);
     }
 }
