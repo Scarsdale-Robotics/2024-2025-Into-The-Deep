@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.synchropather.systems.lift;
 
+import com.acmerobotics.dashboard.config.Config;
+
 import org.firstinspires.ftc.teamcode.RobotSystem;
 import org.firstinspires.ftc.teamcode.synchropather.systems.MovementType;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.superclasses.Movement;
@@ -7,17 +9,18 @@ import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.superclasse
 
 import java.util.ArrayList;
 
+@Config
 public class LiftPlan extends Plan<LiftState> {
     // Feedforward constants
     //TODO: TUNE
-    private static final double kS = 0;
-    private static final double kV = 1;
-    private static final double kA = 0;
+    public static double kS = 0;
+    public static double kV = 1;
+    public static double kA = 0;
 
     // Positional PD constants
     //TODO: TUNE
-    private static final double kP = 1;
-    private static final double kD = 0;
+    public static double kP = 16;
+    public static double kD = 0.1;
 
     private final ArrayList<Double> leHistory;
     private final ArrayList<Double> reHistory;
@@ -28,6 +31,10 @@ public class LiftPlan extends Plan<LiftState> {
         this.robot = robot;
         this.leHistory = new ArrayList<>();
         this.reHistory = new ArrayList<>();
+        robot.telemetry.addData("[SYNCHROPATHER] LiftPlan leftHeight", 0);
+        robot.telemetry.addData("[SYNCHROPATHER] LiftPlan rightHeight", 0);
+        robot.telemetry.addData("[SYNCHROPATHER] LiftPlan desiredState.getHeight()", 0);
+        robot.telemetry.update();
     }
 
     public void loop() {
@@ -66,17 +73,23 @@ public class LiftPlan extends Plan<LiftState> {
         double ru = 0;
 
         // Lift PD
-        lu += kP*le + kD*ldedt;
-        ru += kP*re + kD*rdedt;
+        lu += (kP*le + kD*ldedt) / LiftConstants.MAX_VELOCITY;
+        ru += (kP*re + kD*rdedt) / LiftConstants.MAX_VELOCITY;
 
         // Feedforward
-        double fu = kS*Math.signum(dv) + kV*dv + kA*da;
+        double fu = (kS*Math.signum(dv) + kV*dv + kA*da) / LiftConstants.MAX_VELOCITY;
         lu += fu;
         ru += fu;
 
         // Set drive powers
         robot.inDep.setLeftLiftPower(lu);
         robot.inDep.setRightLiftPower(ru);
+
+        robot.telemetry.addData("[SYNCHROPATHER] LiftPlan leftHeight", leftHeight);
+        robot.telemetry.addData("[SYNCHROPATHER] LiftPlan rightHeight", rightHeight);
+        robot.telemetry.addData("[SYNCHROPATHER] LiftPlan desiredState.getHeight()", desiredState.getHeight());
+        robot.telemetry.update();
+
     }
 
     @Override

@@ -1,11 +1,14 @@
 package org.firstinspires.ftc.teamcode.opmodes.calibration.ExampleSynchroPather.translation;
 
+import com.acmerobotics.dashboard.FtcDashboard;
+import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.arcrobotics.ftclib.geometry.Pose2d;
 import com.arcrobotics.ftclib.geometry.Rotation2d;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 import org.firstinspires.ftc.teamcode.RobotSystem;
+import org.firstinspires.ftc.teamcode.opmodes.calibration.Drawing;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.Synchronizer;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.TimeSpan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.rotation.RotationPlan;
@@ -29,12 +32,21 @@ public class ExampleSynchroPatherDiagonalAuto extends LinearOpMode {
         waitForStart();
 
         while (opModeIsActive()) {
-            while (opModeIsActive() && !gamepad1.square);
+            while (opModeIsActive() && !gamepad1.square) {
+                robot.localization.update();
+            }
             synchronizer.start();
             while (opModeIsActive() && synchronizer.update()) {
                 robot.localization.update();
+                TelemetryPacket packet = new TelemetryPacket();
+                packet.fieldOverlay().setStroke("#3F51B5");
+                Drawing.drawRobot(packet.fieldOverlay(), robot.localization.getPose());
+                if (robot.opMode.gamepad1.triangle)
+                    Drawing.drawTargetPose(packet.fieldOverlay(), new Pose2d(robot.drive.targetX, robot.drive.targetY, new Rotation2d(robot.drive.targetH)));
+                FtcDashboard.getInstance().sendTelemetryPacket(packet);
             }
             synchronizer.stop();
+            robot.localization.update();
         }
     }
 

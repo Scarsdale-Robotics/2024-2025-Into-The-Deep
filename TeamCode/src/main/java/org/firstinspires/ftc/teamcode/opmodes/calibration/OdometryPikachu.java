@@ -87,7 +87,7 @@ public class OdometryPikachu extends LinearOpMode {
         while (opModeIsActive()) {
             odometry.updatePose();
             Pose2d pose = odometry.getPose();
-            pose = new Pose2d(-pose.getY(), pose.getX(), pose.getRotation());
+            pose = new Pose2d(pose.getY(), pose.getX(), pose.getRotation().times(-1));
 
             ////////////////////
             // DRIVE CONTROLS //

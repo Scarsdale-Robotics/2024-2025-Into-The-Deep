@@ -20,9 +20,10 @@ import org.firstinspires.ftc.teamcode.synchropather.systems.rotation.movements.L
 import org.firstinspires.ftc.teamcode.synchropather.systems.translation.TranslationPlan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.translation.TranslationState;
 import org.firstinspires.ftc.teamcode.synchropather.systems.translation.movements.CRSplineTranslation;
+import org.firstinspires.ftc.teamcode.synchropather.systems.translation.movements.LinearTranslation;
 
-@Autonomous(name="Example SynchroPather Translation & Rotation Spline Auto")
-public class ExampleSynchroPatherTranslationRotationSplineAuto extends LinearOpMode {
+@Autonomous(name="Example SynchroPather Star Auto")
+public class ExampleSynchroPatherStarAuto extends LinearOpMode {
 
     RobotSystem robot;
     Synchronizer synchronizer;
@@ -58,14 +59,56 @@ public class ExampleSynchroPatherTranslationRotationSplineAuto extends LinearOpM
         // Translation plan
         CRSplineTranslation spline1 = new CRSplineTranslation(0,
                 new TranslationState(0, 0),
-                new TranslationState(12, 6),
-                new TranslationState(12, 18),
-                new TranslationState(24, 24)
+                new TranslationState(6, 3),
+                new TranslationState(6, 9),
+                new TranslationState(12, 12),
+                new TranslationState(18, 9),
+                new TranslationState(18, 3),
+                new TranslationState(24, 0),
+                new TranslationState(18, -3),
+                new TranslationState(18, -9),
+                new TranslationState(12, -12),
+                new TranslationState(6, -9),
+                new TranslationState(6, -3),
+                new TranslationState(0, 0),
+                new TranslationState(-6, 3),
+                new TranslationState(-6, 9),
+                new TranslationState(-12, 12),
+                new TranslationState(-18, 9),
+                new TranslationState(-18, 3),
+                new TranslationState(-24, 0),
+                new TranslationState(-18, -3),
+                new TranslationState(-18, -9),
+                new TranslationState(-12, -12),
+                new TranslationState(-6, -9),
+                new TranslationState(-6, -3),
+                new TranslationState(0, 0)
         );
         CRSplineTranslation spline2 = new CRSplineTranslation(spline1.getEndTime(),
-                new TranslationState(24, 24),
-                new TranslationState(12, 18),
-                new TranslationState(12, 6),
+                new TranslationState(0, 0),
+                new TranslationState(3, 6),
+                new TranslationState(9, 6),
+                new TranslationState(12, 12),
+                new TranslationState(9, 18),
+                new TranslationState(3, 18),
+                new TranslationState(0, 24),
+                new TranslationState(-3, 18),
+                new TranslationState(-9, 18),
+                new TranslationState(-12, 12),
+                new TranslationState(-9, 6),
+                new TranslationState(-3, 6),
+                new TranslationState(0, 0),
+                new TranslationState(3, -6),
+                new TranslationState(9, -6),
+                new TranslationState(12, -12),
+                new TranslationState(9, -18),
+                new TranslationState(3, -18),
+                new TranslationState(0, -24),
+                new TranslationState(-3, -18),
+                new TranslationState(-9, -18),
+                new TranslationState(-12, -12),
+                new TranslationState(-9, -6),
+                new TranslationState(-3, -6),
                 new TranslationState(0, 0)
         );
         TranslationPlan translationPlan = new TranslationPlan(robot,
@@ -74,21 +117,37 @@ public class ExampleSynchroPatherTranslationRotationSplineAuto extends LinearOpM
         );
 
         // Rotation plan
-        LinearRotation rotation = new LinearRotation(new TimeSpan(0, spline2.getEndTime()),
+        LinearRotation rot1 = new LinearRotation(new TimeSpan(0, spline1.getEndTime()/2),
                 new RotationState(Math.toRadians(0)),
                 new RotationState(Math.toRadians(360))
         );
-        RotationPlan rotationPlan = new RotationPlan(robot,
-                rotation
+        LinearRotation rot2 = new LinearRotation(new TimeSpan(spline1.getEndTime()/2, spline1.getEndTime()),
+                new RotationState(Math.toRadians(360)),
+                new RotationState(Math.toRadians(0))
         );
+        LinearRotation rot3 = new LinearRotation(new TimeSpan(spline1.getEndTime(), 3*spline1.getEndTime()/2),
+                new RotationState(Math.toRadians(0)),
+                new RotationState(Math.toRadians(360))
+        );
+        LinearRotation rot4 = new LinearRotation(new TimeSpan(3*spline1.getEndTime()/2, spline2.getEndTime()),
+                new RotationState(Math.toRadians(360)),
+                new RotationState(Math.toRadians(0))
+        );
+        RotationPlan rotationPlan = new RotationPlan(robot,
+                rot1,
+                rot2,
+                rot3,
+                rot4
+        );
+
 
         // Lift plan
         LinearLift lift1 = new LinearLift(new TimeSpan(0, spline1.getEndTime()),
                 new LiftState(0),
-                new LiftState(3000)
+                new LiftState(4000)
         );
         LinearLift lift2 = new LinearLift(new TimeSpan(spline1.getEndTime(), spline2.getEndTime()),
-                new LiftState(3000),
+                new LiftState(4000),
                 new LiftState(0)
         );
 
