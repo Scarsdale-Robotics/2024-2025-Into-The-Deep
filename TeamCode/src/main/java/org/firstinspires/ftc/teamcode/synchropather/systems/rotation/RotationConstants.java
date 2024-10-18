@@ -10,10 +10,10 @@ public class RotationConstants {
     /**
      *  Max angular velocity of the robot in rad/s.
      */
-    public static final double MAX_ANGULAR_VELOCITY = DriveConstants.MAX_ANGULAR_VELOCITY; //TODO: TUNE
+    public static final double MAX_ANGULAR_VELOCITY = 0.65*DriveConstants.MAX_ANGULAR_VELOCITY; //TODO: TUNE
     /**
      *  Max angular acceleration of the robot in rad/s^2.
      */
-    public static final double MAX_ANGULAR_ACCELERATION = DriveConstants.MAX_ANGULAR_ACCELERATION; //TODO: TUNE
+    public static final double MAX_ANGULAR_ACCELERATION = 0.65*DriveConstants.MAX_ANGULAR_ACCELERATION; //TODO: TUNE
 
 }

@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.opmodes.calibration.ExampleSynchroPather.rotation;
+package org.firstinspires.ftc.teamcode.opmodes.calibration.ExampleSynchroPather;
 
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
@@ -16,10 +16,10 @@ import org.firstinspires.ftc.teamcode.synchropather.systems.rotation.RotationSta
 import org.firstinspires.ftc.teamcode.synchropather.systems.rotation.movements.LinearRotation;
 import org.firstinspires.ftc.teamcode.synchropather.systems.translation.TranslationPlan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.translation.TranslationState;
-import org.firstinspires.ftc.teamcode.synchropather.systems.translation.movements.LinearTranslation;
+import org.firstinspires.ftc.teamcode.synchropather.systems.translation.movements.CRSplineTranslation;
 
-@Autonomous(name="Example SynchroPather Full Rotation Auto")
-public class ExampleSynchroPatherFullRotation extends LinearOpMode {
+@Autonomous(name="Example SynchroPather Translation & Rotation Spline Auto")
+public class ExampleSynchroPatherTranslationRotationSplineAuto extends LinearOpMode {
 
     RobotSystem robot;
     Synchronizer synchronizer;
@@ -52,34 +52,37 @@ public class ExampleSynchroPatherFullRotation extends LinearOpMode {
 
 
     private void initSynchronizer() {
-
-        // Rotation plan
-        LinearRotation rotCCW = new LinearRotation(0,
-                new RotationState(Math.toRadians(0)),
-                new RotationState(Math.toRadians(360))
-        );
-        LinearRotation rotCW = new LinearRotation(rotCCW.getEndTime(),
-                new RotationState(Math.toRadians(360)),
-                new RotationState(Math.toRadians(0))
-        );
-        RotationPlan rotationPlan = new RotationPlan(robot,
-                rotCCW,
-                rotCW
-        );
-
         // Translation plan
-        LinearTranslation still = new LinearTranslation(new TimeSpan(0, rotCW.getEndTime()),
+        CRSplineTranslation spline1 = new CRSplineTranslation(0,
                 new TranslationState(0, 0),
+                new TranslationState(12, 6),
+                new TranslationState(12, 18),
+                new TranslationState(24, 24)
+        );
+        CRSplineTranslation spline2 = new CRSplineTranslation(spline1.getEndTime(),
+                new TranslationState(24, 24),
+                new TranslationState(12, 18),
+                new TranslationState(12, 6),
                 new TranslationState(0, 0)
         );
         TranslationPlan translationPlan = new TranslationPlan(robot,
-                still
+                spline1,
+                spline2
+        );
+
+        // Rotation plan
+        LinearRotation rotation = new LinearRotation(new TimeSpan(0, spline2.getEndTime()),
+                new RotationState(Math.toRadians(0)),
+                new RotationState(Math.toRadians(360))
+        );
+        RotationPlan rotationPlan = new RotationPlan(robot,
+                rotation
         );
 
         // Synchronizer
         this.synchronizer = new Synchronizer(
-                rotationPlan
-                ,translationPlan
+                translationPlan
+                ,rotationPlan
         );
     }
 

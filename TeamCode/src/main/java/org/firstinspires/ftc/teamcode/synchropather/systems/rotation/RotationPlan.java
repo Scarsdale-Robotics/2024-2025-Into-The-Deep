@@ -20,11 +20,11 @@ public class RotationPlan extends Plan<RotationState> {
 	//TODO: TUNE
 	public static double kS = 0;
 	public static double kV = 1;
-	public static double kA = 0;
+	public static double kA = 0.1;
 
 	// PD constants
 	//TODO: TUNE
-	public static double kP = 1;
+	public static double kP = 4;
 	public static double kD = 0;
 
 	// Error history array

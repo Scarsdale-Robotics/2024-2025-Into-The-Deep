@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.opmodes.calibration;
 
 import com.acmerobotics.dashboard.FtcDashboard;
+import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.arcrobotics.ftclib.drivebase.MecanumDrive;
@@ -15,15 +16,16 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import org.firstinspires.ftc.teamcode.HardwareRobot;
 
 @TeleOp(name="Odometry Logger", group="Calibration")
+@Config
 public class OdometryLogger extends LinearOpMode {
     // Distance between parallel odometers
-    private static final double TRACK_WIDTH = 11.3386; //TODO: tune
+    public static double TRACK_WIDTH = 11.3386; //TODO: tune
     // Signed distance from the point of rotation (positive=forward)
-    private static final double CENTER_WHEEL_OFFSET = 0.944882; //TODO: tune
+    public static double CENTER_WHEEL_OFFSET = 0.944882; //TODO: tune
     // Measured in inches
-    private static final double WHEEL_DIAMETER = 1.37795;
+    public static double WHEEL_DIAMETER = 1.37795;
     // Odometer encoder resolution
-    private static final double TICKS_PER_REV = 4096;
+    public static double TICKS_PER_REV = 4096;
     // Circumference divided by encoder resolution [inches/tick]
     private static final double DISTANCE_PER_PULSE = (Math.PI * WHEEL_DIAMETER) / TICKS_PER_REV;
 
