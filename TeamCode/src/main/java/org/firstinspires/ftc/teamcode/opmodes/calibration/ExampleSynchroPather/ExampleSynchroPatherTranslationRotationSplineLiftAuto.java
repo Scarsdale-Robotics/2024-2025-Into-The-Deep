@@ -21,8 +21,8 @@ import org.firstinspires.ftc.teamcode.synchropather.systems.translation.Translat
 import org.firstinspires.ftc.teamcode.synchropather.systems.translation.TranslationState;
 import org.firstinspires.ftc.teamcode.synchropather.systems.translation.movements.CRSplineTranslation;
 
-@Autonomous(name="Example SynchroPather Translation & Rotation Spline Auto")
-public class ExampleSynchroPatherTranslationRotationSplineAuto extends LinearOpMode {
+@Autonomous(name="Example SynchroPather Translation & Rotation Spline & Lift Auto", group = "Calibration")
+public class ExampleSynchroPatherTranslationRotationSplineLiftAuto extends LinearOpMode {
 
     RobotSystem robot;
     Synchronizer synchronizer;

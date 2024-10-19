@@ -22,7 +22,7 @@ import org.firstinspires.ftc.teamcode.synchropather.systems.translation.Translat
 import org.firstinspires.ftc.teamcode.synchropather.systems.translation.movements.CRSplineTranslation;
 import org.firstinspires.ftc.teamcode.synchropather.systems.translation.movements.LinearTranslation;
 
-@Autonomous(name="Example SynchroPather Star Auto")
+@Autonomous(name="Example SynchroPather Star Auto", group = "Calibration")
 public class ExampleSynchroPatherStarAuto extends LinearOpMode {
 
     RobotSystem robot;

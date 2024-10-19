@@ -18,7 +18,7 @@ import org.firstinspires.ftc.teamcode.synchropather.systems.translation.Translat
 import org.firstinspires.ftc.teamcode.synchropather.systems.translation.TranslationState;
 import org.firstinspires.ftc.teamcode.synchropather.systems.translation.movements.LinearTranslation;
 
-@Autonomous(name="Example SynchroPather Diagonal Auto")
+@Autonomous(name="Example SynchroPather Diagonal Auto", group = "Calibration")
 public class ExampleSynchroPatherDiagonalAuto extends LinearOpMode {
 
     RobotSystem robot;
