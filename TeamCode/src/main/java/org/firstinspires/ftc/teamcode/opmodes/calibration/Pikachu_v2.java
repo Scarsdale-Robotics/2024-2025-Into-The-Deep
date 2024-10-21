@@ -22,7 +22,7 @@ import org.firstinspires.ftc.teamcode.synchropather.systems.translation.Translat
 import org.firstinspires.ftc.teamcode.synchropather.systems.translation.movements.CRSplineTranslation;
 import org.firstinspires.ftc.teamcode.synchropather.systems.translation.movements.LinearTranslation;
 
-@Autonomous(name="Pikachu v2")
+@Autonomous(name="Pikachu v2", group = "Calibration")
 public class Pikachu_v2 extends LinearOpMode {
 
     RobotSystem robot;
