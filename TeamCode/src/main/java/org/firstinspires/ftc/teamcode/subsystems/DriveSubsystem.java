@@ -147,6 +147,7 @@ public class DriveSubsystem extends SubsystemBase {
             R = -1;
         }
 
+
         double factor = Math.max(-1, Math.min(1, speed / maxSpeed));
         L *= factor;
         R *= factor;
@@ -165,6 +166,7 @@ public class DriveSubsystem extends SubsystemBase {
         wheelSpeeds[RobotDrive.MotorType.kBackRight.value] += turn;
 
         normalize(wheelSpeeds);
+
 
         controller.driveWithMotorPowers(
                 wheelSpeeds[RobotDrive.MotorType.kFrontLeft.value],
@@ -188,7 +190,9 @@ public class DriveSubsystem extends SubsystemBase {
      * @return the normalized angle in radians.
      */
     private static double normalizeAngle(double radians) {
-        return (radians + Math.PI) % (2*Math.PI) - Math.PI;
+        while (radians >= Math.PI) radians -= 2*Math.PI;
+        while (radians < -Math.PI) radians += 2*Math.PI;
+        return radians;
     }
 
     /**
