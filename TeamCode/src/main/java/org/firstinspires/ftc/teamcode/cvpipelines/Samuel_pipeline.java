@@ -68,7 +68,6 @@ public class Samuel_pipeline implements VisionProcessor {
         Core.inRange(frame, lowerGreen, upperGreen, greenMask);
 
         // below is the the watershed algorithm for yellow
-
         // convert yellow mask to grayscale
         Mat grayYellowMask = new Mat();
         Imgproc.cvtColor(yellowMask, grayYellowMask, Imgproc.COLOR_BGR2GRAY);
@@ -88,22 +87,26 @@ public class Samuel_pipeline implements VisionProcessor {
         Mat distThresholdYellowMask = new Mat();
         Imgproc.threshold(distTransformYellowMask, distThresholdYellowMask, 0.5, 1.0, Imgproc.THRESH_BINARY);
 
-        // dilate the distance transform image to fill holes
+        // Dilate the distance transform image to fill holes
+        Mat yellowKernel = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(5, 5));
+        Imgproc.dilate(distThresholdYellowMask, distThresholdYellowMask, yellowKernel);
+
+        // Find sure foreground and background areas
+        Mat yellowMarkers = new Mat();
+        Core.convertScaleAbs(distThresholdYellowMask, yellowMarkers);
+
+        // watershed algorithm
+        Imgproc.watershed(frame, yellowMarkers);
 
         // creating yellow contours
         List<MatOfPoint> yellowContours = new ArrayList<>();
-        Imgproc.findContours(dilatedYellowMask, yellowContours, new Mat(), Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
+        Imgproc.findContours(yellowMarkers, yellowContours, new Mat(), Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
 
-        // creating a rotating box for the object
-        double minAreaThreshold = 50;
+        // creating a box for the object
+
         for (MatOfPoint contour : yellowContours) {
-            double contourArea = Imgproc.contourArea(contour);
-            if (contourArea < minAreaThreshold) {
-                continue;
-            }
 
             // Get the bounding boc for each contour
-
             Rect boundingBox = Imgproc.boundingRect(contour);
 
             // drawing the bounding box on frame
