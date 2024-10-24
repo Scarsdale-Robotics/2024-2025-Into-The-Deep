@@ -69,38 +69,38 @@ public class Samuel_pipeline implements VisionProcessor {
 
         // below is the the watershed algorithm for yellow
         // convert yellow mask to grayscale
-        Mat grayYellowMask = new Mat();
-        Imgproc.cvtColor(yellowMask, grayYellowMask, Imgproc.COLOR_BGR2GRAY);
+        Mat gray = new Mat();
+        Imgproc.cvtColor(yellowMask, gray, Imgproc.COLOR_BGR2GRAY);
 
         // Apply a threshold to binarize the image
-        Mat binaryYellowMask = new Mat();
-        Imgproc.distanceTransform(grayYellowMask, binaryYellowMask, 0, 255, Imgproc.THRESH_BINARY + Imgproc.THRESH_OTSU);
+        Mat binary = new Mat();
+        Imgproc.distanceTransform(gray, binary, 0, 255, Imgproc.THRESH_BINARY + Imgproc.THRESH_OTSU);
 
         // Perform distance transform
-        Mat distTransformYellowMask = new Mat();
-        Imgproc.distanceTransform(binaryYellowMask, distTransformYellowMask, Imgproc.DIST_L2, 5);
+        Mat distTransform = new Mat();
+        Imgproc.distanceTransform(binary, distTransform, Imgproc.DIST_L2, 5);
 
         // normalize the distance image for visualization
-        Core.normalize(distTransformYellowMask, distTransformYellowMask, 0, 1.0, Core.NORM_MINMAX);
+        Core.normalize(distTransform, distTransform, 0, 1.0, Core.NORM_MINMAX);
 
         // Threshold the distance transform image
-        Mat distThresholdYellowMask = new Mat();
-        Imgproc.threshold(distTransformYellowMask, distThresholdYellowMask, 0.5, 1.0, Imgproc.THRESH_BINARY);
+        Mat distThreshold = new Mat();
+        Imgproc.threshold(distTransform, distThreshold, 0.5, 1.0, Imgproc.THRESH_BINARY);
 
         // Dilate the distance transform image to fill holes
-        Mat yellowKernel = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(5, 5));
-        Imgproc.dilate(distThresholdYellowMask, distThresholdYellowMask, yellowKernel);
+        Mat Kernel = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(5, 5));
+        Imgproc.dilate(distThreshold, distThreshold, Kernel);
 
         // Find sure foreground and background areas
-        Mat yellowMarkers = new Mat();
-        Core.convertScaleAbs(distThresholdYellowMask, yellowMarkers);
+        Mat Markers = new Mat();
+        Core.convertScaleAbs(distThreshold, Markers);
 
         // watershed algorithm
-        Imgproc.watershed(frame, yellowMarkers);
+        Imgproc.watershed(frame, Markers);
 
         // creating yellow contours
         List<MatOfPoint> yellowContours = new ArrayList<>();
-        Imgproc.findContours(yellowMarkers, yellowContours, new Mat(), Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
+        Imgproc.findContours(Markers, yellowContours, new Mat(), Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
 
         // creating a box for the object
 
