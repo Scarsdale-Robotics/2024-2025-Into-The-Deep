@@ -11,6 +11,12 @@ import org.firstinspires.ftc.teamcode.RobotSystem;
 import org.firstinspires.ftc.teamcode.opmodes.calibration.Drawing;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.Synchronizer;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.TimeSpan;
+import org.firstinspires.ftc.teamcode.synchropather.systems.claw.ClawPlan;
+import org.firstinspires.ftc.teamcode.synchropather.systems.claw.ClawState;
+import org.firstinspires.ftc.teamcode.synchropather.systems.claw.movements.LinearClaw;
+import org.firstinspires.ftc.teamcode.synchropather.systems.elbow.ElbowPlan;
+import org.firstinspires.ftc.teamcode.synchropather.systems.elbow.ElbowState;
+import org.firstinspires.ftc.teamcode.synchropather.systems.elbow.movements.LinearElbow;
 import org.firstinspires.ftc.teamcode.synchropather.systems.lift.LiftPlan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.lift.LiftState;
 import org.firstinspires.ftc.teamcode.synchropather.systems.lift.movements.LinearLift;
@@ -27,6 +33,12 @@ public class AutoBlueBasket extends LinearOpMode {
 
     RobotSystem robot;
     Synchronizer synchronizer;
+
+    public static double clawOpen = 1;
+    public static double clawClosed = 0.91;
+
+    public static double elbowUp = 0.15;
+    public static double elbowDown = 0.38;
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -51,6 +63,7 @@ public class AutoBlueBasket extends LinearOpMode {
 
 
     private void initSynchronizer() {
+
 
         // place preloaded specimen
 
@@ -93,7 +106,7 @@ public class AutoBlueBasket extends LinearOpMode {
         CRSplineTranslation spline2 = new CRSplineTranslation(new TimeSpan(liftFirstSample1.getStartTime(), liftFirstSample1.getEndTime()),
                 new TranslationState(48,42),
                 new TranslationState(47,45),
-                new TranslationState(55,55)
+                new TranslationState(50,50)
         );
 
         // go to second sample
@@ -109,7 +122,7 @@ public class AutoBlueBasket extends LinearOpMode {
         );
 
         LinearTranslation line1 = new LinearTranslation(new TimeSpan(spline2.getEndTime(), Math.max(rot2.getEndTime()+0.5, liftFirstSample2.getEndTime())),
-                new TranslationState(55,55),
+                new TranslationState(50,50),
                 new TranslationState(60,42)
         );
 
@@ -126,7 +139,7 @@ public class AutoBlueBasket extends LinearOpMode {
         CRSplineTranslation spline3 = new CRSplineTranslation(new TimeSpan(liftSecondSample1.getStartTime(), liftSecondSample1.getEndTime()),
                 new TranslationState(60,42),
                 new TranslationState(55,43),
-                new TranslationState(55,55)
+                new TranslationState(50,50)
         );
 
         // pick up third sample
@@ -137,7 +150,7 @@ public class AutoBlueBasket extends LinearOpMode {
         );
 
         CRSplineTranslation spline4 = new CRSplineTranslation(new TimeSpan(liftSecondSample2.getStartTime(), liftSecondSample2.getEndTime()),
-                new TranslationState(55,55),
+                new TranslationState(50,50),
                 new TranslationState(45,36),
                 new TranslationState(60,24)
         );
@@ -150,14 +163,14 @@ public class AutoBlueBasket extends LinearOpMode {
         CRSplineTranslation spline5 = new CRSplineTranslation(new TimeSpan(liftThirdSample1.getStartTime(), liftThirdSample1.getEndTime()),
                 new TranslationState(60,24),
                 new TranslationState(54,43),
-                new TranslationState(55,55)
+                new TranslationState(50,50)
         );
 
 
 
         // park
         CRSplineTranslation spline6 = new CRSplineTranslation(spline5.getEndTime(),
-                new TranslationState(55,55),
+                new TranslationState(50,50),
                 new TranslationState(55, 10),
                 new TranslationState(25,10)
         );
@@ -217,10 +230,96 @@ public class AutoBlueBasket extends LinearOpMode {
                 liftThirdSample2
         );
 
+        // claw
+        LinearClaw claw1 = new LinearClaw(liftPreload2.getStartTime(),
+                new ClawState(clawClosed),
+                new ClawState(clawOpen)
+        );
+
+        LinearClaw claw2 = new LinearClaw(liftFirstSample1.getStartTime(), // grabs sample 1
+                new ClawState(clawOpen),
+                new ClawState(clawClosed)
+        );
+
+        LinearClaw claw3 = new LinearClaw(liftFirstSample2.getStartTime(), // puts sample 1 into basket
+                new ClawState(clawClosed),
+                new ClawState(clawOpen)
+        );
+
+        LinearClaw claw4 = new LinearClaw(liftSecondSample1.getStartTime(), // grabs sample 2
+                new ClawState(clawOpen),
+                new ClawState(clawClosed)
+        );
+
+        LinearClaw claw5 = new LinearClaw(liftSecondSample2.getStartTime(), // puts sample 2 into basket
+                new ClawState(clawClosed),
+                new ClawState(clawOpen)
+        );
+
+        LinearClaw claw6 = new LinearClaw(liftThirdSample1.getStartTime(), // grabs sample 3
+                new ClawState(clawOpen),
+                new ClawState(clawClosed)
+        );
+
+        LinearClaw claw7 = new LinearClaw(liftThirdSample2.getStartTime(), // puts sample 3 into basket
+                new ClawState(clawClosed),
+                new ClawState(clawOpen)
+        );
+
+        ClawPlan clawPlan = new ClawPlan(robot,
+                claw1,
+                claw2,
+                claw3,
+                claw4,
+                claw5,
+                claw6,
+                claw7
+        );
+
+        //elbow
+        LinearElbow elbow1 = new LinearElbow(claw1.getStartTime(), //goes down to sample
+                new ElbowState(elbowUp),
+                new ElbowState(elbowDown)
+        );
+
+        LinearElbow elbow2 = new LinearElbow(claw2.getStartTime(), //goes up
+                new ElbowState(elbowDown),
+                new ElbowState(elbowUp)
+        );
+
+        LinearElbow elbow3 = new LinearElbow(claw4.getStartTime(), //goes down to sample
+                new ElbowState(elbowUp),
+                new ElbowState(elbowDown)
+        );
+        LinearElbow elbow4 = new LinearElbow(claw5.getStartTime(), //goes up
+                new ElbowState(elbowDown),
+                new ElbowState(elbowUp)
+        );
+
+        LinearElbow elbow5 = new LinearElbow(claw6.getStartTime(), //goes down to sample
+                new ElbowState(elbowUp),
+                new ElbowState(elbowDown)
+        );
+        LinearElbow elbow6 = new LinearElbow(claw7.getStartTime(), //goes up
+                new ElbowState(elbowDown),
+                new ElbowState(elbowUp)
+        );
+
+        ElbowPlan elbowPlan = new ElbowPlan(robot,
+                elbow1,
+                elbow2,
+                elbow3,
+                elbow4,
+                elbow5,
+                elbow6
+        );
+
         this.synchronizer = new Synchronizer(
                 translationPlan,
                 rotationPlan,
-                liftPlan
+                liftPlan,
+                elbowPlan,
+                clawPlan
         );
     }
 

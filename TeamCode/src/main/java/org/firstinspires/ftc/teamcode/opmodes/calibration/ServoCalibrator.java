@@ -7,8 +7,8 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import org.firstinspires.ftc.teamcode.HardwareRobot;
 
 @Config
-@TeleOp(name="Effector (Claw and Elbow) Calibrator", group="Calibration")
-public class EffectorCalibrator extends LinearOpMode {
+@TeleOp(name="Servo (Claw and Elbow) Calibrator", group="Calibration")
+public class ServoCalibrator extends LinearOpMode {
 
     public static double clawPosition = 0;
     public static double elbowPosition = 0;
