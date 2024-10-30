@@ -71,7 +71,7 @@ public class AutoBlueBasket extends LinearOpMode {
         CRSplineTranslation spline1 = new CRSplineTranslation(0,
                 new TranslationState(40,60),
                 new TranslationState(10, 45),
-                new TranslationState(0, 40)
+                new TranslationState(0, 34)
 //				new TranslationState(40,50),
 //				new TranslationState(48,30)
         );
@@ -79,19 +79,20 @@ public class AutoBlueBasket extends LinearOpMode {
 
         LinearLift liftPreload1 = new LinearLift(new TimeSpan(spline1.getStartTime(), spline1.getEndTime()),
                 new LiftState(0),
-                new LiftState(2000)
+                new LiftState(1500)
+        );
+
+
+        LinearLift liftPreload2 = new LinearLift(spline1.getEndTime(),
+                new LiftState(1500),
+                new LiftState(0)
         );
 
         // go to first sample
-        CRSplineTranslation spline1p5 = new CRSplineTranslation((spline1.getEndTime()),
+        CRSplineTranslation spline1p5 = new CRSplineTranslation(liftPreload2.getEndTime(),
                 new TranslationState(0, 40),
                 new TranslationState(40,50),
                 new TranslationState(48,42)
-        );
-
-        LinearLift liftPreload2 = new LinearLift(new TimeSpan(spline1p5.getStartTime(), spline1p5.getEndTime()),
-                new LiftState(2000),
-                new LiftState(0)
         );
 
         LinearRotation rot1 = new LinearRotation(spline1p5.getEndTime()-0.5,
@@ -232,7 +233,7 @@ public class AutoBlueBasket extends LinearOpMode {
         );
 
         // claw
-        LinearClaw claw1 = new LinearClaw(liftPreload2.getStartTime(),
+        LinearClaw claw1 = new LinearClaw(liftPreload2.getStartTime() + .42,
                 new ClawState(clawClosed),
                 new ClawState(clawOpen)
         );
@@ -278,7 +279,7 @@ public class AutoBlueBasket extends LinearOpMode {
         );
 
         //elbow
-        LinearElbow elbow1 = new LinearElbow(claw1.getStartTime(), //goes down to sample
+        LinearElbow elbow1 = new LinearElbow(claw1.getStartTime() + .25, //goes down to sample
                 new ElbowState(elbowUp),
                 new ElbowState(elbowDown)
         );
