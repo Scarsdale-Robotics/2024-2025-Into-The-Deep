@@ -37,8 +37,8 @@ public class AutoBlueBasket extends LinearOpMode {
     public static double clawOpen = 1;
     public static double clawClosed = 0.91;
 
-    public static double elbowUp = 0.15;
-    public static double elbowDown = 0.38;
+    public static double elbowUp = 0.275;
+    public static double elbowDown = 0.52;
 
     @Override
     public void runOpMode() throws InterruptedException {

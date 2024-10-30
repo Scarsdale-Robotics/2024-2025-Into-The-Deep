@@ -14,6 +14,7 @@ public class ElbowPlan extends Plan<ElbowState> {
 
     public ElbowPlan(RobotSystem robot, Movement... movements) {
         super(MovementType.ELBOW, movements);
+        this.robot = robot;
         robot.telemetry.addData("[SYNCHROPATHER] ElbowPlan desiredState.getPosition()", 0);
         robot.telemetry.update();
     }

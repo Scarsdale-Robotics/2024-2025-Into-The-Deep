@@ -16,6 +16,7 @@ public class ClawPlan extends Plan<ClawState> {
 
     public ClawPlan(RobotSystem robot, Movement... movements) {
         super(MovementType.CLAW, movements);
+        this.robot = robot;
         robot.telemetry.addData("[SYNCHROPATHER] ClawPlan desiredState.getPosition()", 0);
         robot.telemetry.update();
     }
