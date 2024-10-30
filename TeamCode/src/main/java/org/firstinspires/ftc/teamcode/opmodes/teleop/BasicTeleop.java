@@ -16,11 +16,11 @@ import org.firstinspires.ftc.teamcode.subsystems.LocalizationSubsystem;
 @TeleOp(name="Basic TeleOp")
 public class BasicTeleop extends LinearOpMode {
 
-    public static double clawOpen = 1;
-    public static double clawClosed = 0.91;
+    public static double clawOpen = 0.23;
+    public static double clawClosed = 0.06;;
 
-    public static double elbowUp = 0.15;
-    public static double elbowDown = 0.38;
+    public static double elbowUp = 0.275;
+    public static double elbowDown = 0.53;
 
     @Override
     public void runOpMode() throws InterruptedException {

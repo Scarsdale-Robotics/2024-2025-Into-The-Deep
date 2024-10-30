@@ -34,15 +34,16 @@ public class AutoBlueBasket extends LinearOpMode {
     RobotSystem robot;
     Synchronizer synchronizer;
 
-    public static double clawOpen = 1;
-    public static double clawClosed = 0.91;
+    public static double clawOpen = 0.23;
+    public static double clawClosed = 0.06;;
 
     public static double elbowUp = 0.275;
-    public static double elbowDown = 0.52;
+    public static double elbowDown = 0.53;
 
     @Override
     public void runOpMode() throws InterruptedException {
         this.robot = new RobotSystem(hardwareMap, new Pose2d(40, 60, new Rotation2d(Math.toRadians(-90))), this);
+        robot.inDep.setClawPosition(clawClosed);
         robot.inDep.setElbowPosition(0.3);
         initSynchronizer();
 
@@ -69,8 +70,8 @@ public class AutoBlueBasket extends LinearOpMode {
 
         CRSplineTranslation spline1 = new CRSplineTranslation(0,
                 new TranslationState(40,60),
-                new TranslationState(20, 40),
-                new TranslationState(5, 35)
+                new TranslationState(10, 45),
+                new TranslationState(0, 40)
 //				new TranslationState(40,50),
 //				new TranslationState(48,30)
         );
@@ -83,7 +84,7 @@ public class AutoBlueBasket extends LinearOpMode {
 
         // go to first sample
         CRSplineTranslation spline1p5 = new CRSplineTranslation((spline1.getEndTime()),
-                new TranslationState(5, 35),
+                new TranslationState(0, 40),
                 new TranslationState(40,50),
                 new TranslationState(48,42)
         );
