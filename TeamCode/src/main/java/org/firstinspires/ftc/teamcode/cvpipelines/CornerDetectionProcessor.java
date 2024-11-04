@@ -2,10 +2,9 @@ package org.firstinspires.ftc.teamcode.cvpipelines;
 
 import android.graphics.Canvas;
 
-//import com.acmerobotics.dashboard.config.Config;
-
 import org.firstinspires.ftc.robotcore.internal.camera.calibration.CameraCalibration;
 import org.firstinspires.ftc.vision.VisionProcessor;
+//import org.opencv.android.OpenCVLoader;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
@@ -34,6 +33,9 @@ public class CornerDetectionProcessor implements VisionProcessor {
     public int width;
     public int height;
 
+    public static int testVariable = 42;
+
+
     public AtomicBoolean hasStarted = new AtomicBoolean(false);
 
     private Mat rgbaMat = new Mat();
@@ -41,14 +43,25 @@ public class CornerDetectionProcessor implements VisionProcessor {
     private Mat mask = new Mat();
     private Mat hierarchy = new Mat();
 
+//    public static Size kernelSize = new Size(5, 5);
+    public static double kernelSize1 = 5;
+    public static double kernelSize2 = 5;
+
     // List to store detected boxes
     private List<MatOfPoint> boxes = new ArrayList<>();
 
     // Scalar values for color range (HSV) - Adjust these values based on lighting conditions
 //    public Scalar lowerYellow = new Scalar(20, 100, 100);
 //    public Scalar upperYellow = new Scalar(30, 255, 255);
-    public static Scalar lowerYellow = new Scalar(0, 0, 0);
-    public static Scalar upperYellow = new Scalar(255, 255, 255);
+    public static double lowerYellowR = 10;
+    public static double lowerYellowG = 30;
+    public static double lowerYellowB = 30;
+    public static double upperYellowR = 255;
+    public static double upperYellowG = 255;
+    public static double upperYellowB = 255;
+
+
+    public static double k_epsilon = 0.02;
 //    private Scalar lowerYellow;
 //    private Scalar upperYellow;
 
@@ -65,16 +78,19 @@ public class CornerDetectionProcessor implements VisionProcessor {
     }
 
     @Override
-    public Object processFrame(Mat input, long captureTimeNanos) {
+    public Object processFrame(Mat input, long nanoStart) {
+
+        Scalar lowerYellow = new Scalar(lowerYellowR, lowerYellowG, lowerYellowB);
+        Scalar upperYellow = new Scalar(upperYellowR, upperYellowG, upperYellowB);
 
         // Convert input image to HSV color space
-        Imgproc.cvtColor(input, hsvMat, Imgproc.COLOR_BGR2HSV);
+        Imgproc.cvtColor(input, hsvMat, Imgproc.COLOR_RGB2HSV);
 
         // Create a binary mask where yellow colors are white and the rest are black
         Core.inRange(hsvMat, lowerYellow, upperYellow, mask);
 
         // Apply morphological operations to clean up the mask
-        Mat kernel = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(5, 5));
+        Mat kernel = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(kernelSize1, kernelSize2));
         Imgproc.morphologyEx(mask, mask, Imgproc.MORPH_OPEN, kernel);
         Imgproc.morphologyEx(mask, mask, Imgproc.MORPH_CLOSE, kernel);
 
@@ -89,7 +105,7 @@ public class CornerDetectionProcessor implements VisionProcessor {
         for (MatOfPoint contour : contours) {
             // Approximate the contour to a polygon
             MatOfPoint2f contour2f = new MatOfPoint2f(contour.toArray());
-            double epsilon = 0.02 * Imgproc.arcLength(contour2f, true);
+            double epsilon = k_epsilon * Imgproc.arcLength(contour2f, true);
             MatOfPoint2f approxCurve = new MatOfPoint2f();
             Imgproc.approxPolyDP(contour2f, approxCurve, epsilon, true);
 
