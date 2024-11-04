@@ -16,6 +16,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 
+import org.firstinspires.ftc.teamcode.cvpipelines.processors.SampleDistinguishingPipeline;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
@@ -38,6 +39,7 @@ public class CVSubsystem extends SubsystemBase {
     private final WebcamName cameraName;
     private VisionPortal visionPortal;
     private AprilTagProcessor aprilTag;
+    private SampleDistinguishingPipeline sdp;
 
     private final Telemetry telemetry;
 
@@ -88,15 +90,18 @@ public class CVSubsystem extends SubsystemBase {
                 .setDrawTagOutline(true)
                 .build();
 
+        sdp = new SampleDistinguishingPipeline(telemetry);
+
         // Create the vision portal by using a builder.
         VisionPortal.Builder builder = new VisionPortal.Builder();
         builder.setCamera(cameraName);
         builder.setCameraResolution(CAM_SZ);
-        builder.addProcessors(aprilTag);
+        builder.addProcessors(aprilTag, sdp);
 
         // Build the Vision Portal, using the above settings.
         visionPortal = builder.build();
         visionPortal.setProcessorEnabled(aprilTag, true);
+        visionPortal.setProcessorEnabled(sdp, true);
     }
 
 
@@ -248,10 +253,10 @@ public class CVSubsystem extends SubsystemBase {
     }
 
     /**
-     * Returns the (x, y) offset of the center of the current targeted color from the top left corner
+     * Returns the (x, y, theta) offset of the center of the current targeted color from the top left corner
      */
-    public Point getSampleOffset() {
-        // TODO: IMPLEMENT
+    public SampleDistinguishingPipeline.Pose getSampleOffset() {
+
     }
 
 }
