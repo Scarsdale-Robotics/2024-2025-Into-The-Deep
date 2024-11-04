@@ -7,10 +7,10 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import org.firstinspires.ftc.teamcode.RobotSystem;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.Synchronizer;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.TimeSpan;
-import org.firstinspires.ftc.teamcode.synchropather.systems.rotation.RotationPlan;
+//import org.firstinspires.ftc.teamcode.synchropather.systems.rotation.RotationPlan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.rotation.RotationState;
 import org.firstinspires.ftc.teamcode.synchropather.systems.rotation.movements.LinearRotation;
-import org.firstinspires.ftc.teamcode.synchropather.systems.translation.TranslationPlan;
+//import org.firstinspires.ftc.teamcode.synchropather.systems.translation.TranslationPlan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.translation.TranslationState;
 import org.firstinspires.ftc.teamcode.synchropather.systems.translation.movements.CRSplineTranslation;
 import org.firstinspires.ftc.teamcode.synchropather.systems.translation.movements.LinearTranslation;
@@ -44,25 +44,25 @@ public class ExampleSynchroPatherAuto extends LinearOpMode {
                 new TranslationState(24, 0),
                 new TranslationState(0, 0)
         );
-        TranslationPlan translationPlan = new TranslationPlan(robot,
-                line1,
-                line2
-        );
+//        TranslationPlan translationPlan = new TranslationPlan(robot,
+//                line1,
+//                line2
+//        );
 
         // Rotation plan
         LinearRotation rotation = new LinearRotation(new TimeSpan(0, line2.getEndTime()),
                 new RotationState(Math.toRadians(0)),
                 new RotationState(Math.toRadians(360))
         );
-        RotationPlan rotationPlan = new RotationPlan(robot,
-                rotation
-        );
+//        RotationPlan rotationPlan = new RotationPlan(robot,
+//                rotation
+//        );
 
         // Synchronizer
-        this.synchronizer = new Synchronizer(
-                translationPlan,
-                rotationPlan
-        );
+//        this.synchronizer = new Synchronizer(
+//                translationPlan,
+//                rotationPlan
+//        );
     }
 
 }

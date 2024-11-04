@@ -10,21 +10,21 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import org.firstinspires.ftc.teamcode.RobotSystem;
 import org.firstinspires.ftc.teamcode.subsystems.InDepSubsystem;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.Synchronizer;
-import org.firstinspires.ftc.teamcode.synchropather.systems.claw.ClawPlan;
+//import org.firstinspires.ftc.teamcode.synchropather.systems.claw.ClawPlan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.claw.ClawState;
 import org.firstinspires.ftc.teamcode.synchropather.systems.claw.movements.MoveClaw;
-import org.firstinspires.ftc.teamcode.synchropather.systems.elbow.ElbowPlan;
+//import org.firstinspires.ftc.teamcode.synchropather.systems.elbow.ElbowPlan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.elbow.ElbowState;
 import org.firstinspires.ftc.teamcode.synchropather.systems.elbow.movements.MoveElbow;
-import org.firstinspires.ftc.teamcode.synchropather.systems.lift.LiftPlan;
+//import org.firstinspires.ftc.teamcode.synchropather.systems.lift.LiftPlan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.lift.LiftState;
 import org.firstinspires.ftc.teamcode.synchropather.systems.lift.movements.LinearLift;
 import org.firstinspires.ftc.teamcode.synchropather.systems.rotation.movements.LinearRotation;
-import org.firstinspires.ftc.teamcode.synchropather.systems.rotation.RotationPlan;
+//import org.firstinspires.ftc.teamcode.synchropather.systems.rotation.RotationPlan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.rotation.RotationState;
 import org.firstinspires.ftc.teamcode.synchropather.systems.translation.movements.CRSplineTranslation;
 import org.firstinspires.ftc.teamcode.synchropather.systems.translation.movements.LinearTranslation;
-import org.firstinspires.ftc.teamcode.synchropather.systems.translation.TranslationPlan;
+//import org.firstinspires.ftc.teamcode.synchropather.systems.translation.TranslationPlan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.translation.TranslationState;
 
 @Autonomous(name="Kenneth Auto")
@@ -134,22 +134,22 @@ public class KennethAuto extends LinearOpMode {
                 new TranslationState(-40.75,63.5)
         );
 
-        TranslationPlan translationPlan = new TranslationPlan(robot,
-                spline1,
-                spline2,
-                spline3,
-                spline4,
-                spline5,
-                line1,
-                line2,
-                line3,
-                line4,
-                line5,
-                line6,
-                line7,
-                line8,
-                returnToStart
-        );
+//        TranslationPlan translationPlan = new TranslationPlan(robot,
+//                spline1,
+//                spline2,
+//                spline3,
+//                spline4,
+//                spline5,
+//                line1,
+//                line2,
+//                line3,
+//                line4,
+//                line5,
+//                line6,
+//                line7,
+//                line8,
+//                returnToStart
+//        );
 
 
         // rotation Plan
@@ -158,9 +158,9 @@ public class KennethAuto extends LinearOpMode {
                 new RotationState(Math.toRadians(360))
         );
 
-        RotationPlan rotationPlan = new RotationPlan(robot,
-                rot1
-        );
+//        RotationPlan rotationPlan = new RotationPlan(robot,
+//                rot1
+//        );
 
 
         // Lift plan
@@ -169,9 +169,9 @@ public class KennethAuto extends LinearOpMode {
                 new LiftState(500)
         );
 
-        LiftPlan liftPlan = new LiftPlan(robot,
-                lift1
-        );
+//        LiftPlan liftPlan = new LiftPlan(robot,
+//                lift1
+//        );
 
 
 
@@ -181,30 +181,30 @@ public class KennethAuto extends LinearOpMode {
                 new ElbowState(InDepSubsystem.ElbowPosition.UP)
         );
 
-        ElbowPlan elbowPlan = new ElbowPlan(robot,
-                elbow1
-        );
+//        ElbowPlan elbowPlan = new ElbowPlan(robot,
+//                elbow1
+//        );
 
         MoveClaw claw1 = new MoveClaw(6,
                 new ClawState(InDepSubsystem.ClawPosition.CLOSED),
                 new ClawState(InDepSubsystem.ClawPosition.OPEN)
         );
-        ClawPlan clawPlan = new ClawPlan(robot, claw1);
+//        ClawPlan clawPlan = new ClawPlan(robot, claw1);
 
 
         // put all the Plans into a Synchronizer
-        Synchronizer synchronizer = new Synchronizer(
-                translationPlan,
-                rotationPlan, // initializes the plans here
-                liftPlan,
-                elbowPlan,
-                clawPlan
-        );
+//        Synchronizer synchronizer = new Synchronizer(
+//                translationPlan,
+//                rotationPlan//, // initializes the plans here
+////                liftPlan//,
+////                elbowPlan//,
+////                clawPlan
+//        );
 
-        synchronizer.start();
-        while (opModeIsActive() && synchronizer.update()) {
-            telemetry.addData("ELAPSED TIME", synchronizer.getElapsedTime());
-        };
-        synchronizer.stop();
+//        synchronizer.start();
+//        while (opModeIsActive() && synchronizer.update()) {
+//            telemetry.addData("ELAPSED TIME", synchronizer.getElapsedTime());
+//        };
+//        synchronizer.stop();
     }
 }
