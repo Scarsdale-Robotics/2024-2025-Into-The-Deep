@@ -71,7 +71,7 @@ public class AutoBlueBasket extends LinearOpMode {
         CRSplineTranslation spline1 = new CRSplineTranslation(0,
                 new TranslationState(40,60),
                 new TranslationState(10, 45),
-                new TranslationState(0, 34)
+                new TranslationState(0, 35)
 //				new TranslationState(40,50),
 //				new TranslationState(48,30)
         );
@@ -88,11 +88,11 @@ public class AutoBlueBasket extends LinearOpMode {
                 new LiftState(0)
         );
 
-        // go to first sample
-        CRSplineTranslation spline1p5 = new CRSplineTranslation(liftPreload2.getEndTime(),
-                new TranslationState(0, 40),
+        // go to first sample (movement)
+        CRSplineTranslation spline1p5 = new CRSplineTranslation(liftPreload2.getEndTime() - 0.25,
+                new TranslationState(0, 35),
                 new TranslationState(40,50),
-                new TranslationState(48,42)
+                new TranslationState(46,42)
         );
 
         LinearRotation rot1 = new LinearRotation(spline1p5.getEndTime()-0.5,
@@ -100,11 +100,13 @@ public class AutoBlueBasket extends LinearOpMode {
                 new RotationState(Math.toRadians(45))
         );
 
+
         LinearLift liftFirstSample1 = new LinearLift(spline1p5.getEndTime(),
                 new LiftState(0),
                 new LiftState(4200)
         );
 
+        // go to basket
         CRSplineTranslation spline2 = new CRSplineTranslation(new TimeSpan(liftFirstSample1.getStartTime(), liftFirstSample1.getEndTime()),
                 new TranslationState(48,42),
                 new TranslationState(47,45),
@@ -112,7 +114,6 @@ public class AutoBlueBasket extends LinearOpMode {
         );
 
         // go to second sample
-
         LinearRotation rot2 = new LinearRotation(spline2.getEndTime()-0.5,
                 new RotationState(Math.toRadians(45)),
                 new RotationState(Math.toRadians(-90))
@@ -123,6 +124,7 @@ public class AutoBlueBasket extends LinearOpMode {
                 new LiftState(0)
         );
 
+        //go to second sample (movement)
         LinearTranslation line1 = new LinearTranslation(new TimeSpan(spline2.getEndTime(), Math.max(rot2.getEndTime()+0.5, liftFirstSample2.getEndTime())),
                 new TranslationState(50,50),
                 new TranslationState(60,42)
@@ -138,6 +140,7 @@ public class AutoBlueBasket extends LinearOpMode {
                 new LiftState(4200)
         );
 
+        // go to basket
         CRSplineTranslation spline3 = new CRSplineTranslation(new TimeSpan(liftSecondSample1.getStartTime(), liftSecondSample1.getEndTime()),
                 new TranslationState(60,42),
                 new TranslationState(55,43),
@@ -145,12 +148,12 @@ public class AutoBlueBasket extends LinearOpMode {
         );
 
         // pick up third sample
-
         LinearLift liftSecondSample2 = new LinearLift(spline3.getEndTime(),
                 new LiftState(4200),
                 new LiftState(0)
         );
 
+        //go to to third sample (movement)
         CRSplineTranslation spline4 = new CRSplineTranslation(new TimeSpan(liftSecondSample2.getStartTime(), liftSecondSample2.getEndTime()),
                 new TranslationState(50,50),
                 new TranslationState(45,36),
@@ -162,13 +165,12 @@ public class AutoBlueBasket extends LinearOpMode {
                 new LiftState(4200)
         );
 
+        // go to basket
         CRSplineTranslation spline5 = new CRSplineTranslation(new TimeSpan(liftThirdSample1.getStartTime(), liftThirdSample1.getEndTime()),
                 new TranslationState(60,24),
                 new TranslationState(54,43),
                 new TranslationState(50,50)
         );
-
-
 
         // park
         CRSplineTranslation spline6 = new CRSplineTranslation(spline5.getEndTime(),
@@ -192,9 +194,6 @@ public class AutoBlueBasket extends LinearOpMode {
                 spline5,
                 spline6
         );
-
-
-
 
         LinearRotation rot4 = new LinearRotation(spline4.getStartTime()-0.5,
                 new RotationState(Math.toRadians(45)),
@@ -233,7 +232,7 @@ public class AutoBlueBasket extends LinearOpMode {
         );
 
         // claw
-        LinearClaw claw1 = new LinearClaw(liftPreload2.getStartTime() + .42,
+        LinearClaw claw1 = new LinearClaw(liftPreload2.getStartTime() + .445,
                 new ClawState(clawClosed),
                 new ClawState(clawOpen)
         );

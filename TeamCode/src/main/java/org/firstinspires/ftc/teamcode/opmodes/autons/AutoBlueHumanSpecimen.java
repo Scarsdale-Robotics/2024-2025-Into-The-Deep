@@ -28,8 +28,8 @@ import org.firstinspires.ftc.teamcode.synchropather.systems.translation.Translat
 import org.firstinspires.ftc.teamcode.synchropather.systems.translation.movements.CRSplineTranslation;
 import org.firstinspires.ftc.teamcode.synchropather.systems.translation.movements.LinearTranslation;
 
-@Autonomous(name="Auto Blue Basket Specimen", group="Autons")
-public class AutoBlueBasketSpecimen extends LinearOpMode {
+@Autonomous(name="Auto Blue Human Specimen", group="Autons")
+public class AutoBlueHumanSpecimen extends LinearOpMode{
 
     RobotSystem robot;
     Synchronizer synchronizer;
@@ -42,7 +42,7 @@ public class AutoBlueBasketSpecimen extends LinearOpMode {
 
     @Override
     public void runOpMode() throws InterruptedException {
-        this.robot = new RobotSystem(hardwareMap, new Pose2d(40, 60, new Rotation2d(Math.toRadians(-90))), this);
+        this.robot = new RobotSystem(hardwareMap, new Pose2d(-24, 60, new Rotation2d(Math.toRadians(-90))), this);
         robot.inDep.setClawPosition(clawClosed);
         robot.inDep.setElbowPosition(0.3);
         initSynchronizer();
@@ -62,88 +62,83 @@ public class AutoBlueBasketSpecimen extends LinearOpMode {
         synchronizer.stop();
     }
 
-
-
     private void initSynchronizer() {
+            // place preloaded specimen
+
+            CRSplineTranslation spline1 = new CRSplineTranslation(0,
+                    new TranslationState(-24,60),
+                    new TranslationState(-10, 45),
+                    new TranslationState(-10, 35)
+            );
+
+            LinearRotation still = new LinearRotation(0,
+                    new RotationState(Math.toRadians(-90)),
+                    new RotationState(Math.toRadians(-90))
+            );
+
+            RotationPlan rotationPlan = new RotationPlan(robot,
+                    still
+            );
 
 
-        // place preloaded specimen
+            LinearLift liftPreload1 = new LinearLift(new TimeSpan(spline1.getStartTime(), spline1.getEndTime()-0.5),
+                    new LiftState(0),
+                    new LiftState(1500)
+            );
 
-        CRSplineTranslation spline1 = new CRSplineTranslation(0,
-                new TranslationState(40,60),
-                new TranslationState(10, 45),
-                new TranslationState(0, 35)
-        );
+            LinearLift liftPreload2 = new LinearLift(spline1.getEndTime()-0.5,
+                    new LiftState(1500),
+                    new LiftState(0)
+            );
 
-        LinearRotation still = new LinearRotation(0,
-                new RotationState(Math.toRadians(-90)),
-                new RotationState(Math.toRadians(-90))
-        );
+            CRSplineTranslation splinePark = new CRSplineTranslation(liftPreload2.getEndTime(),
+                    new TranslationState(-10, 35),
+                    new TranslationState(-20, 36),
+                    new TranslationState(-36, 36),
+                    new TranslationState(-36, 12),
+                    new TranslationState(-24, 0)
+            );
 
-        RotationPlan rotationPlan = new RotationPlan(robot,
-                still
-        );
+            TranslationPlan translationPlan = new TranslationPlan(robot,
+                    spline1,
+                    splinePark
+            );
 
-
-        LinearLift liftPreload1 = new LinearLift(new TimeSpan(spline1.getStartTime(), spline1.getEndTime()-0.5),
-                new LiftState(0),
-                new LiftState(1500)
-        );
-
-        LinearLift liftPreload2 = new LinearLift(spline1.getEndTime()-0.5,
-                new LiftState(1500),
-                new LiftState(0)
-        );
-
-        CRSplineTranslation splinePark = new CRSplineTranslation(liftPreload2.getEndTime(),
-                new TranslationState(0, 35),
-                new TranslationState(36, 36),
-                new TranslationState(36, 12),
-                new TranslationState(24, 0)
-        );
-
-        TranslationPlan translationPlan = new TranslationPlan(robot,
-                spline1,
-                splinePark
-        );
-
-        LiftPlan liftPlan = new LiftPlan(robot,
-                liftPreload1,
-                liftPreload2
-        );
+            LiftPlan liftPlan = new LiftPlan(robot,
+                    liftPreload1,
+                    liftPreload2
+            );
 
 
-        // claw
-        LinearClaw claw1 = new LinearClaw(liftPreload2.getStartTime()+.61,
-                new ClawState(clawClosed),
-                new ClawState(clawOpen)
-        );
+            // claw
+            LinearClaw claw1 = new LinearClaw(liftPreload2.getStartTime()+.61,
+                    new ClawState(clawClosed),
+                    new ClawState(clawOpen)
+            );
 
 
-        ClawPlan clawPlan = new ClawPlan(robot,
-                claw1
-        );
+            ClawPlan clawPlan = new ClawPlan(robot,
+                    claw1
+            );
 
-        //elbow
-        LinearElbow elbowStill = new LinearElbow(claw1.getStartTime(), //goes down to sample
-                new ElbowState(elbowUp),
-                new ElbowState(elbowUp)
-        );
-
-
-        ElbowPlan elbowPlan = new ElbowPlan(robot,
-                elbowStill
-        );
+            //elbow
+            LinearElbow elbowStill = new LinearElbow(claw1.getStartTime(), //goes down to sample
+                    new ElbowState(elbowUp),
+                    new ElbowState(elbowUp)
+            );
 
 
-        this.synchronizer = new Synchronizer(
-                translationPlan,
-                rotationPlan,
-                liftPlan,
-                elbowPlan,
-                clawPlan
-        );
+            ElbowPlan elbowPlan = new ElbowPlan(robot,
+                    elbowStill
+            );
+
+
+            this.synchronizer = new Synchronizer(
+                    translationPlan,
+                    rotationPlan,
+                    liftPlan,
+                    elbowPlan,
+                    clawPlan
+            );
     }
-
-
 }
