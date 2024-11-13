@@ -49,8 +49,8 @@ public class ColorRangeTester extends OpenCvPipeline {
     public static Scalar testVariable = new Scalar(0, 1, 2);
     public static Scalar testVariable2 = new Scalar(0, 1, 2);
 
-    public static Scalar lowerYellow = new Scalar(14.2, 86.4, 0); // hsv
-    public static Scalar upperYellow = new Scalar(65, 255, 255.0); // hsv
+    public static Scalar lowerYellow = new Scalar(12.8, 86.4, 165.8); // hsv
+    public static Scalar upperYellow = new Scalar(22.7, 255, 255.0); // hsv
 
 //    @Override
 //    public void init(int width, int height, CameraCalibration calibration) {

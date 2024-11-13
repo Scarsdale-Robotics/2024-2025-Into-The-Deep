@@ -13,6 +13,7 @@ import org.opencv.core.Point;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
+import org.opencv.core.CvType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -50,8 +51,8 @@ public class CornerDetectionTester extends OpenCvPipeline {
     public static Scalar testVariable = new Scalar(0, 1, 2);
     public static Scalar testVariable2 = new Scalar(0, 1, 2);
 
-    public static Scalar lowerYellow = new Scalar(14.2, 86.4, 0); // hsv
-    public static Scalar upperYellow = new Scalar(65, 255, 255.0); // hsv
+    public static Scalar lowerYellow = new Scalar(12.8, 86.4, 165.8); // hsv
+    public static Scalar upperYellow = new Scalar(22.7, 255, 255.0); // hsv
 
 //    @Override
 //    public void init(int width, int height, CameraCalibration calibration) {
@@ -76,23 +77,47 @@ public class CornerDetectionTester extends OpenCvPipeline {
         // inRange is the Binary mask
 
         // Morphology
-        Mat kernel = Imgproc.getStructuringElement(Imgproc.CV_SHAPE_RECT, new Size(15, 15));
+        Mat kernel = Imgproc.getStructuringElement(Imgproc.CV_SHAPE_RECT, new Size(20, 20));
+        Mat kernel2 = Imgproc.getStructuringElement(Imgproc.CV_SHAPE_RECT, new Size(5, 5));
         Imgproc.dilate(inRange, inRange, kernel);
         Imgproc.erode(inRange, inRange, kernel);
 
-        // Find contours in the binary mask
-        Mat hierarchy = new Mat();
-        List<MatOfPoint> contours = new ArrayList<>();
-        Imgproc.findContours(inRange.clone(), contours, hierarchy, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
-        Imgproc.drawContours(output, contours, -1, new Scalar(0, 0, 255), 2);
+        Mat gray = new Mat();
+        Imgproc.cvtColor(hsv, gray, Imgproc.COLOR_RGB2GRAY);
+        inRange.copyTo(gray);
 
+        // Convert to float32 for cornerHarris
+        Mat grayFloat = new Mat();
+        gray.convertTo(grayFloat, CvType.CV_32F);
+
+        // Apply Harris Corner detection
+        Mat corners = new Mat();
+        Imgproc.cornerHarris(grayFloat, corners, 2, 7, 0.16);
+//        Imgproc.dilate(corners, corners, kernel2);
+
+//        // Find contours in the binary mask
+//        Mat hierarchy = new Mat();
+//        List<MatOfPoint> contours = new ArrayList<>();
+//        Imgproc.findContours(inRange.clone(), contours, hierarchy, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
+//        Imgproc.drawContours(output, contours, -1, new Scalar(0, 0, 255), 2);
+//
         Imgproc.cvtColor(inRange, inRange, Imgproc.COLOR_GRAY2RGBA);
 //        Imgproc.cvtColor(input, input, Imgproc.COLOR_RGBA2BGR);
+        int thresh = 50;
+        for( int j = 0; j < corners.rows() ; j++){
+            for( int i = 0; i < corners.cols(); i++){
+                if ((int) corners.get(j,i)[0] > thresh){
+                    Imgproc.circle(inRange, new Point(i,j), 5 , new Scalar(100, 0, 155), 2 ,8 , 0);
+                }
+            }
+        }
 
         telemetry.addData("ee", inRange.type());
         telemetry.addData("input", input.type());
+        telemetry.addData("corners", corners.type());
         telemetry.update();
         Core.bitwise_and(input, inRange, output);
+//        Core.bitwise_or(output, corners, output);
 
         return output;
 
