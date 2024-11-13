@@ -2,12 +2,9 @@ package org.firstinspires.ftc.teamcode.subsystems;
 
 import android.util.Size;
 
-import com.acmerobotics.dashboard.FtcDashboard;
-import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.arcrobotics.ftclib.command.SubsystemBase;
 import com.arcrobotics.ftclib.geometry.Pose2d;
 import com.arcrobotics.ftclib.geometry.Rotation2d;
-import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
@@ -16,10 +13,10 @@ import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 
+import org.firstinspires.ftc.teamcode.cvpipelines.processors.VanillaPer_ocessor;
 import org.firstinspires.ftc.vision.VisionPortal;
-import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
-import org.opencv.core.Point;
+import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -38,6 +35,7 @@ public class CVSubsystem extends SubsystemBase {
     private final WebcamName cameraName;
     private VisionPortal visionPortal;
     private AprilTagProcessor aprilTag;
+    private VanillaPer_ocessor VaPe;
 
     private final Telemetry telemetry;
 
@@ -82,16 +80,18 @@ public class CVSubsystem extends SubsystemBase {
         aprilTag = new AprilTagProcessor.Builder()
                 .setDrawTagOutline(true)
                 .build();
+        VaPe = new VanillaPer_ocessor();
+
 
         // Create the vision portal by using a builder.
         VisionPortal.Builder builder = new VisionPortal.Builder();
         builder.setCamera(cameraName);
         builder.setCameraResolution(new Size(640, 480));
-        builder.addProcessors(aprilTag);
+        builder.addProcessors(VaPe, aprilTag);
 
         // Build the Vision Portal, using the above settings.
         visionPortal = builder.build();
-        visionPortal.setProcessorEnabled(aprilTag, true);
+        visionPortal.setProcessorEnabled(VaPe, true);
     }
 
 
