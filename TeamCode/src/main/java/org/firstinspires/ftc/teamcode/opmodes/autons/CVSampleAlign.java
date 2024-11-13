@@ -8,6 +8,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.HardwareRobot;
+import org.firstinspires.ftc.teamcode.subsystems.CVSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.DriveSubsystem;
 
 import java.util.ArrayList;
@@ -33,6 +34,7 @@ public class CVSampleAlign extends LinearOpMode {
         telemetry.update();
 
         HardwareRobot robot = new HardwareRobot(hardwareMap);
+        CVSubsystem cv = new CVSubsystem(robot.cameraName, telemetry);
         MecanumDrive drive = new MecanumDrive(
                 robot.leftFront,
                 robot.rightFront,
