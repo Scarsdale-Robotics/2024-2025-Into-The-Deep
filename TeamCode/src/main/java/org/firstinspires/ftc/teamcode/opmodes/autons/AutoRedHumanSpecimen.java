@@ -28,21 +28,21 @@ import org.firstinspires.ftc.teamcode.synchropather.systems.translation.Translat
 import org.firstinspires.ftc.teamcode.synchropather.systems.translation.movements.CRSplineTranslation;
 import org.firstinspires.ftc.teamcode.synchropather.systems.translation.movements.LinearTranslation;
 
-@Autonomous(name="Auto Blue Basket Specimen", group="Autons")
-public class AutoBlueBasketSpecimen extends LinearOpMode {
-
+@Autonomous(name="Auto Red Human Specimen", group="Autons")
+public class AutoRedHumanSpecimen extends LinearOpMode {
     RobotSystem robot;
     Synchronizer synchronizer;
 
     public static double clawOpen = 0.23;
-    public static double clawClosed = 0.06;;
+    public static double clawClosed = 0.06;
+    ;
 
     public static double elbowUp = 0.275;
     public static double elbowDown = 0.53;
 
     @Override
     public void runOpMode() throws InterruptedException {
-        this.robot = new RobotSystem(hardwareMap, new Pose2d(40, 60, new Rotation2d(Math.toRadians(-90))), this);
+        this.robot = new RobotSystem(hardwareMap, new Pose2d(-24, 60, new Rotation2d(Math.toRadians(-90))), this);
         robot.inDep.setClawPosition(clawClosed);
         robot.inDep.setElbowPosition(0.3);
         initSynchronizer();
@@ -62,22 +62,16 @@ public class AutoBlueBasketSpecimen extends LinearOpMode {
         synchronizer.stop();
     }
 
-
-
     private void initSynchronizer() {
-
-
-        // place preloaded specimen
-
         CRSplineTranslation spline1 = new CRSplineTranslation(0,
-                new TranslationState(40,60),
-                new TranslationState(10, 45),
-                new TranslationState(10, 35)
+                new TranslationState(-24,-60),
+                new TranslationState(-10, -45),
+                new TranslationState(-10, -35)
         );
 
         LinearRotation still = new LinearRotation(0,
-                new RotationState(Math.toRadians(-90)),
-                new RotationState(Math.toRadians(-90))
+                new RotationState(Math.toRadians(90)),
+                new RotationState(Math.toRadians(90))
         );
 
         RotationPlan rotationPlan = new RotationPlan(robot,
@@ -96,10 +90,11 @@ public class AutoBlueBasketSpecimen extends LinearOpMode {
         );
 
         CRSplineTranslation splinePark = new CRSplineTranslation(liftPreload2.getEndTime(),
-                new TranslationState(10, 35),
-                new TranslationState(36, 36),
-                new TranslationState(36, 12),
-                new TranslationState(24, 0)
+                new TranslationState(-10, -35),
+                new TranslationState(-20, -36),
+                new TranslationState(-36, -36),
+                new TranslationState(-36, -12),
+                new TranslationState(-24, 0)
         );
 
         TranslationPlan translationPlan = new TranslationPlan(robot,
@@ -135,7 +130,6 @@ public class AutoBlueBasketSpecimen extends LinearOpMode {
                 elbowStill
         );
 
-
         this.synchronizer = new Synchronizer(
                 translationPlan,
                 rotationPlan,
@@ -144,6 +138,4 @@ public class AutoBlueBasketSpecimen extends LinearOpMode {
                 clawPlan
         );
     }
-
-
 }
