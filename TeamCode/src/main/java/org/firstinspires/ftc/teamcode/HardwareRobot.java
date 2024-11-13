@@ -14,16 +14,16 @@ public class HardwareRobot {
     public final MotorEx rightFront;
     public final MotorEx leftBack;
     public final MotorEx rightBack;
-    public final MotorEx lift;
+//    public final MotorEx lift;
 
-    public final Encoder leftOdometer;
-    public final Encoder rightOdometer;
-    public final Encoder centerOdometer;
+//    public final Encoder leftOdometer;
+//    public final Encoder rightOdometer;
+//    public final Encoder centerOdometer;
 
     public final Limelight3A limelight;
 
-    public final Servo elbow;
-    public final Servo claw;  // claw open/close servo
+//    public final Servo elbow;
+//    public final Servo claw;  // claw open/close servo
 
 
     public HardwareRobot(HardwareMap hardwareMap) {
@@ -35,7 +35,7 @@ public class HardwareRobot {
         rightFront = new MotorEx(hardwareMap, "rightFront", Motor.GoBILDA.RPM_312);
         leftBack = new MotorEx(hardwareMap, "leftBack", Motor.GoBILDA.RPM_312);
         rightBack = new MotorEx(hardwareMap, "rightBack", Motor.GoBILDA.RPM_312);
-        lift = new MotorEx(hardwareMap, "linearSlide", Motor.GoBILDA.RPM_312);
+//        lift = new MotorEx(hardwareMap, "linearSlide", Motor.GoBILDA.RPM_312);
 
         leftFront.motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         rightFront.motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -71,20 +71,20 @@ public class HardwareRobot {
         //////////////
         // ODOMETRY //
         //////////////
-        leftOdometer = rightFront.encoder;
-        rightOdometer = leftFront.encoder;
-        centerOdometer = leftBack.encoder;
-
-        leftOdometer.setDirection(Motor.Direction.REVERSE);
-        rightOdometer.setDirection(Motor.Direction.REVERSE);
+//        leftOdometer = rightFront.encoder;
+//        rightOdometer = leftFront.encoder;
+//        centerOdometer = leftBack.encoder;
+//
+//        leftOdometer.setDirection(Motor.Direction.REVERSE);
+//        rightOdometer.setDirection(Motor.Direction.REVERSE);
 
 
 
         ////////////
         // SERVOS //
         ////////////
-        elbow = hardwareMap.get(ServoImplEx.class, "elbow");
-        claw = hardwareMap.get(ServoImplEx.class, "claw");
+//        elbow = hardwareMap.get(ServoImplEx.class, "elbow");
+//        claw = hardwareMap.get(ServoImplEx.class, "claw");
 
 
         ////////////

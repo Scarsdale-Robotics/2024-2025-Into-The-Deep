@@ -23,13 +23,13 @@ public class BasicTeleop extends LinearOpMode {
                 robot.leftBack,
                 robot.rightBack
         );
-        LocalizationSubsystem localization = new LocalizationSubsystem(
-                new Pose2d(0, 0, new Rotation2d(0)),
-                robot.leftOdometer,
-                robot.rightOdometer,
-                robot.centerOdometer,
-                telemetry
-        );
+//        LocalizationSubsystem localization = new LocalizationSubsystem(
+//                new Pose2d(0, 0, new Rotation2d(0)),
+//                robot.leftOdometer,
+//                robot.rightOdometer,
+//                robot.centerOdometer,
+//                telemetry
+//        );
 
         waitForStart();
 

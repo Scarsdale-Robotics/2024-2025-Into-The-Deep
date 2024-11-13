@@ -3,6 +3,7 @@ import com.arcrobotics.ftclib.drivebase.MecanumDrive;
 import com.arcrobotics.ftclib.geometry.Pose2d;
 import com.arcrobotics.ftclib.geometry.Rotation2d;
 import com.qualcomm.hardware.limelightvision.LLResult;
+import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
@@ -11,9 +12,15 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import org.firstinspires.ftc.teamcode.subsystems.DriveSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.LocalizationSubsystem;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
+import java.util.Objects;
+
+import java.time.Duration;
+import java.time.Instant;
 
 @Autonomous(name="ari LimelightSh_t")
 public class LimelightSh_t extends LinearOpMode {
@@ -22,11 +29,15 @@ public class LimelightSh_t extends LinearOpMode {
 
     @Override
     public void runOpMode() throws InterruptedException {
+
         limelight = hardwareMap.get(Limelight3A.class, "limelight");
 
         telemetry.setMsTransmissionInterval(11);
 
         limelight.pipelineSwitch(2);
+
+        telemetry.addData("state","prep");
+        telemetry.update();
 
         HardwareRobot robot = new HardwareRobot(hardwareMap);
         MecanumDrive drive = new MecanumDrive(
@@ -35,13 +46,13 @@ public class LimelightSh_t extends LinearOpMode {
                 robot.leftBack,
                 robot.rightBack
         );
-        LocalizationSubsystem localization = new LocalizationSubsystem(
-                new Pose2d(0, 0, new Rotation2d(0)),
-                robot.leftOdometer,
-                robot.rightOdometer,
-                robot.centerOdometer,
-                telemetry
-        );
+//        LocalizationSubsystem localization = new LocalizationSubsystem(
+//                new Pose2d(0, 0, new Rotation2d(0)),
+////                robot.leftOdometer,
+////                robot.rightOdometer,
+////                robot.centerOdometer,
+//                telemetry
+//        );
         /*
          * Starts polling for data.  If you neglect to call start(), getLatestResult() will return null.
          */
@@ -51,36 +62,58 @@ public class LimelightSh_t extends LinearOpMode {
         telemetry.update();
         waitForStart();
 
-        List<Double> oldtxlist= Arrays.asList(360.0,360.0,360.0,360.0);
+        ArrayList<Double> oldtxlist= new ArrayList<Double>();
+        ArrayList<Double> oldtylist= new ArrayList<Double>();
+        ArrayList<Double> runtimelist= new ArrayList<Double>();
+        for(int i = 0; i<5;i++){
+            oldtxlist.add(360.0);
+            oldtylist.add(360.0);
+            runtimelist.add(360.0);
+        }
 
-        ElapsedTime runtime = new ElapsedTime(0);
+        double MAX_SPEED = 0.2;
 
-        List<Double> runtimelist= Arrays.asList(360.0,360.0,360.0,360.0);
+        Date lt = new Date();
         while (opModeIsActive()) {
+            telemetry.addData("state","running");
             LLResult result = limelight.getLatestResult();
-            if (result != null) {
-                if (result.isValid()) {
-                    double tx = result.getTx(); // How far left or right the target is (degrees)
-                    double ty = result.getTy(); // How far up or down the target is (degrees)
-                    double ta = result.getTa();
+            if (result != null && result.isValid()) {
+                List<LLResultTypes.DetectorResult> detections = result.getDetectorResults();
+                int i=0;
+                for (LLResultTypes.DetectorResult detection : detections) {
+                    String className = detection.getClassName(); // What was detected
+                    telemetry.addData(String.valueOf(i++), className);
+                    if (!Objects.equals(className, "yellow")) continue;
+                    double tx = detection.getTargetXDegrees(); // Where it is (left-right)
+                    double ty = detection.getTargetYDegrees(); // Where it is (up-down)
 
-                    double deltatime = runtime.seconds();
+                    Date d2 = new Date();
+                    double deltatime = (d2.getTime()-lt.getTime())/1000.0;
+                    lt = d2;
                     runtimelist.remove(0);runtimelist.add(deltatime);
 
                     oldtxlist.remove(0);oldtxlist.add(deltatime);
 
                     if(oldtxlist.get(0)==360) {
-                        drive.driveRobotCentric(tx * 0.01, 0, 0);
-                    }
-                    else{
+                        drive.driveRobotCentric(Math.max(-MAX_SPEED, Math.min(tx * 0.05, MAX_SPEED)), -Math.max(-MAX_SPEED, Math.min(ty * 0.05, MAX_SPEED)), 0);
+                    } else{
                         double derivativex = (-oldtxlist.get(4)+8*oldtxlist.get(3)-8*oldtxlist.get(1)+oldtxlist.get(0))/(12*(runtimelist.get(4)-runtimelist.get(0)));
+                        double u_tx = Math.max(Math.min(tx*0.05+0.02*derivativex,MAX_SPEED),-MAX_SPEED);
+                        double derivativey = (-oldtylist.get(4)+8*oldtylist.get(3)-8*oldtylist.get(1)+oldtylist.get(0))/(12*(runtimelist.get(4)-runtimelist.get(0)));
+                        double u_ty = Math.max(Math.min(ty*0.05+0.02*derivativey,MAX_SPEED),-MAX_SPEED);
+                        drive.driveRobotCentric(u_tx,-u_ty,0);
                     }
-                    telemetry.addData("Target X", tx);
-                    telemetry.addData("Target Y", ty);
-                    telemetry.addData("Target Area", ta);
-
-                    telemetry.update();
+                    telemetry.addData(String.valueOf(i++), tx);
+                    break;
                 }
+//                    telemetry.addData("Target X", tx);
+//                    telemetry.addData("Target Y", ty);
+
+                telemetry.update();
+            } else {
+                drive.driveRobotCentric(0, 0, 0);
+                telemetry.addData("ERROR","NO RESULT");
+                telemetry.update();
             }
 
         }

@@ -11,7 +11,7 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.subsystems.CVSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.DriveSubsystem;
-import org.firstinspires.ftc.teamcode.subsystems.InDepSubsystem;
+//import org.firstinspires.ftc.teamcode.subsystems.InDepSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.LocalizationSubsystem;
 
 public class RobotSystem {
@@ -21,8 +21,8 @@ public class RobotSystem {
 
     public final DriveSubsystem drive;
     public final CVSubsystem cv;
-    public final LocalizationSubsystem localization;
-    public final InDepSubsystem inDep;
+//    public final LocalizationSubsystem localization;
+//    public final InDepSubsystem inDep;
 
     public RobotSystem(HardwareMap hardwareMap, Pose2d initialPose, LinearOpMode opMode) {
         this.opMode = opMode;
@@ -33,24 +33,24 @@ public class RobotSystem {
                 initialPose.getHeading(),
                 telemetry
         );
-        this.localization = new LocalizationSubsystem(
-                initialPose,
-                hardwareRobot.leftOdometer,
-                hardwareRobot.rightOdometer,
-                hardwareRobot.centerOdometer,
-                cv,
-                telemetry
-        );
+//        this.localization = new LocalizationSubsystem(
+//                initialPose,
+////                hardwareRobot.leftOdometer,
+////                hardwareRobot.rightOdometer,
+////                hardwareRobot.centerOdometer,
+//                cv,
+//                telemetry
+//        );
         this.drive = new DriveSubsystem(
                 hardwareRobot.leftFront,
                 hardwareRobot.rightFront,
                 hardwareRobot.leftBack,
                 hardwareRobot.rightBack
         );
-        this.inDep = new InDepSubsystem(
-                hardwareRobot,
-                opMode
-        );
+//        this.inDep = new InDepSubsystem(
+//                hardwareRobot,
+//                opMode
+//        );
     }
 
 }
