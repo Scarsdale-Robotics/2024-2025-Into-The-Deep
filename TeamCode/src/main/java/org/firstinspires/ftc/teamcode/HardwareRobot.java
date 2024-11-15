@@ -76,8 +76,8 @@ public class HardwareRobot {
         ////////////
         // CAMERA //
         ////////////
-        cameraName = hardwareMap.get(WebcamName.class, "limelight");
-//        cameraName = null;
+//        cameraName = hardwareMap.get(WebcamName.class, "limelight");
+        cameraName = null;
 
     }
 }

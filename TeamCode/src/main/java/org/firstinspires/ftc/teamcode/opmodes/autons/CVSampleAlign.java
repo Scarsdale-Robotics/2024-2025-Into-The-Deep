@@ -34,7 +34,7 @@ public class CVSampleAlign extends LinearOpMode {
         telemetry.update();
 
         HardwareRobot robot = new HardwareRobot(hardwareMap);
-        CVSubsystem cv = new CVSubsystem(robot.cameraName, telemetry);
+//        CVSubsystem cv = new CVSubsystem(robot.cameraName, telemetry);
         MecanumDrive drive = new MecanumDrive(
                 robot.leftFront,
                 robot.rightFront,
@@ -88,9 +88,9 @@ public class CVSampleAlign extends LinearOpMode {
                         drive.driveRobotCentric(Math.max(-MAX_SPEED, Math.min(tx * 0.05, MAX_SPEED)), -Math.max(-MAX_SPEED, Math.min(ty * 0.05, MAX_SPEED)), 0);
                     } else{
                         double derivativex = (-oldtxlist.get(4)+8*oldtxlist.get(3)-8*oldtxlist.get(1)+oldtxlist.get(0))/(12*(runtimelist.get(4)-runtimelist.get(0)));
-                        double u_tx = Math.max(Math.min(tx*0.05+0.05*derivativex,MAX_SPEED),-MAX_SPEED);
+                        double u_tx = Math.max(Math.min(tx*0.5+0.05*derivativex,MAX_SPEED),-MAX_SPEED);
                         double derivativey = (-oldtylist.get(4)+8*oldtylist.get(3)-8*oldtylist.get(1)+oldtylist.get(0))/(12*(runtimelist.get(4)-runtimelist.get(0)));
-                        double u_ty = Math.max(Math.min(ty*0.05+0.5*derivativey,MAX_SPEED),-MAX_SPEED);
+                        double u_ty = Math.max(Math.min(ty*0.5+0.5*derivativey,MAX_SPEED),-MAX_SPEED);
                         drive.driveRobotCentric(u_tx,-u_ty,0);
                     }
                     break;
