@@ -60,7 +60,7 @@ public class CVSampleAlign extends LinearOpMode {
             runtimelist.add(360.0);
         }
 
-        double MAX_SPEED = 0.2;
+        double MAX_SPEED = 0.5;
 
         Date lt = new Date();
         double i=0;
@@ -84,13 +84,15 @@ public class CVSampleAlign extends LinearOpMode {
 
                     oldtxlist.remove(0);oldtxlist.add(deltatime);
 
+                    //hi <-- kevin han
+
                     if(oldtxlist.get(0)==360) {
                         drive.driveRobotCentric(Math.max(-MAX_SPEED, Math.min(tx * 0.05, MAX_SPEED)), -Math.max(-MAX_SPEED, Math.min(ty * 0.05, MAX_SPEED)), 0);
                     } else{
                         double derivativex = (-oldtxlist.get(4)+8*oldtxlist.get(3)-8*oldtxlist.get(1)+oldtxlist.get(0))/(12*(runtimelist.get(4)-runtimelist.get(0)));
-                        double u_tx = Math.max(Math.min(tx*0.5+0.05*derivativex,MAX_SPEED),-MAX_SPEED);
+                        double u_tx = Math.max(Math.min(tx*0.5+0.0*derivativex,MAX_SPEED),-MAX_SPEED);
                         double derivativey = (-oldtylist.get(4)+8*oldtylist.get(3)-8*oldtylist.get(1)+oldtylist.get(0))/(12*(runtimelist.get(4)-runtimelist.get(0)));
-                        double u_ty = Math.max(Math.min(ty*0.5+0.5*derivativey,MAX_SPEED),-MAX_SPEED);
+                        double u_ty = Math.max(Math.min(ty*0.5+0.0*derivativey,MAX_SPEED),-MAX_SPEED);
                         drive.driveRobotCentric(u_tx,-u_ty,0);
                     }
                     break;
