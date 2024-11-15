@@ -51,8 +51,9 @@ public class CornerDetectionTester extends OpenCvPipeline {
     public static Scalar testVariable = new Scalar(0, 1, 2);
     public static Scalar testVariable2 = new Scalar(0, 1, 2);
 
-    public static Scalar lowerYellow = new Scalar(12.8, 86.4, 165.8); // hsv
+    public static Scalar lowerYellow = new Scalar(12.8, 86.4, 137.8); // hsv
     public static Scalar upperYellow = new Scalar(22.7, 255, 255.0); // hsv
+    public static int harrisKSize = 7;
 
 //    @Override
 //    public void init(int width, int height, CameraCalibration calibration) {
@@ -92,7 +93,7 @@ public class CornerDetectionTester extends OpenCvPipeline {
 
         // Apply Harris Corner detection
         Mat corners = new Mat();
-        Imgproc.cornerHarris(grayFloat, corners, 2, 7, 0.16);
+        Imgproc.cornerHarris(grayFloat, corners, 2, harrisKSize, 0.16);
 //        Imgproc.dilate(corners, corners, kernel2);
 
 //        // Find contours in the binary mask
