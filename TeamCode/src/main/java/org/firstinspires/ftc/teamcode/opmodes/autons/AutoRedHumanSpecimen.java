@@ -30,12 +30,12 @@ import org.firstinspires.ftc.teamcode.synchropather.systems.translation.movement
 
 @Autonomous(name="Auto Red Human Specimen", group="Autons")
 public class AutoRedHumanSpecimen extends LinearOpMode {
+
     RobotSystem robot;
     Synchronizer synchronizer;
 
-    public static double clawOpen = 0.23;
-    public static double clawClosed = 0.06;
-    ;
+    public static double clawOpen = 0.2;
+    public static double clawClosed = 0.1;
 
     public static double elbowUp = 0.275;
     public static double elbowDown = 0.53;
@@ -64,9 +64,9 @@ public class AutoRedHumanSpecimen extends LinearOpMode {
 
     private void initSynchronizer() {
         CRSplineTranslation spline1 = new CRSplineTranslation(0,
-                new TranslationState(-24,-60),
-                new TranslationState(-10, -45),
-                new TranslationState(-10, -35)
+                new TranslationState(24,-60),
+                new TranslationState(10, -45),
+                new TranslationState(10, -34)
         );
 
         LinearRotation still = new LinearRotation(0,
@@ -90,11 +90,11 @@ public class AutoRedHumanSpecimen extends LinearOpMode {
         );
 
         CRSplineTranslation splinePark = new CRSplineTranslation(liftPreload2.getEndTime(),
-                new TranslationState(-10, -35),
-                new TranslationState(-20, -36),
-                new TranslationState(-36, -36),
-                new TranslationState(-36, -12),
-                new TranslationState(-24, 0)
+                new TranslationState(10, -34),
+                new TranslationState(20, -40),
+                new TranslationState(36, -36),
+                new TranslationState(36, -12),
+                new TranslationState(24, 0)
         );
 
         TranslationPlan translationPlan = new TranslationPlan(robot,
@@ -109,7 +109,7 @@ public class AutoRedHumanSpecimen extends LinearOpMode {
 
 
         // claw
-        LinearClaw claw1 = new LinearClaw(liftPreload2.getStartTime()+.61,
+        LinearClaw claw1 = new LinearClaw(liftPreload2.getStartTime()+.66,
                 new ClawState(clawClosed),
                 new ClawState(clawOpen)
         );

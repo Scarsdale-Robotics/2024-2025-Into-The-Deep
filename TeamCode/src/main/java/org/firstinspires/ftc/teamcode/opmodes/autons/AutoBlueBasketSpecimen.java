@@ -72,7 +72,7 @@ public class AutoBlueBasketSpecimen extends LinearOpMode {
         CRSplineTranslation spline1 = new CRSplineTranslation(0,
                 new TranslationState(40,60),
                 new TranslationState(10, 45),
-                new TranslationState(10, 35)
+                new TranslationState(10, 34)
         );
 
         LinearRotation still = new LinearRotation(0,
@@ -96,7 +96,7 @@ public class AutoBlueBasketSpecimen extends LinearOpMode {
         );
 
         CRSplineTranslation splinePark = new CRSplineTranslation(liftPreload2.getEndTime(),
-                new TranslationState(10, 35),
+                new TranslationState(10, 34),
                 new TranslationState(36, 36),
                 new TranslationState(36, 12),
                 new TranslationState(24, 0)
@@ -114,7 +114,7 @@ public class AutoBlueBasketSpecimen extends LinearOpMode {
 
 
         // claw
-        LinearClaw claw1 = new LinearClaw(liftPreload2.getStartTime()+.61,
+        LinearClaw claw1 = new LinearClaw(liftPreload2.getStartTime()+.66,
                 new ClawState(clawClosed),
                 new ClawState(clawOpen)
         );
