@@ -51,6 +51,9 @@ public class BasicTeleop extends LinearOpMode {
         boolean claw = false, toggleClaw = false; // false = claw open
         boolean elbow = true, toggleElbow = false;// true = elbow up
         boolean toggleMacro = false; //false = not in picking up position
+        boolean toggleMacroBasket = false;//false = not in reaching mode
+        double liftTargetPosition = 0;  //set lift pos to 0;
+        boolean liftMacroRunning = false; //while liftMacroRunning is true, other acts are not allowed during the movement
 
         while (opModeIsActive()) {
             localization.update();
@@ -114,6 +117,7 @@ public class BasicTeleop extends LinearOpMode {
 
             double leftPower = 0;
             double rightPower = 0;
+            double kP = 0.01;
 
             // Read gamepad
             double triggerPower = gamepad1.right_trigger - gamepad1.left_trigger;
@@ -126,48 +130,56 @@ public class BasicTeleop extends LinearOpMode {
         	rightPower = clamp(rightPower);
         	*/
 
-            // Set powers
-            robot.leftLift.set(leftPower);
-            robot.rightLift.set(rightPower);
-            ;
 
             if (gamepad1.right_bumper && !toggleMacro) {
                 claw = false;
                 elbow = false;
-                triggerPower = -1;
+                liftTargetPosition = 0;
+                liftMacroRunning = true;
                 toggleMacro = true;
             }
             if (!gamepad1.right_bumper)
                 toggleMacro = false;
 
-            ;
-        }/*
-        	if (clawMacro)
-           	claw = true;
-        	else claw = false;
-        	if (elbowMacro);
+            if (!liftMacroRunning) {
+                // Set powers
+                robot.leftLift.set(leftPower);
+                robot.rightLift.set(rightPower);
+            } else {
+                //p controller
+                double liftPosition = robot.leftLift.getCurrentPosition(); //get current position
+                double error = liftTargetPosition - liftPosition;
 
-        	else robot.elbow.setPosition(elbowUp);
-        	if (liftMacro)
-            	triggerPower = -1;
-        	else triggerPower = 0;
-
-        	boolean toggleMacroBasket = false, macroBasket = false;
+                //control law
+                double u_t = kP * error;
+                robot.leftLift.set(u_t);
 
 
-        	if (gamepad1.right_stick_button && !toggleMacroBasket) {
-            	triggerPower = 20;
-            	claw = false;
-            	toggleMacroBasket = true;
-            	macroBasket = !macroBasket;
-        	}
-        	if (!gamepad1.right_stick_button) !toggleMacroBasket
-        	if(gamepad1.right_stick_button && toggleMacroBasket) {
-            	triggerPower = -20;
-            	claw = true;
-            	toggleMacroBasket = false;
-        	}
-    	*/
+                if (Math.abs(error) < 50) {
+                    liftMacroRunning = false;
+                }
+
+            }
+
+
+            if (gamepad1.right_stick_button && !toggleMacroBasket) {
+                triggerPower = 20; //lift goes up
+                sleep(5000);
+                claw = true; //claw open
+                toggleMacroBasket = !toggleMacroBasket; //set toggle to true
+            }
+            /*else if (gamepad1.right_stick_button && toggleMacroBasket){
+                triggerPower = -20;
+                sleep(5000);
+                claw = true; //claw open
+                toggleMacroBasket = !toggleMacroBasket;
+            } */
+            if(!gamepad1.right_stick_button) {
+                toggleMacroBasket = false;
+            }
+        }
+
+
     }
 }
 /**
