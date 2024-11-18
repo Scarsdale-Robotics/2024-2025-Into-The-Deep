@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.subsystems;
 
+import com.acmerobotics.dashboard.config.Config;
 import com.arcrobotics.ftclib.command.SubsystemBase;
 import com.arcrobotics.ftclib.geometry.Pose2d;
 import com.arcrobotics.ftclib.geometry.Rotation2d;
@@ -14,6 +15,7 @@ import java.util.ArrayList;
 /**
  * Estimate robot pose with a Kalman Filter using odometry as the model, imu and camera as sensors.
  */
+@Config
 public class LocalizationSubsystem extends SubsystemBase {
 
     ///////////////////
@@ -53,9 +55,9 @@ public class LocalizationSubsystem extends SubsystemBase {
     //////////////
 
     // Distance between parallel odometers
-    private static final double TRACK_WIDTH = 11.3386;
+    public static double TRACK_WIDTH = 11.3386;
     // Signed distance from the point of rotation (positive=forward)
-    private static final double CENTER_WHEEL_OFFSET = 0.944882;
+    public static double CENTER_WHEEL_OFFSET = 0.944882;
     // Measured in inches
     private static final double WHEEL_DIAMETER = 1.37795;
     // Odometer encoder resolution
