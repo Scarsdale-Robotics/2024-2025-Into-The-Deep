@@ -34,8 +34,8 @@ public class AutoBlueBasket extends LinearOpMode {
     RobotSystem robot;
     Synchronizer synchronizer;
 
-    public static double clawOpen = 0.23;
-    public static double clawClosed = 0.06;;
+    public static double clawOpen = 0.2;
+    public static double clawClosed = 0.1;
 
     public static double elbowUp = 0.275;
     public static double elbowDown = 0.53;
