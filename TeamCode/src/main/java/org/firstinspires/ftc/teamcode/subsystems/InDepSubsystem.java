@@ -79,7 +79,7 @@ public class InDepSubsystem extends SubsystemBase {
             NAME = name;
         }
     }
-    public void setElbowPosition(ElbowPosition position) { //take three arguments
+    public void setElbowPosition(ElbowPosition position) {
         setElbowPosition(position.SERVO_POSITION);
     }
     public void setElbowPosition(double position) {

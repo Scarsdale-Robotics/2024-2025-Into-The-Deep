@@ -1,19 +1,19 @@
-package org.firstinspires.ftc.teamcode.synchropather.systems.lift.movements;
+package org.firstinspires.ftc.teamcode.synchropather.systems.claw.movements;
 
 import org.firstinspires.ftc.teamcode.synchropather.systems.MovementType;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.TimeSpan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.calculators.StretchedDisplacementCalculator;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.superclasses.Movement;
-import org.firstinspires.ftc.teamcode.synchropather.systems.lift.LiftConstants;
-import org.firstinspires.ftc.teamcode.synchropather.systems.lift.LiftState;
+import org.firstinspires.ftc.teamcode.synchropather.systems.claw.ClawConstants;
+import org.firstinspires.ftc.teamcode.synchropather.systems.claw.ClawState;
 
-public class LinearLift extends Movement {
+public class LinearClaw extends Movement {
     private double distance, minDuration;
-    private LiftState start, end;
+    private ClawState start, end;
     private StretchedDisplacementCalculator calculator;
 
-    public LinearLift(TimeSpan timeSpan, LiftState start, LiftState end) {
-        super(timeSpan, MovementType.LIFT);
+    public LinearClaw(TimeSpan timeSpan, ClawState start, ClawState end) {
+        super(timeSpan, MovementType.CLAW);
         this.start = start;
         this.end = end;
         init(false, 0);
@@ -24,8 +24,8 @@ public class LinearLift extends Movement {
      * @param start
      * @param end
      */
-    public LinearLift(double startTime, LiftState start, LiftState end) {
-        super(MovementType.LIFT);
+    public LinearClaw(double startTime, ClawState start, ClawState end) {
+        super(MovementType.CLAW);
         this.start = start;
         this.end = end;
         init(true, startTime);
@@ -36,10 +36,10 @@ public class LinearLift extends Movement {
         return minDuration;
     }
     /**
-     * @return the indicated LiftState.
+     * @return the indicated ClawState.
      */
     @Override
-    public LiftState getState(double elapsedTime) {
+    public ClawState getState(double elapsedTime) {
         double t = distance!=0 ? calculator.getDisplacement(elapsedTime) / distance : 0;
 
         double q0 = 1 - t;
@@ -49,48 +49,48 @@ public class LinearLift extends Movement {
         return start.times(q0).plus(end.times(q1));
     }
     /**
-     * @return the indicated velocity LiftState.
+     * @return the indicated velocity ClawState.
      */
     @Override
-    public LiftState getVelocity(double elapsedTime) {
+    public ClawState getVelocity(double elapsedTime) {
         double sign = end.minus(start).sign();
         double speed = calculator.getVelocity(elapsedTime);
 
         // scaled velocity vector
-        return new LiftState(sign * speed);
+        return new ClawState(sign * speed);
     }
     /**
-     * @return the indicated acceleration LiftState.
+     * @return the indicated acceleration ClawState.
      */
     @Override
-    public LiftState getAcceleration(double elapsedTime) {
+    public ClawState getAcceleration(double elapsedTime) {
         double sign = end.minus(start).sign();
         double speed = calculator.getAcceleration(elapsedTime);
 
         // scaled acceleration vector
-        return new LiftState(sign * speed);
+        return new ClawState(sign * speed);
     }
     /**
-     * @return the LiftState of this Movement at the start time.
+     * @return the ClawState of this Movement at the start time.
      */
     @Override
-    public LiftState getStartState() {
+    public ClawState getStartState() {
         return start;
     }
     /**
-     * @return the LiftState of this Movement at the end time.
+     * @return the ClawState of this Movement at the end time.
      */
     @Override
-    public LiftState getEndState() {
+    public ClawState getEndState() {
         return end;
     }
 
     /**
-     * @return "LinearLift"
+     * @return "LinearClaw"
      */
     @Override
     public String getDisplayName() {
-        return "LinearLift";
+        return "LinearClaw";
     }
 
     /**
@@ -99,8 +99,8 @@ public class LinearLift extends Movement {
     private void init(boolean startTimeConstructor, double startTime) {
         distance = end.minus(start).abs();
 
-        double MAV = LiftConstants.MAX_VELOCITY;
-        double MAA = LiftConstants.MAX_ACCELERATION;
+        double MAV = ClawConstants.MAX_VELOCITY;
+        double MAA = ClawConstants.MAX_ACCELERATION;
 
         if (startTimeConstructor) {
             minDuration = StretchedDisplacementCalculator.findMinDuration(distance, MAV, MAA);

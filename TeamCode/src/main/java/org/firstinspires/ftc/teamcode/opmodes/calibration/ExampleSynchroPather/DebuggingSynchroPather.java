@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.opmodes.calibration.ExampleSynchroPather.translation;
+package org.firstinspires.ftc.teamcode.opmodes.calibration.ExampleSynchroPather;
 
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
@@ -18,8 +18,8 @@ import org.firstinspires.ftc.teamcode.synchropather.systems.translation.Translat
 import org.firstinspires.ftc.teamcode.synchropather.systems.translation.TranslationState;
 import org.firstinspires.ftc.teamcode.synchropather.systems.translation.movements.LinearTranslation;
 
-@Autonomous(name="Example SynchroPather Auto", group = "Calibration")
-public class ExampleSynchroPatherAuto extends LinearOpMode {
+@Autonomous(name="Debugging SynchroPather OpMode", group = "Calibration")
+public class DebuggingSynchroPather extends LinearOpMode {
 
     RobotSystem robot;
     Synchronizer synchronizer;
@@ -67,9 +67,9 @@ public class ExampleSynchroPatherAuto extends LinearOpMode {
         );
 
         // Rotation plan
-        LinearRotation rotation = new LinearRotation(new TimeSpan(0, line2.getEndTime()),
+        LinearRotation rotation = new LinearRotation(0,
                 new RotationState(Math.toRadians(0)),
-                new RotationState(Math.toRadians(360))
+                new RotationState(Math.toRadians(180))
         );
         RotationPlan rotationPlan = new RotationPlan(robot,
                 rotation
@@ -78,7 +78,7 @@ public class ExampleSynchroPatherAuto extends LinearOpMode {
         // Synchronizer
         this.synchronizer = new Synchronizer(
                 translationPlan
-//                ,rotationPlan
+                ,rotationPlan
         );
     }
 

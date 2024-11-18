@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.synchropather.systems.__util__.calculators;
 
+
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.TimeSpan;
 
 /**
@@ -70,11 +71,11 @@ public class StretchedDisplacementCalculator extends DisplacementCalculator {
 	 */
 	public void setTimeSpan(TimeSpan newTimeSpan) {
 		timeSpan = newTimeSpan;
-		
+
 		/// catch error for when time < min_time
 		if (getDuration() - minDuration < -1e-3) {
 			throw new RuntimeException(
-					String.format("TimeSpan duration %s is less than the minimum needed time %s.", 
+					String.format("TimeSpan duration %s is less than the minimum needed time %s.",
 							getDuration(),
 							minDuration
 					)
@@ -101,15 +102,15 @@ public class StretchedDisplacementCalculator extends DisplacementCalculator {
 
 	/**
 	 * Calculates the displacement at a certain elapsed time.
-	 * @param elapsedTime 
+	 * @param elapsedTime
 	 * @return the displacement value the given elapsed time.
 	 */
 	public double getDisplacement(double elapsedTime) {
 		elapsedTime = bound(elapsedTime-getStartTime(), 0, getDuration());
-		
+
 		double D = Math.abs(this.distance);
 		double displacement;
-		
+
 		double t_n = getDuration() - elapsedTime, t_a = MV/MA;
 		if (getDuration() <= 2*t_a) {
 			// triangle graph
@@ -117,7 +118,7 @@ public class StretchedDisplacementCalculator extends DisplacementCalculator {
 				displacement = 0.5*MA*elapsedTime*elapsedTime;
 			else
 				displacement = D - 0.5*MA*t_n*t_n;
-		} 
+		}
 		else {
 			// trapezoid graph
 			if (elapsedTime <= getDuration()/2)
@@ -127,21 +128,21 @@ public class StretchedDisplacementCalculator extends DisplacementCalculator {
 		}
 
 		displacement *= sign;
-		
+
 		return displacement;
 	}
 
 	/**
 	 * Calculates the velocity at a certain elapsed time.
-	 * @param elapsedTime 
+	 * @param elapsedTime
 	 * @return the velocity value the given elapsed time.
 	 */
 	public double getVelocity(double elapsedTime) {
 		if (distance == 0) return 0;
 		elapsedTime = bound(elapsedTime-getStartTime(), 0, getDuration());
-		
+
 		double velocity;
-		
+
 		double t_n = getDuration() - elapsedTime, t_a = MV/MA;
 		if (getDuration() <= 2*t_a) {
 			// triangle graph
@@ -149,7 +150,7 @@ public class StretchedDisplacementCalculator extends DisplacementCalculator {
 				velocity = MA*elapsedTime;
 			else
 				velocity = MA*t_n;
-		} 
+		}
 		else {
 			// trapezoid graph
 			if (elapsedTime <= getDuration()/2)
@@ -157,9 +158,9 @@ public class StretchedDisplacementCalculator extends DisplacementCalculator {
 			else
 				velocity = Math.min(MV, MA*t_n);
 		}
-		
+
 		velocity *= sign;
-		
+
 		return velocity;
 	}
 
@@ -226,5 +227,5 @@ public class StretchedDisplacementCalculator extends DisplacementCalculator {
 	private static double bound(double x, double lower, double upper) {
 		return Math.max(lower, Math.min(upper, x));
 	}
-	
+
 }
