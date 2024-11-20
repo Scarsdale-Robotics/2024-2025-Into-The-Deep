@@ -51,6 +51,12 @@ public class ColorRangeTester extends OpenCvPipeline {
 
     public static Scalar lowerYellow = new Scalar(12.8, 86.4, 137.8); // hsv
     public static Scalar upperYellow = new Scalar(22.7, 255, 255.0); // hsv
+    public static Scalar lowerBlue = new Scalar(92.1, 77.9, 31.2); // hsv
+    public static Scalar upperBlue = new Scalar(136, 255, 255.0); // hsv
+    public static Scalar lowerRed= new Scalar(161.5, 103.4, 82.2); // hsv
+    public static Scalar upperRed = new Scalar(182.8, 255, 255.0); // hsv
+    public static Scalar lowerTarget = new Scalar(92.1, 77.9, 31.2); // hsv
+    public static Scalar upperTarget = new Scalar(100, 255, 255.0); // hsv
 
 //    @Override
 //    public void init(int width, int height, CameraCalibration calibration) {
@@ -71,13 +77,13 @@ public class ColorRangeTester extends OpenCvPipeline {
 
         Mat inRange = new Mat();
 //        Core.inRange(hsv, PixelColor.YELLOW.LOWER, PixelColor.YELLOW.UPPER, inRange);
-        Core.inRange(hsv, lowerYellow, upperYellow, inRange);
+        Core.inRange(hsv, lowerTarget, upperTarget, inRange);
         // inRange is the Binary mask
 
         // Morphology
         Mat kernel = Imgproc.getStructuringElement(Imgproc.CV_SHAPE_RECT, new Size(15, 15));
-        Imgproc.dilate(inRange, inRange, kernel);
-        Imgproc.erode(inRange, inRange, kernel);
+//        Imgproc.dilate(inRange, inRange, kernel);
+//        Imgproc.erode(inRange, inRange, kernel);
 
         Imgproc.cvtColor(inRange, inRange, Imgproc.COLOR_GRAY2RGBA);
 //        Imgproc.cvtColor(input, input, Imgproc.COLOR_RGBA2BGR);
