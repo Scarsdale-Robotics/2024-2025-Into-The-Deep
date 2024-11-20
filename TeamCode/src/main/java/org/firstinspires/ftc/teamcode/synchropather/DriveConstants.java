@@ -10,11 +10,11 @@ public final class DriveConstants {
 	/**
 	 *  Max velocity driving forward in in/s.
 	 */
-	public static final double MAX_FORWARD_SPEED = 54d; //TODO: TUNE
+	public static final double MAX_FORWARD_SPEED = 60d; //TODO: TUNE
 	/**
 	 * Max velocity driving sideways in in/s.
 	 */
-	public static final double MAX_STRAFE_SPEED = 54d; //TODO: TUNE
+	public static final double MAX_STRAFE_SPEED = 40d; //TODO: TUNE
 	/**
 	 * Angle of the output force vector of the robot's Mecanum wheels in radians.
 	 */
@@ -22,7 +22,7 @@ public final class DriveConstants {
 
 
 	/**
-	 *  Max velocity of the robot used for SynchroPather in in/s.
+	 *  Max velocity of the robot in in/s.
 	 */
 	public static final double MAX_VELOCITY = Math.min(MAX_FORWARD_SPEED, MAX_STRAFE_SPEED);
 	/**
@@ -38,10 +38,5 @@ public final class DriveConstants {
 	 *  Max angular acceleration of the robot in rad/s^2.
 	 */
 	public static final double MAX_ANGULAR_ACCELERATION = 4; //TODO: TUNE
-
-	/**
-	 *  Used for differentiating and integrating spline paths, between 0 and 1 (lower = more calculations, more detail).
-	 */
-	public static final double delta_t = 0.005;
 	
 }

@@ -13,6 +13,7 @@ public final class Drawing {
 
 
     public static void drawRobot(Canvas c, com.arcrobotics.ftclib.geometry.Pose2d t) {
+//        Pose2d t_rr = new Pose2d(t.getY(), -t.getX(), t.getHeading());
         Pose2d t_rr = new Pose2d(t.getX(), t.getY(), t.getHeading());
         final double ROBOT_RADIUS = 9;
 

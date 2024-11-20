@@ -3,29 +3,30 @@ package org.firstinspires.ftc.teamcode;
 import com.arcrobotics.ftclib.hardware.motors.Motor;
 import com.arcrobotics.ftclib.hardware.motors.Motor.Encoder;
 import com.arcrobotics.ftclib.hardware.motors.MotorEx;
+import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.ServoImplEx;
-
-import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 
 public class HardwareRobot {
     public final MotorEx leftFront;
     public final MotorEx rightFront;
     public final MotorEx leftBack;
     public final MotorEx rightBack;
-    public final MotorEx lift1;
-    public final MotorEx lift2;
+
+    public final MotorEx leftLift;
+    public final MotorEx rightLift;
 
     public final Encoder leftOdometer;
     public final Encoder rightOdometer;
     public final Encoder centerOdometer;
 
+    public final Limelight3A limelight;
+
     public final Servo elbow;
     public final Servo claw;  // claw open/close servo
 
-    public final WebcamName cameraName;
 
     public HardwareRobot(HardwareMap hardwareMap) {
 
@@ -36,8 +37,6 @@ public class HardwareRobot {
         rightFront = new MotorEx(hardwareMap, "rightFront", Motor.GoBILDA.RPM_312);
         leftBack = new MotorEx(hardwareMap, "leftBack", Motor.GoBILDA.RPM_312);
         rightBack = new MotorEx(hardwareMap, "rightBack", Motor.GoBILDA.RPM_312);
-        lift1 = new MotorEx(hardwareMap, "leftLift", Motor.GoBILDA.RPM_312);
-        lift2 = new MotorEx(hardwareMap, "rightLift", Motor.GoBILDA.RPM_312);
 
         leftFront.motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         rightFront.motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -69,6 +68,25 @@ public class HardwareRobot {
         leftBack.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
         rightBack.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
 
+        //////////
+        // LIFT //
+        //////////
+
+        leftLift = new MotorEx(hardwareMap, "leftLift", Motor.GoBILDA.RPM_312);
+        leftLift.motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        leftLift.motor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        leftLift.setRunMode(Motor.RunMode.RawPower);
+        leftLift.motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        leftLift.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
+        leftLift.setInverted(true);
+
+        rightLift = new MotorEx(hardwareMap, "rightLift", Motor.GoBILDA.RPM_312);
+        rightLift.motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightLift.motor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        rightLift.setRunMode(Motor.RunMode.RawPower);
+        rightLift.motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        rightLift.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
+
 
         //////////////
         // ODOMETRY //
@@ -77,6 +95,7 @@ public class HardwareRobot {
         rightOdometer = leftFront.encoder;
         centerOdometer = leftBack.encoder;
 
+        leftOdometer.setDirection(Motor.Direction.REVERSE);
         rightOdometer.setDirection(Motor.Direction.REVERSE);
 
 
@@ -91,8 +110,7 @@ public class HardwareRobot {
         ////////////
         // CAMERA //
         ////////////
-//        cameraName = hardwareMap.get(WebcamName.class, "Webcam 1");
-        cameraName = null;
+        limelight = hardwareMap.get(Limelight3A.class, "limelight");
 
     }
 }

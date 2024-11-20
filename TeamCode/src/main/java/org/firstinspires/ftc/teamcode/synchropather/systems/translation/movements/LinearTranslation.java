@@ -1,10 +1,11 @@
-package org.firstinspires.ftc.teamcode.synchropather.systems.translation;
+package org.firstinspires.ftc.teamcode.synchropather.systems.translation.movements;
 
-import org.firstinspires.ftc.teamcode.synchropather.DriveConstants;
 import org.firstinspires.ftc.teamcode.synchropather.systems.MovementType;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.TimeSpan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.calculators.StretchedDisplacementCalculator;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.superclasses.Movement;
+import org.firstinspires.ftc.teamcode.synchropather.systems.translation.TranslationConstants;
+import org.firstinspires.ftc.teamcode.synchropather.systems.translation.TranslationState;
 
 /**
  * Movement for planning a linear translation.
@@ -115,8 +116,8 @@ public class LinearTranslation extends Movement {
 	private void init(boolean startTimeConstructor, double startTime) {
 		distance = end.minus(start).hypot();
 
-		double MV = DriveConstants.MAX_VELOCITY;
-		double MA = DriveConstants.MAX_ACCELERATION;
+		double MV = TranslationConstants.MAX_VELOCITY;
+		double MA = TranslationConstants.MAX_ACCELERATION;
 
 		if (startTimeConstructor) {
 			minDuration = StretchedDisplacementCalculator.findMinDuration(distance, MV, MA);

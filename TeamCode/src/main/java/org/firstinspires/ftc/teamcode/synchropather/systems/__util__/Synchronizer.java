@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.synchropather.systems.__util__;
 
+import com.qualcomm.robotcore.util.ElapsedTime;
+
 import org.firstinspires.ftc.teamcode.synchropather.systems.MovementType;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.superclasses.Plan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.superclasses.RobotState;
@@ -10,31 +12,86 @@ import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.superclasse
 public class Synchronizer {
 
 	private Plan[] plans;
-	
+
+	/**
+	 * The elapsed time that determines the state of every Plan.
+	 */
+	private ElapsedTime runtime;
+
+	/**
+	 * The time when the synchronizer started, in seconds.
+	 */
+	private double startTime;
+
+	/**
+	 * Whether or not the synchronizer is running.
+	 */
+	private boolean running;
+
 	/**
 	 * Creates a new Synchronizer object with the given Plans.
 	 * @param plans
 	 */
 	public Synchronizer(Plan... plans) {
 		this.plans = plans;
+		this.runtime = new ElapsedTime(0);
+		this.startTime = 0;
+		this.running = false;
 	}
 
 	/**
-	 * Calls the loop() method of all plans contained within this Synchronizer.
+	 * Resets the elapsed time to zero and starts the timer.
 	 */
-	public void loop() {
-		for (Plan plan : plans) {
-			plan.loop();
-		}
+	public void start() {
+		startTime = runtime.seconds();
+		running = true;
 	}
 
 	/**
-	 * Sets the target of all plans contained within this Synchronizer to the given elapsedTime.
+	 * @return whether or not this synchronizer is running.
 	 */
-	public void setTarget(double elapsedTime) {
+	public boolean getIsRunning() {
+		return running;
+	}
+
+	/**
+	 * Resets the elapsed time to the given elapsed time and immediately starts the timer.
+	 */
+	public void start(double elapsedTime) {
+		startTime = runtime.seconds() - elapsedTime;
+		running = true;
+	}
+
+	/**
+	 * Sets the target of all plans contained within this Synchronizer to the given elapsedTime and calls loop().
+	 * @return whether or not the synchronizer should still be running.
+	 */
+	public boolean update() {
+		if (!running) throw new RuntimeException("Synchronizer: tried calling update() before calling start()!");
+		double elapsedTime = runtime.seconds() - startTime;
 		for (Plan plan : plans) {
 			plan.setTarget(elapsedTime);
+			plan.loop();
 		}
+		return elapsedTime < getDuration();
+	}
+
+	/**
+	 * @return the current elapsed time if this Synchronizer is running.
+	 */
+	public double getElapsedTime() {
+		if (!running) throw new RuntimeException("Synchronizer: tried calling getElapsedTime() before calling start()!");
+		return runtime.seconds() - startTime;
+	}
+
+	/**
+	 * Stops every subsystem and sets running to false.
+	 */
+	public void stop() {
+		for (Plan plan : plans) {
+			plan.stop();
+		}
+		running = false;
 	}
 
 	/**

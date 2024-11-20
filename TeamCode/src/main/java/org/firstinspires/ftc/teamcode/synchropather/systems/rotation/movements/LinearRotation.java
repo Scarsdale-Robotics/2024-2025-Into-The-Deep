@@ -1,10 +1,11 @@
-package org.firstinspires.ftc.teamcode.synchropather.systems.rotation;
+package org.firstinspires.ftc.teamcode.synchropather.systems.rotation.movements;
 
-import org.firstinspires.ftc.teamcode.synchropather.DriveConstants;
 import org.firstinspires.ftc.teamcode.synchropather.systems.MovementType;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.TimeSpan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.calculators.StretchedDisplacementCalculator;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.superclasses.Movement;
+import org.firstinspires.ftc.teamcode.synchropather.systems.rotation.RotationConstants;
+import org.firstinspires.ftc.teamcode.synchropather.systems.rotation.RotationState;
 
 /**
  * Movement for planning a linear rotation.
@@ -115,8 +116,8 @@ public class LinearRotation extends Movement {
 	private void init(boolean startTimeConstructor, double startTime) {
 		distance = end.minus(start).abs();
 
-		double MAV = DriveConstants.MAX_ANGULAR_VELOCITY;
-		double MAA = DriveConstants.MAX_ANGULAR_ACCELERATION;
+		double MAV = RotationConstants.MAX_ANGULAR_VELOCITY;
+		double MAA = RotationConstants.MAX_ANGULAR_ACCELERATION;
 
 		if (startTimeConstructor) {
 			minDuration = StretchedDisplacementCalculator.findMinDuration(distance, MAV, MAA);

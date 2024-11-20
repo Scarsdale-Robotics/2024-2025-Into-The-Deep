@@ -3,20 +3,27 @@ package org.firstinspires.ftc.teamcode.opmodes.autons;
 
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
-import com.arcrobotics.ftclib.drivebase.MecanumDrive;
+import com.arcrobotics.ftclib.geometry.Pose2d;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.util.ElapsedTime;
 
-import org.firstinspires.ftc.teamcode.HardwareRobot;
 import org.firstinspires.ftc.teamcode.RobotSystem;
-import org.firstinspires.ftc.teamcode.subsystems.DriveSubsystem;
+import org.firstinspires.ftc.teamcode.subsystems.InDepSubsystem;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.Synchronizer;
-import org.firstinspires.ftc.teamcode.synchropather.systems.rotation.LinearRotation;
+import org.firstinspires.ftc.teamcode.synchropather.systems.claw.ClawPlan;
+import org.firstinspires.ftc.teamcode.synchropather.systems.claw.ClawState;
+import org.firstinspires.ftc.teamcode.synchropather.systems.claw.movements.MoveClaw;
+import org.firstinspires.ftc.teamcode.synchropather.systems.elbow.ElbowPlan;
+import org.firstinspires.ftc.teamcode.synchropather.systems.elbow.ElbowState;
+import org.firstinspires.ftc.teamcode.synchropather.systems.elbow.movements.MoveElbow;
+import org.firstinspires.ftc.teamcode.synchropather.systems.lift.LiftPlan;
+import org.firstinspires.ftc.teamcode.synchropather.systems.lift.LiftState;
+import org.firstinspires.ftc.teamcode.synchropather.systems.lift.movements.LinearLift;
+import org.firstinspires.ftc.teamcode.synchropather.systems.rotation.movements.LinearRotation;
 import org.firstinspires.ftc.teamcode.synchropather.systems.rotation.RotationPlan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.rotation.RotationState;
-import org.firstinspires.ftc.teamcode.synchropather.systems.translation.CRSplineTranslation;
-import org.firstinspires.ftc.teamcode.synchropather.systems.translation.LinearTranslation;
+import org.firstinspires.ftc.teamcode.synchropather.systems.translation.movements.CRSplineTranslation;
+import org.firstinspires.ftc.teamcode.synchropather.systems.translation.movements.LinearTranslation;
 import org.firstinspires.ftc.teamcode.synchropather.systems.translation.TranslationPlan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.translation.TranslationState;
 
@@ -42,7 +49,7 @@ public class KennethAuto extends LinearOpMode {
 //        runtime.reset();
 
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
-        RobotSystem robot = new RobotSystem(hardwareMap, this);
+        RobotSystem robot = new RobotSystem(hardwareMap, new Pose2d(), this);
 
 
 
@@ -156,37 +163,48 @@ public class KennethAuto extends LinearOpMode {
         );
 
 
+        // Lift plan
+        LinearLift lift1 = new LinearLift(0,
+                new LiftState(0),
+                new LiftState(500)
+        );
+
+        LiftPlan liftPlan = new LiftPlan(robot,
+                lift1
+        );
+
+
+
+        // Elbow plan
+        MoveElbow elbow1 = new MoveElbow(5,
+                new ElbowState(InDepSubsystem.ElbowPosition.CENTER),
+                new ElbowState(InDepSubsystem.ElbowPosition.UP)
+        );
+
+        ElbowPlan elbowPlan = new ElbowPlan(robot,
+                elbow1
+        );
+
+        MoveClaw claw1 = new MoveClaw(6,
+                new ClawState(InDepSubsystem.ClawPosition.CLOSED),
+                new ClawState(InDepSubsystem.ClawPosition.OPEN)
+        );
+        ClawPlan clawPlan = new ClawPlan(robot, claw1);
+
+
         // put all the Plans into a Synchronizer
         Synchronizer synchronizer = new Synchronizer(
                 translationPlan,
-                rotationPlan // initializes the plans here
+                rotationPlan, // initializes the plans here
+                liftPlan,
+                elbowPlan,
+                clawPlan
         );
 
-        // put the MovementSequence into a visualizer object, with timeFactor between 0 and 1 representing the speed of the visualizer
-        double timeFactor = 3;
-//        Visualizer visualizer = new Visualizer(synchronizer, timeFactor);
-
-        // start visualizer
-//        visualizer.start();
-
-        // main visualizer loop with an example telemetry function
-//        double targetFPS = 144;
-//        while (visualizer.loop()) {
-////			generateTelemetry(visualizer, timeFactor);
-//            Thread.sleep((int)(1000/targetFPS));
-//        }
-
-        double speed = 0.15;
-        ElapsedTime runtime = new ElapsedTime(0);
-        while (opModeIsActive()) {
-
-            synchronizer.setTarget(runtime.seconds());
-            synchronizer.loop();
-
-            // get Position
-            robot.localization.getPose();
-
-
-        }
+        synchronizer.start();
+        while (opModeIsActive() && synchronizer.update()) {
+            telemetry.addData("ELAPSED TIME", synchronizer.getElapsedTime());
+        };
+        synchronizer.stop();
     }
 }

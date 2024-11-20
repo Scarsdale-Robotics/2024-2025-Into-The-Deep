@@ -98,14 +98,17 @@ public class InDepSubsystem extends SubsystemBase {
     //////////
     // CLAW //
     //////////
+    // TODO: Tune all servo values
     public enum ClawPosition {
-        CLOSED(0),
-        PARTIAL(0.5),
-        OPEN(1);
+        CLOSED(0, "Closed"),
+        PARTIAL(0.5, "Partial"),
+        OPEN(1, "Open");
 
         public final double SERVO_POSITION;
-        ClawPosition(double servoPosition) {
+        public final String NAME;
+        private ClawPosition(double servoPosition, String name) {
             SERVO_POSITION = servoPosition;
+            NAME = name;
         }
     }
     public void setClawPosition(ClawPosition position) {
@@ -119,15 +122,17 @@ public class InDepSubsystem extends SubsystemBase {
     // ELBOW //
     ///////////
     public enum ElbowPosition {
-        CENTER(0.5),
-        LOWER_UPPER_CENTER(0.6),
-        UPPER_CENTER(0.75),
-        UP(1);
+        CENTER(0.5, "Center"),
+        LOWER_UPPER_CENTER(0.6, "Lower upper center"),
+        UPPER_CENTER(0.75, "Upper center"),
+        UP(1, "Up");
 
         public final double SERVO_POSITION;
+        public final String NAME;
 
-        ElbowPosition(double servoPosition) {
+        private ElbowPosition(double servoPosition, String name) {
             SERVO_POSITION = servoPosition;
+            NAME = name;
         }
     }
     public void setElbowPosition(ElbowPosition position) {
@@ -155,10 +160,27 @@ public class InDepSubsystem extends SubsystemBase {
     public void setLiftPosition(LiftPosition position) {
         setLiftPosition(position.ENCODER_TICKS);
     }
+
     public void setLiftPosition(int position) {
-        HARDWARE_ROBOT.lift1.setTargetPosition(position);
-        HARDWARE_ROBOT.lift2.setTargetPosition(position);
+        HARDWARE_ROBOT.leftLift.setTargetPosition(position);
+        // ew, use synchropather liftplan pid instead
+
     }
+    public int getLeftLiftPosition() {
+        return HARDWARE_ROBOT.leftLift.getCurrentPosition();
+    }
+    public int getRightLiftPosition() {
+        return HARDWARE_ROBOT.rightLift.getCurrentPosition();
+    }
+
+    public void setLeftLiftPower(double power) {
+        HARDWARE_ROBOT.leftLift.motor.setPower(power);
+    }
+
+    public void setRightLiftPower(double power) {
+        HARDWARE_ROBOT.rightLift.motor.setPower(power);
+    }
+
 
     /////////////////////
     // TASK MANAGEMENT //

@@ -98,7 +98,9 @@ public class RotationState extends RobotState {
 	 * @return the normalized angle in radians.
 	 */
 	private static double normalizeAngle(double radians) {
-		return (radians + Math.PI) % (2*Math.PI) - Math.PI;
+		while (radians >= Math.PI) radians -= 2*Math.PI;
+		while (radians < -Math.PI) radians += 2*Math.PI;
+		return radians;
 	}
 
 }

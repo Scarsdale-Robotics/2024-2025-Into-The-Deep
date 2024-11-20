@@ -7,6 +7,7 @@ import com.arcrobotics.ftclib.hardware.motors.Motor;
 
 import org.firstinspires.ftc.teamcode.synchropather.DriveConstants;
 import org.opencv.core.Point;
+import org.firstinspires.ftc.teamcode.synchropather.systems.rotation.RotationConstants;
 
 public class DriveSubsystem extends SubsystemBase {
 
@@ -21,6 +22,11 @@ public class DriveSubsystem extends SubsystemBase {
     public double driveSpeed;
     public double driveTheta;
     public double turnVelocity;
+
+    // TARGET POSE ///
+    public double targetX;
+    public double targetY;
+    public double targetH;
 
     public DriveSubsystem(Motor leftFront,
                           Motor rightFront,
@@ -39,6 +45,9 @@ public class DriveSubsystem extends SubsystemBase {
         this.driveSpeed = 0;
         this.driveTheta = 0;
         this.turnVelocity = 0;
+        this.targetX = 0;
+        this.targetY = 0;
+        this.targetH = 0;
     }
 
 
@@ -72,12 +81,28 @@ public class DriveSubsystem extends SubsystemBase {
     /**
      * Drives with directions based on robot pov.
      *
+     * @param strafe     Strafe power.
+     * @param forward     Forward power.
+     * @param turn      Turn power.
+     */
+    public void driveRobotCentricPowers(double strafe, double forward, double turn) {
+        double theta;
+        double speed = Math.hypot(strafe, forward) * DriveConstants.MAX_FORWARD_SPEED;
+        if (speed==0) theta = 0;
+        else theta = Math.atan2(forward, strafe);
+
+        driveFieldCentric(theta, speed, -turn * RotationConstants.MAX_ANGULAR_VELOCITY, 0.0);
+    }
+
+    /**
+     * Drives with directions based on robot pov.
+     *
      * @param theta     Direction of drive in radians.
      * @param speed     Desired driving speed in in/s.
      * @param turn      Desired angular velocity in rad/s.
      */
     public void driveRobotCentric(double theta, double speed, double turn) {
-        driveFieldCentric(theta, speed, turn, 0.0);
+        driveFieldCentric(theta, speed, -turn, 0.0);
     }
 
     /**
@@ -97,7 +122,7 @@ public class DriveSubsystem extends SubsystemBase {
      * @param gyroAngle Robot heading in radians.
      */
     public void driveFieldCentric(double theta, double speed, double turn, double gyroAngle) {
-        theta = normalizeAngle(theta-gyroAngle);
+        theta = normalizeAngle(Math.PI/2 + (theta-gyroAngle));
         double maxSpeed = Math.hypot(
                 DriveConstants.MAX_STRAFE_SPEED*Math.cos(theta),
                 DriveConstants.MAX_FORWARD_SPEED*Math.sin(theta)
@@ -114,7 +139,7 @@ public class DriveSubsystem extends SubsystemBase {
             L = -Math.sin(theta_w+theta) / Math.sin(theta_w-theta);
             R = 1;
         }
-        else if (-Math.PI<theta && theta<=-Math.PI/2) {
+        else if (-Math.PI<=theta && theta<=-Math.PI/2) {
             L = -1;
             R = Math.sin(theta_w-theta) / Math.sin(theta_w+theta);
         }
@@ -123,7 +148,7 @@ public class DriveSubsystem extends SubsystemBase {
             R = -1;
         }
 
-        double factor = speed / maxSpeed;
+        double factor = Math.max(-1, Math.min(1, speed / maxSpeed));
         L *= factor;
         R *= factor;
 
@@ -133,7 +158,8 @@ public class DriveSubsystem extends SubsystemBase {
         wheelSpeeds[RobotDrive.MotorType.kBackLeft.value] = R;
         wheelSpeeds[RobotDrive.MotorType.kBackRight.value] = L;
 
-        turn /= DriveConstants.MAX_ANGULAR_VELOCITY;
+        turn /= RotationConstants.MAX_ANGULAR_VELOCITY;
+        turn = Math.max(-1, Math.min(1, turn));
         wheelSpeeds[RobotDrive.MotorType.kFrontLeft.value] -= turn;
         wheelSpeeds[RobotDrive.MotorType.kFrontRight.value] += turn;
         wheelSpeeds[RobotDrive.MotorType.kBackLeft.value] -= turn;

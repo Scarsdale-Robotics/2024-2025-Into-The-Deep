@@ -1,27 +1,31 @@
 package org.firstinspires.ftc.teamcode.opmodes.calibration;
 
 import com.acmerobotics.dashboard.FtcDashboard;
+import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.arcrobotics.ftclib.drivebase.MecanumDrive;
 import com.arcrobotics.ftclib.geometry.Pose2d;
+import com.arcrobotics.ftclib.geometry.Rotation2d;
 import com.arcrobotics.ftclib.hardware.motors.Motor;
 import com.arcrobotics.ftclib.kinematics.HolonomicOdometry;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.HardwareRobot;
 
 @TeleOp(name="Odometry Logger", group="Calibration")
+@Config
 public class OdometryLogger extends LinearOpMode {
     // Distance between parallel odometers
-    private static final double TRACK_WIDTH = 6.649; //TODO: tune
+    public static double TRACK_WIDTH = 11.3386; //TODO: tune
     // Signed distance from the point of rotation (positive=forward)
-    private static final double CENTER_WHEEL_OFFSET = 0; //TODO: tune
+    public static double CENTER_WHEEL_OFFSET = 0.944882; //TODO: tune
     // Measured in inches
-    private static final double WHEEL_DIAMETER = 1.37795;
+    public static double WHEEL_DIAMETER = 1.37795;
     // Odometer encoder resolution
-    private static final double TICKS_PER_REV = 4096;
+    public static double TICKS_PER_REV = 4096;
     // Circumference divided by encoder resolution [inches/tick]
     private static final double DISTANCE_PER_PULSE = (Math.PI * WHEEL_DIAMETER) / TICKS_PER_REV;
 
@@ -59,7 +63,13 @@ public class OdometryLogger extends LinearOpMode {
 
         waitForStart();
 
-        double speed = 0.3;
+        Pose2d lastPose = new Pose2d();
+        ElapsedTime runtime = new ElapsedTime(0);
+
+        double maxSpeed = 0;
+        double maxAngularSpeed = 0;
+
+        double speed = 1;
         while (opModeIsActive()) {
 
             double forward = -speed*gamepad1.left_stick_y;
@@ -72,6 +82,10 @@ public class OdometryLogger extends LinearOpMode {
 
             // Draw robot on dashboard
             Pose2d currentPose = odometry.getPose();
+            currentPose = new Pose2d(currentPose.getY(), currentPose.getX(), new Rotation2d(-currentPose.getHeading()));
+
+
+
             TelemetryPacket packet = new TelemetryPacket();
             packet.fieldOverlay().setStroke("#3F51B5");
             Drawing.drawRobot(packet.fieldOverlay(), currentPose);
@@ -83,7 +97,22 @@ public class OdometryLogger extends LinearOpMode {
             telemetry.addData("X", currentPose.getX());
             telemetry.addData("Y", currentPose.getY());
             telemetry.addData("H", Math.toDegrees(currentPose.getHeading())+"deg");
+
+            double currentSpeed = currentPose.minus(lastPose).getTranslation().getNorm()/runtime.seconds();
+            maxSpeed = Math.max(maxSpeed, currentSpeed);
+            telemetry.addData("maxSpeed", maxSpeed);
+            telemetry.addData("currentSpeed", currentSpeed);
+
+            double angularSpeed = Math.abs(currentPose.getHeading() - lastPose.getHeading())/runtime.seconds();
+            maxAngularSpeed = Math.max(maxAngularSpeed, angularSpeed);
+            telemetry.addData("maxAngularSpeed", maxAngularSpeed);
+            telemetry.addData("currentAngularSpeed", angularSpeed);
+
             telemetry.update();
+
+            runtime.reset();
+            lastPose = currentPose;
+
         }
     }
 
