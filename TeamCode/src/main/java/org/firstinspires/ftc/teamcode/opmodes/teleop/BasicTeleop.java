@@ -38,6 +38,9 @@ public class BasicTeleop extends LinearOpMode {
         robot.inDep.setClawPosition(clawOpen);
         robot.inDep.setElbowPosition(elbowPosition);
 
+        robot.claw.setPosition(clawOpen);
+        robot.elbow.setPosition(elbowUp);
+
         waitForStart();
 
         double speed = 1;
@@ -58,7 +61,6 @@ public class BasicTeleop extends LinearOpMode {
             double turn = speed * gamepad1.right_stick_x;
 
             robot.drive.driveFieldCentricPowers(forward, strafe, turn, Math.toDegrees(robot.localization.getH()));
-
             telemetry.addData("forward", forward);
             telemetry.addData("strafe", strafe);
             telemetry.addData("turn", turn);
@@ -93,7 +95,6 @@ public class BasicTeleop extends LinearOpMode {
             robot.inDep.setElbowPosition(elbowPosition);
 
 
-
             ///////////////////
             // LIFT CONTROLS //
             ///////////////////
@@ -120,10 +121,10 @@ public class BasicTeleop extends LinearOpMode {
             rightPower += triggerPower;
 
             // Clamp powers
-        	/*
-        	leftPower = clamp(leftPower);
-        	rightPower = clamp(rightPower);
-        	*/
+        	  /*
+        	  leftPower = clamp(leftPower);
+        	  rightPower = clamp(rightPower);
+        	  */
 
 
             if (gamepad1.square && !toggleMacro) {
@@ -171,6 +172,7 @@ public class BasicTeleop extends LinearOpMode {
             if(!gamepad1.right_stick_button) {
                 toggleMacroBasket = false;
             }
+
         }
 
 
