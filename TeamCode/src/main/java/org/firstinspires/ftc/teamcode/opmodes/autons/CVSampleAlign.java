@@ -5,6 +5,7 @@ import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.HardwareRobot;
@@ -16,7 +17,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 
-@Autonomous(name="CVSampleAlign")
+@TeleOp(name="CVSampleAlign")
 public class CVSampleAlign extends LinearOpMode {
 
     private Limelight3A limelight;
@@ -60,46 +61,88 @@ public class CVSampleAlign extends LinearOpMode {
             runtimelist.add(360.0);
         }
 
-        double MAX_SPEED = 0.5;
+        double MAX_SPEED = 0.8;
 
         Date lt = new Date();
         double i=0;
+        boolean finished = false;
+        double lastDist = Double.MAX_VALUE;
         while (opModeIsActive()) {
+            if (!gamepad1.cross) {
+                lastDist = Double.MAX_VALUE;
+                finished = false;
+                oldtxlist= new ArrayList<Double>();
+                oldtylist= new ArrayList<Double>();
+                runtimelist= new ArrayList<Double>();
+                for(int j = 0; j<5;j++){
+                    oldtxlist.add(360.0);
+                    oldtylist.add(360.0);
+                    runtimelist.add(360.0);
+                }
+                drive.driveRobotCentric(0, 0, 0);
+                continue;
+            }
             telemetry.addData("state","running");
             telemetry.addData("a", String.valueOf(i+=0.00001));
             LLResult result = limelight.getLatestResult();
+
             if (result != null && result.isValid()) {
                 List<LLResultTypes.DetectorResult> detections = result.getDetectorResults();
+                List<LLResultTypes.DetectorResult> yellows = new ArrayList<>();
+                List<LLResultTypes.DetectorResult> reds = new ArrayList<>();
+                List<LLResultTypes.DetectorResult> blues = new ArrayList<>();
+
                 for (LLResultTypes.DetectorResult detection : detections) {
-                    String className = detection.getClassName(); // What was detected
-                    telemetry.addData("clr", className);
-                    if (!Objects.equals(className, "yellow")) continue;
+                    String className = detection.getClassName();
+                    if (Objects.equals(className, "yellow"))
+                        yellows.add(detection);
+                    else if (Objects.equals(className, "reds"))
+                        reds.add(detection);
+                    else
+                        blues.add(detection);
+                }
+
+                double closestDetectionDist = Double.MAX_VALUE;
+                LLResultTypes.DetectorResult closestDetection = detections.get(0);
+                for (LLResultTypes.DetectorResult detection : yellows) {
                     double tx = detection.getTargetXDegrees(); // Where it is (left-right)
                     double ty = detection.getTargetYDegrees(); // Where it is (up-down)
-
-                    Date d2 = new Date();
-                    double deltatime = (d2.getTime()-lt.getTime())/1000.0;
-                    lt = d2;
-                    runtimelist.remove(0);runtimelist.add(deltatime);
-
-                    oldtxlist.remove(0);oldtxlist.add(deltatime);
-
-                    //hi <-- kevin han
-
-                    if(oldtxlist.get(0)==360) {
-                        drive.driveRobotCentric(Math.max(-MAX_SPEED, Math.min(tx * 0.05, MAX_SPEED)), -Math.max(-MAX_SPEED, Math.min(ty * 0.05, MAX_SPEED)), 0);
-                    } else{
-                        double derivativex = (-oldtxlist.get(4)+8*oldtxlist.get(3)-8*oldtxlist.get(1)+oldtxlist.get(0))/(12*(runtimelist.get(4)-runtimelist.get(0)));
-                        double u_tx = Math.max(Math.min(tx*0.5+0.0*derivativex,MAX_SPEED),-MAX_SPEED);
-                        double derivativey = (-oldtylist.get(4)+8*oldtylist.get(3)-8*oldtylist.get(1)+oldtylist.get(0))/(12*(runtimelist.get(4)-runtimelist.get(0)));
-                        double u_ty = Math.max(Math.min(ty*0.5+0.0*derivativey,MAX_SPEED),-MAX_SPEED);
-                        drive.driveRobotCentric(u_tx,-u_ty,0);
+                    double d = Math.sqrt(tx*tx+ty*ty);
+                    if (d < closestDetectionDist) {
+                        closestDetectionDist = d;
+                        closestDetection = detection;
                     }
-                    break;
                 }
-//                    telemetry.addData("Target X", tx);
-//                    telemetry.addData("Target Y", ty);
 
+                telemetry.addData("cdd", closestDetectionDist);
+
+//                if (closestDetectionDist > lastDist + 3) {
+//                    finished = true;
+//                    break;
+//                }
+//                lastDist = closestDetectionDist;
+
+                double tx = closestDetection.getTargetXDegrees(); // Where it is (left-right)
+                double ty = closestDetection.getTargetYDegrees(); // Where it is (up-down)
+
+                Date d2 = new Date();
+                double deltatime = (d2.getTime()-lt.getTime())/1000.0;
+                lt = d2;
+                runtimelist.remove(0);runtimelist.add(deltatime);
+
+                oldtxlist.remove(0);oldtxlist.add(deltatime);
+
+                //hi <-- kevin han
+
+                if(oldtxlist.get(0)== 360) {
+                    drive.driveRobotCentric(Math.max(-MAX_SPEED, Math.min(tx * 0.05, MAX_SPEED)), -Math.max(-MAX_SPEED, Math.min(ty * 0.05, MAX_SPEED)), 0);
+                } else{
+                    double derivativex = (-oldtxlist.get(4)+8*oldtxlist.get(3)-8*oldtxlist.get(1)+oldtxlist.get(0))/(12*(runtimelist.get(4)-runtimelist.get(0)));
+                    double u_tx = Math.max(Math.min(tx*0.03+0*derivativex,MAX_SPEED),-MAX_SPEED);
+                    double derivativey = (-oldtylist.get(4)+8*oldtylist.get(3)-8*oldtylist.get(1)+oldtylist.get(0))/(12*(runtimelist.get(4)-runtimelist.get(0)));
+                    double u_ty = Math.max(Math.min(ty*0.6  +0.3*derivativey,MAX_SPEED),-MAX_SPEED);
+                    drive.driveRobotCentric(u_tx,-u_ty,0);
+                }
                 telemetry.update();
             } else {
                 drive.driveRobotCentric(0, 0, 0);
