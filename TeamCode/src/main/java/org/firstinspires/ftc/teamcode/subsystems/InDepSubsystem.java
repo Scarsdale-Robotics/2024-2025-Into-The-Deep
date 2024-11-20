@@ -79,7 +79,7 @@ public class InDepSubsystem extends SubsystemBase {
         if (
             HARDWARE_ROBOT.claw.getPosition() == currentTask.CLAW_POSITION.SERVO_POSITION &&
             HARDWARE_ROBOT.elbow.getPosition() == currentTask.ELBOW_POSITION.SERVO_POSITION &&
-            HARDWARE_ROBOT.lift.atTargetPosition() && taskPossiblyComplete
+            HARDWARE_ROBOT.leftLift.atTargetPosition() && taskPossiblyComplete
         ) {
             // Update tasks
             switch (currentTask) {

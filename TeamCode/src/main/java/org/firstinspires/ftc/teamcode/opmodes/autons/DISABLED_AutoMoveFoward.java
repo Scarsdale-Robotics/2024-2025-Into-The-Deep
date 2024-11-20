@@ -5,43 +5,33 @@ import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.arcrobotics.ftclib.geometry.Pose2d;
 import com.arcrobotics.ftclib.geometry.Rotation2d;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 import org.firstinspires.ftc.teamcode.RobotSystem;
 import org.firstinspires.ftc.teamcode.opmodes.calibration.Drawing;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.Synchronizer;
-import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.TimeSpan;
-import org.firstinspires.ftc.teamcode.synchropather.systems.claw.ClawPlan;
-import org.firstinspires.ftc.teamcode.synchropather.systems.claw.ClawState;
-import org.firstinspires.ftc.teamcode.synchropather.systems.claw.movements.LinearClaw;
-import org.firstinspires.ftc.teamcode.synchropather.systems.elbow.ElbowPlan;
-import org.firstinspires.ftc.teamcode.synchropather.systems.elbow.ElbowState;
-import org.firstinspires.ftc.teamcode.synchropather.systems.elbow.movements.LinearElbow;
-import org.firstinspires.ftc.teamcode.synchropather.systems.lift.LiftPlan;
-import org.firstinspires.ftc.teamcode.synchropather.systems.lift.LiftState;
-import org.firstinspires.ftc.teamcode.synchropather.systems.lift.movements.LinearLift;
-import org.firstinspires.ftc.teamcode.synchropather.systems.rotation.RotationPlan;
-import org.firstinspires.ftc.teamcode.synchropather.systems.rotation.RotationState;
-import org.firstinspires.ftc.teamcode.synchropather.systems.rotation.movements.LinearRotation;
+import org.firstinspires.ftc.teamcode.synchropather.systems.claw.ClawConstants;
+import org.firstinspires.ftc.teamcode.synchropather.systems.elbow.ElbowConstants;
 import org.firstinspires.ftc.teamcode.synchropather.systems.translation.TranslationPlan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.translation.TranslationState;
-import org.firstinspires.ftc.teamcode.synchropather.systems.translation.movements.CRSplineTranslation;
 import org.firstinspires.ftc.teamcode.synchropather.systems.translation.movements.LinearTranslation;
 
+@Disabled
 @Autonomous(name="Auto Move Foward", group = "Autons")
-public class AutoMoveFoward extends LinearOpMode{
+public class DISABLED_AutoMoveFoward extends LinearOpMode{
     RobotSystem robot;
     Synchronizer synchronizer;
 
-    public static double clawOpen = 0.23;
-    public static double clawClosed = 0.06;;
+    public static double clawOpen = ClawConstants.OPEN_POSITION;
+    public static double clawClosed = ClawConstants.CLOSED_POSITION;
 
-    public static double elbowUp = 0.275;
-    public static double elbowDown = 0.53;
+    public static double elbowUp = ElbowConstants.UP_POSITION;
+    public static double elbowDown = ElbowConstants.DOWN_POSITION;
 
     @Override
     public void runOpMode() throws InterruptedException {
-        this.robot = new RobotSystem(hardwareMap, new Pose2d(40, 60, new Rotation2d(Math.toRadians(-90))), this);
+        this.robot = new RobotSystem(hardwareMap, new Pose2d(40, 60, new Rotation2d(Math.toRadians(-90))), false, this);
         robot.inDep.setClawPosition(clawClosed);
         robot.inDep.setElbowPosition(0.3);
         initSynchronizer();

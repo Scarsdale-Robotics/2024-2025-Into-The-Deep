@@ -18,7 +18,7 @@ public class LocalizationLogger extends LinearOpMode {
     public void runOpMode() {
         this.telemetry = new MultipleTelemetry(this.telemetry, FtcDashboard.getInstance().getTelemetry());
 //        RobotSystem robot = new RobotSystem(hardwareMap, new Pose2d(60, 24, new Rotation2d(Math.PI/2)), this);
-        RobotSystem robot = new RobotSystem(hardwareMap, new Pose2d(0, 0, new Rotation2d(0)), this);
+        RobotSystem robot = new RobotSystem(hardwareMap, new Pose2d(0, 0, new Rotation2d(0)), false, this);
 
         robot.localization.disableCamera();
 

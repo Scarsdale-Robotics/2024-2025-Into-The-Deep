@@ -1,7 +1,7 @@
 package org.firstinspires.ftc.teamcode.subsystems;
 
-import com.acmerobotics.dashboard.FtcDashboard;
-import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
+import android.util.Size;
+
 import com.arcrobotics.ftclib.command.SubsystemBase;
 import com.arcrobotics.ftclib.geometry.Pose2d;
 import com.arcrobotics.ftclib.geometry.Rotation2d;
@@ -13,11 +13,11 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
-import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
 import org.firstinspires.ftc.robotcore.external.navigation.Position;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
-import org.firstinspires.ftc.teamcode.opmodes.calibration.Drawing;
+import org.firstinspires.ftc.vision.VisionPortal;
+import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
+import org.opencv.core.Point;
 
 
 public class CVSubsystem extends SubsystemBase {
@@ -27,6 +27,7 @@ public class CVSubsystem extends SubsystemBase {
      * 0 = AprilTag Pipeline
      */
     private final Limelight3A limelight;
+
 
     private final Telemetry telemetry;
 
@@ -38,43 +39,17 @@ public class CVSubsystem extends SubsystemBase {
     // INIT METHODS //
     //////////////////
 
-    public CVSubsystem(WebcamName cameraName, double initialHeading, boolean isRedTeam, Telemetry telemetry) {
+    public CVSubsystem(Limelight3A limelight, double initialHeading, boolean isRedTeam, Telemetry telemetry) {
         this.limelight = limelight;
         this.limelight.updateRobotOrientation(Math.toDegrees(initialHeading));
         this.telemetry = telemetry;
-        this.cameraName = cameraName;
   
         // Switch to AprilTag
-        limelight.pipelineSwitch(0);
-        limelight.start();
+        this.limelight.pipelineSwitch(0);
+        this.limelight.start();
 
         currentTargetColor = isRedTeam ? SampleColor.RY : SampleColor.BY;
 
-        // Construct AprilTag locations map.
-        initAprilTagLocations();
-
-        // Create AprilTagProcessor and VisionPortal.
-        initVisionPortal();
-    }
-  
-    /**
-     * Creates a VisionPortal with an AprilTag processor.
-     */
-    private void initVisionPortal() {
-        // Create the AprilTag processor.
-        aprilTag = new AprilTagProcessor.Builder()
-                .setDrawTagOutline(true)
-                .build();
-
-        // Create the vision portal by using a builder.
-        VisionPortal.Builder builder = new VisionPortal.Builder();
-        builder.setCamera(cameraName);
-        builder.setCameraResolution(CAM_SZ);
-        builder.addProcessors(aprilTag);
-
-        // Build the Vision Portal, using the above settings.
-        visionPortal = builder.build();
-        visionPortal.setProcessorEnabled(aprilTag, true);
     }
 
 
@@ -237,6 +212,7 @@ public class CVSubsystem extends SubsystemBase {
      */
     public Point getSampleOffset() {
         // TODO: IMPLEMENT
+        return null;
     }
 
 }

@@ -7,7 +7,6 @@ import com.arcrobotics.ftclib.geometry.Pose2d;
 import com.arcrobotics.ftclib.geometry.Rotation2d;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.HardwareRobot;
 import org.firstinspires.ftc.teamcode.subsystems.CVSubsystem;
@@ -26,7 +25,7 @@ public class AprilTagLogger extends LinearOpMode {
                 robot.leftBack,
                 robot.rightBack
         );
-        CVSubsystem cv = new CVSubsystem(robot.cameraName, Math.PI, true, telemetry);
+        CVSubsystem cv = new CVSubsystem(robot.limelight, Math.PI, true, telemetry);
 
         waitForStart();
 

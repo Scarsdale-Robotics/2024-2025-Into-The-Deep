@@ -4,22 +4,17 @@ import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.arcrobotics.ftclib.geometry.Pose2d;
+import com.arcrobotics.ftclib.geometry.Rotation2d;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.RobotSystem;
-import org.firstinspires.ftc.teamcode.synchropather.systems.MovementType;
-import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.Synchronizer;
 import org.firstinspires.ftc.teamcode.synchropather.systems.claw.ClawConstants;
 import org.firstinspires.ftc.teamcode.synchropather.systems.elbow.ElbowConstants;
-import org.firstinspires.ftc.teamcode.synchropather.systems.elbow.ElbowPlan;
-import org.firstinspires.ftc.teamcode.synchropather.systems.elbow.ElbowState;
-import org.firstinspires.ftc.teamcode.synchropather.systems.elbow.movements.LinearElbow;
 
 @Config
-@TeleOp(name="Basic TeleOp")
-public class BasicTeleop extends LinearOpMode {
+@TeleOp(name="Blue TeleOp")
+public class BlueTeleop extends LinearOpMode {
 
     private RobotSystem robot;
 
@@ -33,13 +28,10 @@ public class BasicTeleop extends LinearOpMode {
     @Override
     public void runOpMode() throws InterruptedException {
         this.telemetry = new MultipleTelemetry(this.telemetry, FtcDashboard.getInstance().getTelemetry());
-        this.robot = new RobotSystem(hardwareMap, new Pose2d(), this);
+        this.robot = new RobotSystem(hardwareMap, new Pose2d(0, 0, new Rotation2d(Math.toRadians(-90))), false, this);
 
         robot.inDep.setClawPosition(clawOpen);
         robot.inDep.setElbowPosition(elbowPosition);
-
-        robot.claw.setPosition(clawOpen);
-        robot.elbow.setPosition(elbowUp);
 
         waitForStart();
 
