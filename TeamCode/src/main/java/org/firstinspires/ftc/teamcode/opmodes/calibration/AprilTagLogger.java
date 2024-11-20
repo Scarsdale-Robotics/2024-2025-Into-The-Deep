@@ -26,10 +26,7 @@ public class AprilTagLogger extends LinearOpMode {
                 robot.leftBack,
                 robot.rightBack
         );
-        CVSubsystem cv = new CVSubsystem(robot.limelight, Math.PI, telemetry);
-
-//        int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
-//        FtcDashboard.getInstance().startCameraStream();
+        CVSubsystem cv = new CVSubsystem(robot.cameraName, Math.PI, true, telemetry);
 
         waitForStart();
 

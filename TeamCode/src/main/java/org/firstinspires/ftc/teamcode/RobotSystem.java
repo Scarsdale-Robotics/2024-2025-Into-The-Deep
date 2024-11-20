@@ -24,13 +24,14 @@ public class RobotSystem {
     public final LocalizationSubsystem localization;
     public final InDepSubsystem inDep;
 
-    public RobotSystem(HardwareMap hardwareMap, Pose2d initialPose, LinearOpMode opMode) {
+    public RobotSystem(HardwareMap hardwareMap, Pose2d initialPose, boolean isRedTeam, LinearOpMode opMode) {
         this.opMode = opMode;
         this.telemetry = new MultipleTelemetry(opMode.telemetry, FtcDashboard.getInstance().getTelemetry());
         HardwareRobot hardwareRobot = new HardwareRobot(hardwareMap);
         this.cv = new CVSubsystem(
-                hardwareRobot.limelight,
+                hardwareRobot.cameraName,
                 initialPose.getHeading(),
+                isRedTeam,
                 telemetry
         );
         this.localization = new LocalizationSubsystem(
@@ -49,7 +50,9 @@ public class RobotSystem {
         );
         this.inDep = new InDepSubsystem(
                 hardwareRobot,
-                opMode
+                opMode,
+                drive,
+                cv
         );
     }
 
