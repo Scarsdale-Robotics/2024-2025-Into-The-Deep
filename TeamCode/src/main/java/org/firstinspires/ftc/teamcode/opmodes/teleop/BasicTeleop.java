@@ -11,6 +11,8 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import org.firstinspires.ftc.teamcode.RobotSystem;
 import org.firstinspires.ftc.teamcode.synchropather.systems.MovementType;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.Synchronizer;
+import org.firstinspires.ftc.teamcode.synchropather.systems.claw.ClawConstants;
+import org.firstinspires.ftc.teamcode.synchropather.systems.elbow.ElbowConstants;
 import org.firstinspires.ftc.teamcode.synchropather.systems.elbow.ElbowPlan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.elbow.ElbowState;
 import org.firstinspires.ftc.teamcode.synchropather.systems.elbow.movements.LinearElbow;
@@ -21,11 +23,11 @@ public class BasicTeleop extends LinearOpMode {
 
     private RobotSystem robot;
 
-    public static double clawOpen = 0.2;
-    public static double clawClosed = 0.1;
+    public static double clawOpen = ClawConstants.OPEN_POSITION;
+    public static double clawClosed = ClawConstants.CLOSED_POSITION;
 
-    public static double elbowUp = 0.275;
-    public static double elbowDown = 0.5;
+    public static double elbowUp = ElbowConstants.UP_POSITION;
+    public static double elbowDown = ElbowConstants.DOWN_POSITION;
     private double elbowPosition = elbowUp;
 
     @Override
@@ -83,7 +85,7 @@ public class BasicTeleop extends LinearOpMode {
 
             // RB: Raise elbow
             // LB: Lower elbow
-            double friction = 0.02;
+            double friction = 0.04;
             if (gamepad1.right_bumper) elbowPosition += friction*(elbowUp-elbowPosition);
             if (gamepad1.left_bumper) elbowPosition += friction*(elbowDown-elbowPosition);
 

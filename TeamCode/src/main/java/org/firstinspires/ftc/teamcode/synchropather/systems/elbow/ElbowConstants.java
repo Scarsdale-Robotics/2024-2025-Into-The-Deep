@@ -12,9 +12,14 @@ public class ElbowConstants {
      *  Max elbow velocity in servovalue/s.
      */
     public static double MAX_VELOCITY = 1;
+
     /**
      *  Max elbow acceleration in servovalue/s^2.
      */
     public static double MAX_ACCELERATION = 1;
+
+    public static double DOWN_POSITION = 0.5;
+
+    public static double UP_POSITION = 0.275;
 
 }
