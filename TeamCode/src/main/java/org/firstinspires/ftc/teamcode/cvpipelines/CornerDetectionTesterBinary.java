@@ -3,10 +3,8 @@ package org.firstinspires.ftc.teamcode.cvpipelines;
 import android.graphics.Canvas;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
-import org.opencv.core.MatOfPoint;
 import org.openftc.easyopencv.OpenCvPipeline;
 
-import org.firstinspires.ftc.robotcore.internal.camera.calibration.CameraCalibration;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.Point;
@@ -18,7 +16,7 @@ import org.opencv.core.CvType;
 import java.util.ArrayList;
 import java.util.List;
 
-public class CornerDetectionTester extends OpenCvPipeline {
+public class CornerDetectionTesterBinary extends OpenCvPipeline {
     enum PixelColor {
         WHITE(new Scalar(0, 0, 178.5), new Scalar(255, 26.9, 255), true),
         YELLOW(new Scalar(19, 50, 0), new Scalar(80, 225.0, 255.0), true),
@@ -60,7 +58,7 @@ public class CornerDetectionTester extends OpenCvPipeline {
 //
 //    }
 
-    public CornerDetectionTester(Telemetry telemetry){
+    public CornerDetectionTesterBinary(Telemetry telemetry){
         this.telemetry = telemetry;
 
     }
@@ -95,12 +93,11 @@ public class CornerDetectionTester extends OpenCvPipeline {
 //        gray.convertTo(grayFloat, CvType.CV_32F);
 
         Mat bi = new Mat();
-        gray.copyTo(bi);
-//        Imgproc.bilateralFilter(gray, bi, 5, 75, 75);
+        Imgproc.bilateralFilter(gray, bi, 5, 75, 75);
 
         // Apply Harris Corner detection
         Mat corners = new Mat();
-        Imgproc.cornerHarris(bi, corners, 2, 5, 0.07); // 0.056106
+        Imgproc.cornerHarris(bi, corners, 2, harrisKSize, 0.02);
         Mat simpleKernel = Mat.ones(new Size(3, 3), CvType.CV_8U);
         Mat dilatedCorners = new Mat();
         Imgproc.dilate(corners, dilatedCorners, simpleKernel);
@@ -120,7 +117,7 @@ public class CornerDetectionTester extends OpenCvPipeline {
         }
 
         // Apply a distance threshold to filter close corners
-        double thresh = 10;
+        double thresh = 20;
         List<Point> filteredCorners = filterCornersByDistance(cornerPoints, thresh);
 
         // Draw the corners on the input frame
