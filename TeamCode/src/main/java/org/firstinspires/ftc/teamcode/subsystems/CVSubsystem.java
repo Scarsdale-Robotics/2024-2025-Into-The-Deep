@@ -30,22 +30,51 @@ public class CVSubsystem extends SubsystemBase {
 
     private final Telemetry telemetry;
 
+    private SampleColor currentTargetColor;
 
-    /**
-     * Constructs a new CVSubsystem object with the given parameters.
-     * @param limelight The Limelight3A object.
-     * @param initialHeading The robot's initial heading in radians.
-     * @param telemetry The Telemetry object.
-     */
-    public CVSubsystem(Limelight3A limelight, double initialHeading, Telemetry telemetry) {
+    public final Size CAM_SZ = new Size(640, 480);
+
+    //////////////////
+    // INIT METHODS //
+    //////////////////
+
+    public CVSubsystem(WebcamName cameraName, double initialHeading, boolean isRedTeam, Telemetry telemetry) {
         this.limelight = limelight;
         this.limelight.updateRobotOrientation(Math.toDegrees(initialHeading));
         this.telemetry = telemetry;
-
+        this.cameraName = cameraName;
+  
         // Switch to AprilTag
         limelight.pipelineSwitch(0);
         limelight.start();
 
+        currentTargetColor = isRedTeam ? SampleColor.RY : SampleColor.BY;
+
+        // Construct AprilTag locations map.
+        initAprilTagLocations();
+
+        // Create AprilTagProcessor and VisionPortal.
+        initVisionPortal();
+    }
+  
+    /**
+     * Creates a VisionPortal with an AprilTag processor.
+     */
+    private void initVisionPortal() {
+        // Create the AprilTag processor.
+        aprilTag = new AprilTagProcessor.Builder()
+                .setDrawTagOutline(true)
+                .build();
+
+        // Create the vision portal by using a builder.
+        VisionPortal.Builder builder = new VisionPortal.Builder();
+        builder.setCamera(cameraName);
+        builder.setCameraResolution(CAM_SZ);
+        builder.addProcessors(aprilTag);
+
+        // Build the Vision Portal, using the above settings.
+        visionPortal = builder.build();
+        visionPortal.setProcessorEnabled(aprilTag, true);
     }
 
 
@@ -190,6 +219,24 @@ public class CVSubsystem extends SubsystemBase {
             this.translationCovariance = translationCovariance;
             this.headingCovariance = headingCovariance;
         }
+    }
+
+    public enum SampleColor {
+        RED,
+        YELLOW,
+        BLUE,
+        BY,
+        RY
+    }
+    public void switchTargetedSampleColor(SampleColor newColor) {
+        currentTargetColor = newColor;
+    }
+
+    /**
+     * Returns the (x, y) offset of the center of the current targeted color from the top left corner
+     */
+    public Point getSampleOffset() {
+        // TODO: IMPLEMENT
     }
 
 }

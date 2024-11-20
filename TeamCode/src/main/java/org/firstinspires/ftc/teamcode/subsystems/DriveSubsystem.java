@@ -6,6 +6,7 @@ import com.arcrobotics.ftclib.drivebase.RobotDrive;
 import com.arcrobotics.ftclib.hardware.motors.Motor;
 
 import org.firstinspires.ftc.teamcode.synchropather.DriveConstants;
+import org.opencv.core.Point;
 import org.firstinspires.ftc.teamcode.synchropather.systems.rotation.RotationConstants;
 
 public class DriveSubsystem extends SubsystemBase {
@@ -212,6 +213,18 @@ public class DriveSubsystem extends SubsystemBase {
             }
         }
 
+    }
+
+
+    /////////////////////////////////////
+    // AUTOMATIC DRIVING FUNCTIONALITY //
+    /////////////////////////////////////
+    public void stepTowards2DPoint(Point error) {
+        // TODO: IMPLEMENT
+    }
+
+    public void stepTowardsFieldLocation() {
+        // TODO: IMPLEMENT
     }
 
 }
