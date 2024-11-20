@@ -114,6 +114,18 @@ public class DriveSubsystem extends SubsystemBase {
     }
 
     /**
+     * Drives based on driver pov.
+     *
+     * @param strafe     Strafe power.
+     * @param forward     Forward power.
+     * @param turn      Turn power.
+     * @param gyroAngle Robot heading in radians.
+     */
+    public void driveFieldCentricPowers(double strafe, double forward, double turn, double gyroAngle) {
+        controller.driveFieldCentric(strafe, forward, turn, gyroAngle);
+    }
+
+    /**
      * Corrected driving with bias based on driver pov.
      *
      * @param theta     Direction of drive in radians.

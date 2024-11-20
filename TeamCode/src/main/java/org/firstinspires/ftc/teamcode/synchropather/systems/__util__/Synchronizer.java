@@ -111,6 +111,16 @@ public class Synchronizer {
 	}
 
 	/**
+	 * Gets the RobotState at the current elapsed time within the Plan of the given movementType.
+	 * @param movementType
+	 * @return the indicated RobotState, or null if the Plan does not exist.
+	 */
+	public RobotState getState(MovementType movementType) {
+		double elapsedTime = runtime.seconds() - startTime;
+		return getState(movementType, elapsedTime);
+	}
+
+	/**
 	 * Gets the velocity RobotState at the given elapsedTime within the Plan of the given movementType.
 	 * @param movementType
 	 * @param elapsedTime
@@ -127,6 +137,16 @@ public class Synchronizer {
 	}
 
 	/**
+	 * Gets the velocity RobotState at the current elapsed time within the Plan of the given movementType.
+	 * @param movementType
+	 * @return the indicated velocity RobotState, or null if the Plan does not exist.
+	 */
+	public RobotState getVelocity(MovementType movementType) {
+		double elapsedTime = runtime.seconds() - startTime;
+		return getVelocity(movementType, elapsedTime);
+	}
+
+	/**
 	 * Gets the acceleration RobotState at the given elapsedTime within the Plan of the given movementType.
 	 * @param movementType
 	 * @param elapsedTime
@@ -140,6 +160,16 @@ public class Synchronizer {
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * Gets the acceleration RobotState at the current elapsed time within the Plan of the given movementType.
+	 * @param movementType
+	 * @return the indicated acceleration RobotState, or null if the Plan does not exist.
+	 */
+	public RobotState getAcceleration(MovementType movementType) {
+		double elapsedTime = runtime.seconds() - startTime;
+		return getAcceleration(movementType, elapsedTime);
 	}
 
 	/**
