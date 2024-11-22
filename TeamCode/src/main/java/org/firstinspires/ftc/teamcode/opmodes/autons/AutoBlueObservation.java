@@ -95,9 +95,9 @@ public class AutoBlueObservation extends LinearOpMode{
             CRSplineTranslation splinePark = new CRSplineTranslation(liftPreload2.getEndTime(),
                     new TranslationState(-10, 34),
                     new TranslationState(-20, 40),
-                    new TranslationState(-36, 36),
-                    new TranslationState(-36, 12),
-                    new TranslationState(-24, 0)
+                    //new TranslationState(-36, 36),
+                    //new TranslationState(-36, 12),
+                    new TranslationState(-24, 60)
             );
 
             TranslationPlan translationPlan = new TranslationPlan(robot,
