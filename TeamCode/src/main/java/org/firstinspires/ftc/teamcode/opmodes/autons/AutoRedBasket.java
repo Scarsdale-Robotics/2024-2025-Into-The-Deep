@@ -43,9 +43,9 @@ public class AutoRedBasket extends LinearOpMode {
 
     @Override
     public void runOpMode() throws InterruptedException {
-        this.robot = new RobotSystem(hardwareMap, new Pose2d(-40, -60, new Rotation2d(Math.toRadians(90))), true, this);
+        this.robot = new RobotSystem(hardwareMap, new Pose2d(-40, -63.5, new Rotation2d(Math.toRadians(90))), true, this);
         robot.inDep.setClawPosition(clawClosed);
-        robot.inDep.setElbowPosition(0.3);
+        robot.inDep.setElbowPosition(elbowUp);
         initSynchronizer();
 
         waitForStart();
@@ -67,8 +67,8 @@ public class AutoRedBasket extends LinearOpMode {
     private void initSynchronizer() {
         // place preloaded specimen
         CRSplineTranslation spline1 = new CRSplineTranslation(0,
-                new TranslationState(-40,-60),
-                new TranslationState(-10, -45),
+                new TranslationState(-40,-63.5),
+                new TranslationState(-14, -48),
                 new TranslationState(-10, -34)
         );
 
@@ -95,8 +95,8 @@ public class AutoRedBasket extends LinearOpMode {
         CRSplineTranslation splinePark = new CRSplineTranslation(liftPreload2.getEndTime(),
                 new TranslationState(-10, -34),
                 new TranslationState(-36, -36),
-                new TranslationState(-36, -12),
-                new TranslationState(-24, 0)
+                new TranslationState(-36, -14),
+                new TranslationState(-24, -10)
         );
 
         TranslationPlan translationPlan = new TranslationPlan(robot,
@@ -127,9 +127,15 @@ public class AutoRedBasket extends LinearOpMode {
                 new ElbowState(elbowUp)
         );
 
+        LinearElbow elbowEnd = new LinearElbow(splinePark.getEndTime()-1.5, //goes down to sample
+                new ElbowState(elbowUp),
+                new ElbowState(elbowDown)
+        );
+
 
         ElbowPlan elbowPlan = new ElbowPlan(robot,
-                elbowStill
+                elbowStill,
+                elbowEnd
         );
 
         this.synchronizer = new Synchronizer(

@@ -18,8 +18,8 @@ public class ElbowConstants {
      */
     public static double MAX_ACCELERATION = 1;
 
-    public static double DOWN_POSITION = 0.5;
+    public static double DOWN_POSITION = 0.685;
 
-    public static double UP_POSITION = 0.275;
+    public static double UP_POSITION = 0.45;
 
 }

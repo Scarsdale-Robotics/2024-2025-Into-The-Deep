@@ -5,6 +5,7 @@ import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.arcrobotics.ftclib.geometry.Pose2d;
 import com.arcrobotics.ftclib.geometry.Rotation2d;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 import org.firstinspires.ftc.teamcode.RobotSystem;
@@ -28,9 +29,11 @@ import org.firstinspires.ftc.teamcode.synchropather.systems.rotation.movements.L
 import org.firstinspires.ftc.teamcode.synchropather.systems.translation.TranslationPlan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.translation.TranslationState;
 import org.firstinspires.ftc.teamcode.synchropather.systems.translation.movements.CRSplineTranslation;
+import org.firstinspires.ftc.teamcode.synchropather.systems.translation.movements.LinearTranslation;
 
-@Autonomous(name="Auto Blue (Observation Zone)", group="Autons")
-public class AutoBlueObservation extends LinearOpMode{
+@Disabled
+@Autonomous(name="Auto Blue Observation 1+3", group = "Autons")
+public class DISABLED_AutoBlueObservation1Plus3 extends LinearOpMode {
 
     RobotSystem robot;
     Synchronizer synchronizer;
@@ -63,7 +66,10 @@ public class AutoBlueObservation extends LinearOpMode{
         synchronizer.stop();
     }
 
+
     private void initSynchronizer() {
+
+
         // place preloaded specimen
 
         CRSplineTranslation spline1 = new CRSplineTranslation(0,
@@ -92,15 +98,25 @@ public class AutoBlueObservation extends LinearOpMode{
                 new LiftState(0)
         );
 
-        CRSplineTranslation splinePark = new CRSplineTranslation(liftPreload2.getEndTime(),
+        CRSplineTranslation spline2 = new CRSplineTranslation(liftPreload2.getEndTime(),
                 new TranslationState(-10, 34),
-                new TranslationState(-24, 48),
-                new TranslationState(-48, 63.5)
+                new TranslationState(-33, 36),
+                new TranslationState(-37, 26.5),
+                new TranslationState(-48, 25.5)
+        );
+
+        CRSplineTranslation splinePush = new CRSplineTranslation(spline2.getEndTime(),
+                new TranslationState(-48, 25.5),
+                new TranslationState(-44, 23.5),
+                new TranslationState(-44, 14),
+                new TranslationState(-56, 14),
+                new TranslationState(-56, 60)
         );
 
         TranslationPlan translationPlan = new TranslationPlan(robot,
                 spline1,
-                splinePark
+                spline2,
+                splinePush
         );
 
         LiftPlan liftPlan = new LiftPlan(robot,
@@ -126,17 +142,10 @@ public class AutoBlueObservation extends LinearOpMode{
                 new ElbowState(elbowUp)
         );
 
-        LinearElbow elbowEnd = new LinearElbow(splinePark.getEndTime()-1.5, //goes down to sample
-                new ElbowState(elbowUp),
-                new ElbowState(elbowDown)
-        );
-
 
         ElbowPlan elbowPlan = new ElbowPlan(robot,
-                elbowStill,
-                elbowEnd
+                elbowStill
         );
-
 
         this.synchronizer = new Synchronizer(
                 translationPlan,
@@ -146,4 +155,5 @@ public class AutoBlueObservation extends LinearOpMode{
                 clawPlan
         );
     }
+
 }

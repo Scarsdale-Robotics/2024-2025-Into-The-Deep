@@ -43,9 +43,9 @@ public class AutoRedObservation extends LinearOpMode {
 
     @Override
     public void runOpMode() throws InterruptedException {
-        this.robot = new RobotSystem(hardwareMap, new Pose2d(24, -60, new Rotation2d(Math.toRadians(90))), true, this);
+        this.robot = new RobotSystem(hardwareMap, new Pose2d(24, -63.5, new Rotation2d(Math.toRadians(90))), true, this);
         robot.inDep.setClawPosition(clawClosed);
-        robot.inDep.setElbowPosition(0.3);
+        robot.inDep.setElbowPosition(elbowUp);
         initSynchronizer();
 
         waitForStart();
@@ -65,8 +65,8 @@ public class AutoRedObservation extends LinearOpMode {
 
     private void initSynchronizer() {
         CRSplineTranslation spline1 = new CRSplineTranslation(0,
-                new TranslationState(24,-60),
-                new TranslationState(10, -45),
+                new TranslationState(24,-63.5),
+                new TranslationState(12, -45),
                 new TranslationState(10, -34)
         );
 
@@ -92,10 +92,8 @@ public class AutoRedObservation extends LinearOpMode {
 
         CRSplineTranslation splinePark = new CRSplineTranslation(liftPreload2.getEndTime(),
                 new TranslationState(10, -34),
-                new TranslationState(20, -40),
-                new TranslationState(36, -36),
-                new TranslationState(36, -12),
-                new TranslationState(24, 0)
+                new TranslationState(24, -48),
+                new TranslationState(48, -63.5)
         );
 
         TranslationPlan translationPlan = new TranslationPlan(robot,
@@ -126,9 +124,15 @@ public class AutoRedObservation extends LinearOpMode {
                 new ElbowState(elbowUp)
         );
 
+        LinearElbow elbowEnd = new LinearElbow(splinePark.getEndTime()-1.5, //goes down to sample
+                new ElbowState(elbowUp),
+                new ElbowState(elbowDown)
+        );
+
 
         ElbowPlan elbowPlan = new ElbowPlan(robot,
-                elbowStill
+                elbowStill,
+                elbowEnd
         );
 
         this.synchronizer = new Synchronizer(

@@ -79,7 +79,7 @@ public class BlueTeleop extends LinearOpMode {
 
             // RB: Raise elbow
             // LB: Lower elbow
-            double friction = 0.04;
+            double friction = 0.03;
             if (gamepad1.right_bumper) elbowPosition += friction*(elbowUp-elbowPosition);
             if (gamepad1.left_bumper) elbowPosition += friction*(elbowDown-elbowPosition);
 
