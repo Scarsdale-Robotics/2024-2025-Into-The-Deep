@@ -67,7 +67,7 @@ public class AutoRedObservation extends LinearOpMode {
         CRSplineTranslation spline1 = new CRSplineTranslation(0,
                 new TranslationState(24,-63.5),
                 new TranslationState(12, -45),
-                new TranslationState(10, -34)
+                new TranslationState(10, -37)
         );
 
         LinearRotation still = new LinearRotation(0,
@@ -91,7 +91,7 @@ public class AutoRedObservation extends LinearOpMode {
         );
 
         CRSplineTranslation splinePark = new CRSplineTranslation(liftPreload2.getEndTime(),
-                new TranslationState(10, -34),
+                new TranslationState(10, -37),
                 new TranslationState(24, -48),
                 new TranslationState(48, -63.5)
         );

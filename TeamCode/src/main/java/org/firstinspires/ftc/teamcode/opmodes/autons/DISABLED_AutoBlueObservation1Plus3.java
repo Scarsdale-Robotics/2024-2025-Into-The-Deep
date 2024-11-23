@@ -31,8 +31,8 @@ import org.firstinspires.ftc.teamcode.synchropather.systems.translation.Translat
 import org.firstinspires.ftc.teamcode.synchropather.systems.translation.movements.CRSplineTranslation;
 import org.firstinspires.ftc.teamcode.synchropather.systems.translation.movements.LinearTranslation;
 
-@Disabled
-@Autonomous(name="Auto Blue Observation 1+3", group = "Autons")
+//@Disabled
+@Autonomous(name="[DISABLED] Auto Blue Observation 1+3", group = "Autons")
 public class DISABLED_AutoBlueObservation1Plus3 extends LinearOpMode {
 
     RobotSystem robot;
@@ -70,21 +70,17 @@ public class DISABLED_AutoBlueObservation1Plus3 extends LinearOpMode {
     private void initSynchronizer() {
 
 
-        // place preloaded specimen
+        // Drive to submersible to deposit preloaded specimen
 
         CRSplineTranslation spline1 = new CRSplineTranslation(0,
                 new TranslationState(-24,63.5),
-                new TranslationState(-12, 45),
-                new TranslationState(-10, 34)
+                new TranslationState(-12, 50),
+                new TranslationState(-5, 37)
         );
 
         LinearRotation still = new LinearRotation(0,
                 new RotationState(Math.toRadians(-90)),
                 new RotationState(Math.toRadians(-90))
-        );
-
-        RotationPlan rotationPlan = new RotationPlan(robot,
-                still
         );
 
 
@@ -98,42 +94,10 @@ public class DISABLED_AutoBlueObservation1Plus3 extends LinearOpMode {
                 new LiftState(0)
         );
 
-        CRSplineTranslation spline2 = new CRSplineTranslation(liftPreload2.getEndTime(),
-                new TranslationState(-10, 34),
-                new TranslationState(-33, 36),
-                new TranslationState(-37, 26.5),
-                new TranslationState(-48, 25.5)
-        );
-
-        CRSplineTranslation splinePush = new CRSplineTranslation(spline2.getEndTime(),
-                new TranslationState(-48, 25.5),
-                new TranslationState(-44, 23.5),
-                new TranslationState(-44, 14),
-                new TranslationState(-56, 14),
-                new TranslationState(-56, 60)
-        );
-
-        TranslationPlan translationPlan = new TranslationPlan(robot,
-                spline1,
-                spline2,
-                splinePush
-        );
-
-        LiftPlan liftPlan = new LiftPlan(robot,
-                liftPreload1,
-                liftPreload2
-        );
-
-
         // claw
         LinearClaw claw1 = new LinearClaw(liftPreload2.getStartTime()+.66,
                 new ClawState(clawClosed),
                 new ClawState(clawOpen)
-        );
-
-
-        ClawPlan clawPlan = new ClawPlan(robot,
-                claw1
         );
 
         //elbow
@@ -143,8 +107,107 @@ public class DISABLED_AutoBlueObservation1Plus3 extends LinearOpMode {
         );
 
 
+        // Pick up from observation zone
+
+        LinearTranslation lineToObservation = new LinearTranslation(liftPreload2.getEndTime(),
+                new TranslationState(-5, 37),
+                new TranslationState(-48, 48)
+        );
+
+        LinearRotation rotateToObservation = new LinearRotation(lineToObservation.getStartTime()+0.5,
+                new RotationState(Math.toRadians(-90)),
+                new RotationState(Math.toRadians(90))
+        );
+
+        LinearElbow elbowDownObservation = new LinearElbow(lineToObservation.getEndTime(), //goes down to specimen
+                new ElbowState(elbowUp),
+                new ElbowState(elbowDown)
+        );
+
+        LinearClaw clawCloseObservation = new LinearClaw(elbowDownObservation.getEndTime()-0.1,
+                new ClawState(clawOpen),
+                new ClawState(clawClosed)
+        );
+
+        LinearElbow elbowUpObservation = new LinearElbow(clawCloseObservation.getEndTime()+0.2,
+                new ElbowState(elbowDown),
+                new ElbowState(elbowUp)
+        );
+
+
+        // Deposit specimen at submersible
+
+        CRSplineTranslation splineObservationToSubmersible = new CRSplineTranslation(clawCloseObservation.getEndTime()+0.5,
+                new TranslationState(-48, 48),
+                new TranslationState(-12, 48),
+                new TranslationState(-10, 37)
+        );
+
+        LinearRotation rotateToSubmersible = new LinearRotation(splineObservationToSubmersible.getStartTime()+0.1,
+                new RotationState(Math.toRadians(90)),
+                new RotationState(Math.toRadians(-90))
+        );
+
+        LinearLift liftCycleUp = new LinearLift(splineObservationToSubmersible.getStartTime(),
+                new LiftState(0),
+                new LiftState(1500)
+        );
+
+        LinearLift liftCycleDown = new LinearLift(splineObservationToSubmersible.getEndTime()-0.5,
+                new LiftState(1500),
+                new LiftState(0)
+        );
+
+        // claw
+        LinearClaw clawCycleOpen = new LinearClaw(liftCycleDown.getStartTime()+.66,
+                new ClawState(clawClosed),
+                new ClawState(clawOpen)
+        );
+
+
+        // Park in observation zone
+
+        CRSplineTranslation splinePark = new CRSplineTranslation(liftCycleDown.getEndTime(),
+                new TranslationState(-10, 37),
+                new TranslationState(-18, 48),
+                new TranslationState(-48, 63.5)
+        );
+
+
+
+
+        // Create Plans
+
+        TranslationPlan translationPlan = new TranslationPlan(robot,
+                spline1,
+                lineToObservation,
+                splineObservationToSubmersible,
+                splinePark
+        );
+
+        RotationPlan rotationPlan = new RotationPlan(robot,
+                still,
+                rotateToObservation,
+                rotateToSubmersible
+        );
+
+        LiftPlan liftPlan = new LiftPlan(robot,
+                liftPreload1,
+                liftPreload2,
+                liftCycleUp,
+                liftCycleDown
+        );
+
+        ClawPlan clawPlan = new ClawPlan(robot,
+                claw1,
+                clawCloseObservation,
+                clawCycleOpen
+        );
+
         ElbowPlan elbowPlan = new ElbowPlan(robot,
-                elbowStill
+                elbowStill,
+                elbowDownObservation,
+                elbowUpObservation
         );
 
         this.synchronizer = new Synchronizer(

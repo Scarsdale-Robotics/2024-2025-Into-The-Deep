@@ -36,9 +36,6 @@ public class BlueTeleop extends LinearOpMode {
         waitForStart();
 
         double speed = 1;
-        if(gamepad1.left_stick_button) { //When holding R3, increase speed
-            speed = 1.5;
-        }
         boolean claw = false, toggleClaw = false; // false = claw open
         boolean toggleMacro = false; //false = not in picking up position
         boolean toggleMacroBasket = false;//false = not in reaching mode
@@ -47,6 +44,13 @@ public class BlueTeleop extends LinearOpMode {
 
         while (opModeIsActive()) {
             robot.localization.update();
+
+            ////////////////////
+            // DRIVE CONTROLS //
+            ////////////////////
+
+            // Turn speed down proportional to lift height
+            speed = 1 - Math.max(0,robot.inDep.getLeftLiftPosition()/6000d);
 
             double forward = -speed * gamepad1.left_stick_y;
             double strafe = -speed * gamepad1.left_stick_x;

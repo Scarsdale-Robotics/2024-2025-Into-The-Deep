@@ -28,7 +28,7 @@ public class RedTeleop extends LinearOpMode {
     @Override
     public void runOpMode() throws InterruptedException {
         this.telemetry = new MultipleTelemetry(this.telemetry, FtcDashboard.getInstance().getTelemetry());
-        this.robot = new RobotSystem(hardwareMap, new Pose2d(0, 0, new Rotation2d(Math.toRadians(90))), true, this);
+        this.robot = new RobotSystem(hardwareMap, new Pose2d(0, 0, new Rotation2d(Math.toRadians(-90))), true, this);
 
         robot.inDep.setClawPosition(clawOpen);
         robot.inDep.setElbowPosition(elbowPosition);
@@ -36,9 +36,6 @@ public class RedTeleop extends LinearOpMode {
         waitForStart();
 
         double speed = 1;
-        if(gamepad1.left_stick_button) { //When holding R3, increase speed
-            speed = 1.5;
-        }
         boolean claw = false, toggleClaw = false; // false = claw open
         boolean toggleMacro = false; //false = not in picking up position
         boolean toggleMacroBasket = false;//false = not in reaching mode
@@ -47,6 +44,13 @@ public class RedTeleop extends LinearOpMode {
 
         while (opModeIsActive()) {
             robot.localization.update();
+
+            ////////////////////
+            // DRIVE CONTROLS //
+            ////////////////////
+
+            // Turn speed down proportional to lift height
+            speed = 1 - Math.max(0,robot.inDep.getLeftLiftPosition()/6000d);
 
             double forward = -speed * gamepad1.left_stick_y;
             double strafe = -speed * gamepad1.left_stick_x;
@@ -57,6 +61,7 @@ public class RedTeleop extends LinearOpMode {
             telemetry.addData("strafe", strafe);
             telemetry.addData("turn", turn);
             telemetry.addData("HEADING", robot.localization.getH());
+            telemetry.addData("speed", speed);
             telemetry.update();
 
 
