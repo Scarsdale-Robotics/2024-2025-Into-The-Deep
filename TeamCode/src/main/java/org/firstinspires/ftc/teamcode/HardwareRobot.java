@@ -3,11 +3,14 @@ package org.firstinspires.ftc.teamcode;
 import com.arcrobotics.ftclib.hardware.motors.Motor;
 import com.arcrobotics.ftclib.hardware.motors.Motor.Encoder;
 import com.arcrobotics.ftclib.hardware.motors.MotorEx;
-import com.qualcomm.hardware.limelightvision.Limelight3A;
+import com.qualcomm.hardware.adafruit.AdafruitBNO055IMU;
+import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.ServoImplEx;
+
+import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 
 public class HardwareRobot {
     public final MotorEx leftFront;
@@ -22,7 +25,7 @@ public class HardwareRobot {
     public final Encoder rightOdometer;
     public final Encoder centerOdometer;
 
-    public final Limelight3A limelight;
+    public final WebcamName cameraName;
 
     public final Servo elbow;
     public final Servo claw;  // claw open/close servo
@@ -111,7 +114,8 @@ public class HardwareRobot {
         ////////////
         // CAMERA //
         ////////////
-        limelight = hardwareMap.get(Limelight3A.class, "limelight");
+//        cameraName = hardwareMap.get(WebcamName.class, "limelight");
+        cameraName = null;
 
     }
 }
