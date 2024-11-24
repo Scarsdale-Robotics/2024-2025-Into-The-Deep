@@ -217,7 +217,7 @@ public class CVSubsystem extends SubsystemBase {
         ttsPrevDT.remove(0); ttsPrevDT.add(dt);
         ttsPrevTX.remove(0); ttsPrevTX.add(dt);
 
-        boolean derv_vld = Objects.equals(ttsPrevTX.get(0), DNE);
+        boolean derv_vld = !Objects.equals(ttsPrevTX.get(0), DNE);
 
         double dx = derv_vld ? derivative(ttsPrevTX, ttsPrevDT) : 0;
         double dy = derv_vld ? derivative(ttsPrevTY, ttsPrevDT) : 0;
