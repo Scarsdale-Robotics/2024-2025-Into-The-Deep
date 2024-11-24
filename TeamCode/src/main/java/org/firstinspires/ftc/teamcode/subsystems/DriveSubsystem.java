@@ -101,9 +101,9 @@ public class DriveSubsystem extends SubsystemBase {
      * @param speed     Desired driving speed in in/s.
      * @param turn      Desired angular velocity in rad/s.
      */
-    public void driveRobotCentric(double theta, double speed, double turn) {
-        driveFieldCentric(theta, speed, -turn, 0.0);
-    }
+//    public void driveRobotCentric(double theta, double speed, double turn) {
+//        driveFieldCentric(theta, speed, -turn, 0.0);
+//    }
 
     /**
      * Drives based on driver pov.

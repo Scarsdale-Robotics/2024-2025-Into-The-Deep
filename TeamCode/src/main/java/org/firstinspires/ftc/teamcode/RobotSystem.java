@@ -21,16 +21,17 @@ public class RobotSystem {
     public final CVSubsystem cv;
     public final LocalizationSubsystem localization;
     public final InDepSubsystem inDep;
+    public final HardwareRobot hardwareRobot;
 
     public RobotSystem(HardwareMap hardwareMap, Pose2d initialPose, boolean isRedTeam, LinearOpMode opMode) {
         this.opMode = opMode;
         this.telemetry = new MultipleTelemetry(opMode.telemetry, FtcDashboard.getInstance().getTelemetry());
-        HardwareRobot hardwareRobot = new HardwareRobot(hardwareMap);
+        this.hardwareRobot = new HardwareRobot(hardwareMap);
         this.cv = new CVSubsystem(
-                hardwareRobot.limelight,
-                initialPose.getHeading(),
-                isRedTeam,
-                telemetry);
+                hardwareRobot.cameraName,
+                telemetry,
+                this
+        );
         this.localization = new LocalizationSubsystem(
                 initialPose,
                 hardwareRobot.leftOdometer,

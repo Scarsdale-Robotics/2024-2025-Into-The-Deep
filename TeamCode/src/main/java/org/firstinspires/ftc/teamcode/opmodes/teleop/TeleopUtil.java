@@ -12,8 +12,13 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.RobotSystem;
+import org.firstinspires.ftc.teamcode.subsystems.CVSubsystem;
 import org.firstinspires.ftc.teamcode.synchropather.systems.claw.ClawConstants;
 import org.firstinspires.ftc.teamcode.synchropather.systems.elbow.ElbowConstants;
+
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 public class TeleopUtil {
     private boolean isRedTeam;
@@ -44,7 +49,9 @@ public class TeleopUtil {
         gamepad1 = opMode.gamepad1; gamepad2 = opMode.gamepad2;
 
         this.telemetry = new MultipleTelemetry(this.telemetry, FtcDashboard.getInstance().getTelemetry());
-        this.robot = new RobotSystem(hardwareMap, new Pose2d(0, 0, new Rotation2d(Math.toRadians(-90))), false, this);
+        this.robot = new RobotSystem(hardwareMap, new Pose2d(0, 0, new Rotation2d(Math.toRadians(-90))), false, opMode);
+
+        telemetry.setMsTransmissionInterval(11);
 
         robot.inDep.setClawPosition(CLAW_OPEN);
         robot.inDep.setElbowPosition(elbowPosition);
@@ -63,7 +70,18 @@ public class TeleopUtil {
         double strafe = -speed * gamepad1.left_stick_x;
         double turn = speed * gamepad1.right_stick_x;
 
-        robot.drive.driveFieldCentricPowers(forward, strafe, turn, Math.toDegrees(robot.localization.getH()));
+        double cvMacroMaxSpeed = 0.8;
+
+        Set<CVSubsystem.Color> cvColors = new HashSet<>();
+        boolean cvRunning = false;  // not defining cvRunning later for neatness and consistency in code
+        cvColors.add(isRedTeam ? CVSubsystem.Color.RED : CVSubsystem.Color.BLUE);
+            cvRunning |= robot.cv.tickTowardsSample(gamepad1.cross, cvMacroMaxSpeed, cvColors);
+        cvColors.add(CVSubsystem.Color.YELLOW);
+            cvRunning |= robot.cv.tickTowardsSample(gamepad1.cross && gamepad1.dpad_left, cvMacroMaxSpeed, cvColors);
+
+        // if cv is running then drive will be determined the tickTowardsSample method
+        if (!cvRunning) robot.drive.driveFieldCentricPowers(forward, strafe, turn, Math.toDegrees(robot.localization.getH()));
+
         telemetry.addData("forward", forward);
         telemetry.addData("strafe", strafe);
         telemetry.addData("turn", turn);
@@ -159,10 +177,6 @@ public class TeleopUtil {
         }
         if (!gamepad1.right_stick_button) {
             toggleMacroBasket = false;
-        }
-
-        if (gamepad1.cross) {
-
         }
     }
 }
