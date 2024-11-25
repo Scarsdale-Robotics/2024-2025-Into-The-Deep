@@ -216,11 +216,11 @@ public class CVSubsystem extends SubsystemBase {
         ttsLastTime = t;
         ttsPrevDT.remove(0); ttsPrevDT.add(dt);
         ttsPrevTX.remove(0); ttsPrevTX.add(dt);
+        
+        boolean derv_vld = !Objects.equals(ttsPrevTX.get(0), DNE);//what does this do?
 
-        boolean derv_vld = !Objects.equals(ttsPrevTX.get(0), DNE);
-
-        double dx = derv_vld ? derivative(ttsPrevTX, ttsPrevDT) : 0;
-        double dy = derv_vld ? derivative(ttsPrevTY, ttsPrevDT) : 0;
+        double dx = derv_vld ? derivative(ttsPrevTX, ttsPrevDT) : 0;//what does this do?
+        double dy = derv_vld ? derivative(ttsPrevTY, ttsPrevDT) : 0;//what does this do?
 
         double u_tx = KPX*tx + KDX*dx; clamp.apply(u_tx);
         double u_ty = KPY*ty + KDY*dy; clamp.apply(u_ty);
