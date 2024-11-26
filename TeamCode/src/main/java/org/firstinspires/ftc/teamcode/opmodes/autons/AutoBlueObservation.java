@@ -45,14 +45,14 @@ public class AutoBlueObservation extends LinearOpMode{
     public void runOpMode() throws InterruptedException {
         this.robot = new RobotSystem(hardwareMap, new Pose2d(-24, 63.5, new Rotation2d(Math.toRadians(-90))), false, this);
         robot.inDep.setClawPosition(clawClosed);
-        robot.inDep.setElbowPosition(elbowUp);
+        robot.inDep.setElbowPosition(elbowUp-0.2);
         initSynchronizer();
 
         waitForStart();
 
         synchronizer.start();
         while (opModeIsActive() && synchronizer.update()) {
-            robot.localization.update();
+            robot.logTPS();
             TelemetryPacket packet = new TelemetryPacket();
             packet.fieldOverlay().setStroke("#3F51B5");
             Drawing.drawRobot(packet.fieldOverlay(), robot.localization.getPose());

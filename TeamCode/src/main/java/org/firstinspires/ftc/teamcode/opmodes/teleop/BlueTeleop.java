@@ -30,20 +30,20 @@ public class BlueTeleop extends LinearOpMode {
         this.telemetry = new MultipleTelemetry(this.telemetry, FtcDashboard.getInstance().getTelemetry());
         this.robot = new RobotSystem(hardwareMap, new Pose2d(0, 0, new Rotation2d(Math.toRadians(-90))), false, this);
 
-        robot.inDep.setClawPosition(clawOpen);
-        robot.inDep.setElbowPosition(elbowPosition);
+        robot.inDep.setClawPosition(clawClosed);
+        robot.inDep.setElbowPosition(elbowPosition-0.2);
 
         waitForStart();
 
         double speed = 1;
-        boolean claw = false, toggleClaw = false; // false = claw open
+        boolean claw = true, toggleClaw = false; // false = claw open
         boolean toggleMacro = false; //false = not in picking up position
         boolean toggleMacroBasket = false;//false = not in reaching mode
         double liftTargetPosition = 0;  //set lift pos to 0;
         boolean liftMacroRunning = false; //while liftMacroRunning is true, other acts are not allowed during the movement
 
         while (opModeIsActive()) {
-            robot.localization.update();
+            robot.logTPS();
 
             ////////////////////
             // DRIVE CONTROLS //

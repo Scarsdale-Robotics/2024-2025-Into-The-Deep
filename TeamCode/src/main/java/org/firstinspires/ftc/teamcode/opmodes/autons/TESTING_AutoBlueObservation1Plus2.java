@@ -6,10 +6,10 @@ import com.arcrobotics.ftclib.geometry.Pose2d;
 import com.arcrobotics.ftclib.geometry.Rotation2d;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.RobotSystem;
 import org.firstinspires.ftc.teamcode.opmodes.calibration.Drawing;
-import org.firstinspires.ftc.teamcode.synchropather.DriveConstants;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.Synchronizer;
 import org.firstinspires.ftc.teamcode.synchropather.systems.claw.ClawConstants;
 import org.firstinspires.ftc.teamcode.synchropather.systems.claw.ClawPlan;
@@ -25,11 +25,12 @@ import org.firstinspires.ftc.teamcode.synchropather.systems.lift.movements.Linea
 import org.firstinspires.ftc.teamcode.synchropather.systems.rotation.RotationPlan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.rotation.RotationState;
 import org.firstinspires.ftc.teamcode.synchropather.systems.rotation.movements.LinearRotation;
-import org.firstinspires.ftc.teamcode.synchropather.systems.translation.TranslationConstants;
 import org.firstinspires.ftc.teamcode.synchropather.systems.translation.TranslationPlan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.translation.TranslationState;
 import org.firstinspires.ftc.teamcode.synchropather.systems.translation.movements.CRSplineTranslation;
 import org.firstinspires.ftc.teamcode.synchropather.systems.translation.movements.LinearTranslation;
+
+import java.util.ArrayDeque;
 
 //@Disabled
 @Autonomous(name="[TESTING] Auto Blue Observation 1+2", group = "Autons")
@@ -48,14 +49,14 @@ public class TESTING_AutoBlueObservation1Plus2 extends LinearOpMode {
     public void runOpMode() throws InterruptedException {
         this.robot = new RobotSystem(hardwareMap, new Pose2d(-24, 63.5, new Rotation2d(Math.toRadians(-90))), false, this);
         robot.inDep.setClawPosition(clawClosed);
-        robot.inDep.setElbowPosition(elbowUp);
+        robot.inDep.setElbowPosition(elbowUp-0.2);
         initSynchronizer();
 
         waitForStart();
 
         synchronizer.start();
         while (opModeIsActive() && synchronizer.update()) {
-            robot.localization.update();
+            robot.logTPS();
             TelemetryPacket packet = new TelemetryPacket();
             packet.fieldOverlay().setStroke("#3F51B5");
             Drawing.drawRobot(packet.fieldOverlay(), robot.localization.getPose());

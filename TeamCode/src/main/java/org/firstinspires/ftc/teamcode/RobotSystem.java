@@ -11,8 +11,13 @@ import org.firstinspires.ftc.teamcode.subsystems.CVSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.DriveSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.InDepSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.LocalizationSubsystem;
+import org.firstinspires.ftc.teamcode.threadopmode.OdometryThread;
 
 public class RobotSystem {
+
+    private double TPS = 0;
+
+    private final OdometryThread odometryThread;
 
     public final LinearOpMode opMode;
     public final Telemetry telemetry;
@@ -36,8 +41,8 @@ public class RobotSystem {
                 hardwareRobot.leftOdometer,
                 hardwareRobot.rightOdometer,
                 hardwareRobot.centerOdometer,
-                cv,
-                telemetry
+                cv
+//                ,telemetry
         );
         this.drive = new DriveSubsystem(
                 hardwareRobot.leftFront,
@@ -51,6 +56,20 @@ public class RobotSystem {
                 drive,
                 cv
         );
+
+        // asynchronously run odometry
+        telemetry.addData("TPS", TPS);
+        telemetry.update();
+        odometryThread = new OdometryThread(this.opMode, this.telemetry, this.localization, this);
+        odometryThread.start();
     }
 
+    public void setTPS(double TPS) {
+        this.TPS = TPS;
+    }
+
+    public void logTPS() {
+        telemetry.addData("TPS", TPS);
+        telemetry.update();
+    }
 }

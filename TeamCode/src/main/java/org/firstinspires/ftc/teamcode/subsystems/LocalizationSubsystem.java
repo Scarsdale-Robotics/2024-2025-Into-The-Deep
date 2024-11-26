@@ -311,23 +311,23 @@ public class LocalizationSubsystem extends SubsystemBase {
         double odom_dx = currentPose.getX() - lastOdometryPose.getX();
         double odom_dy = currentPose.getY() - lastOdometryPose.getY();
         double beta = normalizeAngle(h - lastOdometryPose.getHeading());
-        telemetry.addData("_DX", odom_dx);
-        telemetry.addData("_DY", odom_dy);
-        telemetry.addData("_BETA", beta);
+//        telemetry.addData("_DX", odom_dx);
+//        telemetry.addData("_DY", odom_dy);
+//        telemetry.addData("_BETA", beta);
         double dx = odom_dx*Math.cos(beta) - odom_dy*Math.sin(beta);
         double dy = odom_dx*Math.sin(beta) + odom_dy*Math.cos(beta);
         x += dx;
         y += dy;
 
         double odom_dh = normalizeAngle(currentPose.getHeading() - lastOdometryPose.getHeading());
-        telemetry.addData("_DH", odom_dh);
+//        telemetry.addData("_DH", odom_dh);
         h = normalizeAngle(h + odom_dh);
-        telemetry.addData("_PREDICT_H", h);
+//        telemetry.addData("_PREDICT_H", h);
 
         lastOdometryPose = currentPose;
 
 
-        telemetry.update();
+//        telemetry.update();
 
         // Add uncertainty
         // TODO: TUNE
@@ -353,9 +353,9 @@ public class LocalizationSubsystem extends SubsystemBase {
         if (cameraEstimation ==null) return;
 
         Pose2d cameraPose = cameraEstimation.pose;
-        telemetry.addData("heading covariance original", cameraEstimation.headingCovariance);
-        telemetry.addData("heading covariance increase", Math.pow(normalizeAngle(cameraPose.getHeading() - h), 2));
-        telemetry.update();
+//        telemetry.addData("heading covariance original", cameraEstimation.headingCovariance);
+//        telemetry.addData("heading covariance increase", Math.pow(normalizeAngle(cameraPose.getHeading() - h), 2));
+//        telemetry.update();
         cameraEstimation.headingCovariance += Math.pow(normalizeAngle(cameraPose.getHeading() - h), 2);
 
         // Update heading

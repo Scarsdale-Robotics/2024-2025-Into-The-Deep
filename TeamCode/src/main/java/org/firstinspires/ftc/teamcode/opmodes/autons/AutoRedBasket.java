@@ -45,7 +45,7 @@ public class AutoRedBasket extends LinearOpMode {
     public void runOpMode() throws InterruptedException {
         this.robot = new RobotSystem(hardwareMap, new Pose2d(-40, -63.5, new Rotation2d(Math.toRadians(90))), true, this);
         robot.inDep.setClawPosition(clawClosed);
-        robot.inDep.setElbowPosition(elbowUp);
+        robot.inDep.setElbowPosition(elbowUp-0.2);
         initSynchronizer();
 
         waitForStart();
