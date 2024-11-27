@@ -6,7 +6,6 @@ import com.arcrobotics.ftclib.geometry.Pose2d;
 import com.arcrobotics.ftclib.geometry.Rotation2d;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.RobotSystem;
 import org.firstinspires.ftc.teamcode.opmodes.calibration.Drawing;
@@ -29,8 +28,6 @@ import org.firstinspires.ftc.teamcode.synchropather.systems.translation.Translat
 import org.firstinspires.ftc.teamcode.synchropather.systems.translation.TranslationState;
 import org.firstinspires.ftc.teamcode.synchropather.systems.translation.movements.CRSplineTranslation;
 import org.firstinspires.ftc.teamcode.synchropather.systems.translation.movements.LinearTranslation;
-
-import java.util.ArrayDeque;
 
 //@Disabled
 @Autonomous(name="[TESTING] Auto Blue Observation 1+2", group = "Autons")
@@ -56,7 +53,7 @@ public class TESTING_AutoBlueObservation1Plus2 extends LinearOpMode {
 
         synchronizer.start();
         while (opModeIsActive() && synchronizer.update()) {
-            robot.logTPS();
+            robot.logOdometry();
             TelemetryPacket packet = new TelemetryPacket();
             packet.fieldOverlay().setStroke("#3F51B5");
             Drawing.drawRobot(packet.fieldOverlay(), robot.localization.getPose());
@@ -87,11 +84,11 @@ public class TESTING_AutoBlueObservation1Plus2 extends LinearOpMode {
 
         LinearLift liftPreload1 = new LinearLift(spline1.getStartTime(),
                 new LiftState(0),
-                new LiftState(1500)
+                new LiftState(1400)
         );
 
         LinearLift liftPreload2 = new LinearLift(liftPreload1.getEndTime(),
-                new LiftState(1500),
+                new LiftState(1400),
                 new LiftState(0)
         );
 
@@ -173,11 +170,11 @@ public class TESTING_AutoBlueObservation1Plus2 extends LinearOpMode {
 
         LinearLift liftCycleUp = new LinearLift(splineObservationToSubmersible.getStartTime(),
                 new LiftState(0),
-                new LiftState(1500)
+                new LiftState(1400)
         );
 
         LinearLift liftCycleDown = new LinearLift(splineObservationToSubmersible.getEndTime()-0.5,
-                new LiftState(1500),
+                new LiftState(1400),
                 new LiftState(0)
         );
 
@@ -237,11 +234,11 @@ public class TESTING_AutoBlueObservation1Plus2 extends LinearOpMode {
 
         LinearLift liftCycle2Up = new LinearLift(splineCycleObservationToSubmersible.getStartTime(),
                 new LiftState(0),
-                new LiftState(1500)
+                new LiftState(1400)
         );
 
         LinearLift liftCycle2Down = new LinearLift(splineCycleObservationToSubmersible.getEndTime()-0.5,
-                new LiftState(1500),
+                new LiftState(1400),
                 new LiftState(0)
         );
 

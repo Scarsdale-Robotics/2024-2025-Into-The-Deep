@@ -30,7 +30,7 @@ public class TranslationPlan extends Plan<TranslationState> {
 	// Positional PD constants
 	//TODO: TUNE
 	public static double kP = 8;
-	public static double kD = 1;
+	public static double kD = 0.125;
 
 	// Error history array
 	private final ArrayList<Double> exHistory;

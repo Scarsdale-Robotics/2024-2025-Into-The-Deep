@@ -10,9 +10,6 @@ import org.firstinspires.ftc.teamcode.RobotSystem;
 
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
-import com.qualcomm.robotcore.util.ElapsedTime;
-
-import java.util.ArrayDeque;
 
 @TeleOp(name="Localization Logger", group="Calibration")
 public class LocalizationLogger extends LinearOpMode {
@@ -29,7 +26,7 @@ public class LocalizationLogger extends LinearOpMode {
 
         double speed = 1;
         while (opModeIsActive()) {
-            robot.logTPS();
+            robot.logOdometry();
             // Draw robot on dashboard
             Pose2d currentPose = robot.localization.getPose();
             TelemetryPacket packet = new TelemetryPacket();

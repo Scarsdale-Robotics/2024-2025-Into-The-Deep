@@ -55,9 +55,9 @@ public class LocalizationSubsystem extends SubsystemBase {
     //////////////
 
     // Distance between parallel odometers
-    public static double TRACK_WIDTH = 11.3386;
+    public static double TRACK_WIDTH = 11.315;
     // Signed distance from the point of rotation (positive=forward)
-    public static double CENTER_WHEEL_OFFSET = 0.974882;
+    public static double CENTER_WHEEL_OFFSET = 0.9675;
     // Measured in inches
     private static final double WHEEL_DIAMETER = 1.37795;
     // Odometer encoder resolution

@@ -1,10 +1,13 @@
 package org.firstinspires.ftc.teamcode.synchropather.systems.translation;
 
+import com.acmerobotics.dashboard.config.Config;
+
 import org.firstinspires.ftc.teamcode.synchropather.DriveConstants;
 
 /**
  * A static class used by Translation Movements to reference important kinematic and algorithmic tuning values.
  */
+@Config
 public class TranslationConstants {
 
     /**

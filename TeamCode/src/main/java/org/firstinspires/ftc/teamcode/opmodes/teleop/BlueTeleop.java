@@ -43,7 +43,7 @@ public class BlueTeleop extends LinearOpMode {
         boolean liftMacroRunning = false; //while liftMacroRunning is true, other acts are not allowed during the movement
 
         while (opModeIsActive()) {
-            robot.logTPS();
+            robot.logOdometry();
 
             ////////////////////
             // DRIVE CONTROLS //
@@ -51,16 +51,16 @@ public class BlueTeleop extends LinearOpMode {
 
             // Turn speed down proportional to lift height
             speed = 1 - Math.max(0,robot.inDep.getLeftLiftPosition()/6000d);
+            double turnSpeedArmMultiplier = 0.3 + 0.7 * (elbowPosition - elbowDown) / (elbowUp - elbowDown);
 
             double forward = -speed * gamepad1.left_stick_y;
             double strafe = -speed * gamepad1.left_stick_x;
-            double turn = speed * gamepad1.right_stick_x;
+            double turn = turnSpeedArmMultiplier * speed * gamepad1.right_stick_x;
 
             robot.drive.driveFieldCentricPowers(forward, strafe, turn, Math.toDegrees(robot.localization.getH()));
             telemetry.addData("forward", forward);
             telemetry.addData("strafe", strafe);
             telemetry.addData("turn", turn);
-            telemetry.addData("HEADING", robot.localization.getH());
             telemetry.update();
 
 
@@ -83,7 +83,7 @@ public class BlueTeleop extends LinearOpMode {
 
             // RB: Raise elbow
             // LB: Lower elbow
-            double friction = 0.03;
+            double friction = 0.02;
             if (gamepad1.right_bumper) elbowPosition += friction*(elbowUp-elbowPosition);
             if (gamepad1.left_bumper) elbowPosition += friction*(elbowDown-elbowPosition);
 

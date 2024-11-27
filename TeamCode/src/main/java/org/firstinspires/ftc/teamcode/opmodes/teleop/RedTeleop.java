@@ -43,7 +43,7 @@ public class RedTeleop extends LinearOpMode {
         boolean liftMacroRunning = false; //while liftMacroRunning is true, other acts are not allowed during the movement
 
         while (opModeIsActive()) {
-            robot.logTPS();
+            robot.logOdometry();
 
             ////////////////////
             // DRIVE CONTROLS //

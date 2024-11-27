@@ -52,7 +52,7 @@ public class AutoRedBasket extends LinearOpMode {
 
         synchronizer.start();
         while (opModeIsActive() && synchronizer.update()) {
-            robot.localization.update();
+            robot.logOdometry();
             TelemetryPacket packet = new TelemetryPacket();
             packet.fieldOverlay().setStroke("#3F51B5");
             Drawing.drawRobot(packet.fieldOverlay(), robot.localization.getPose());
@@ -69,7 +69,7 @@ public class AutoRedBasket extends LinearOpMode {
         CRSplineTranslation spline1 = new CRSplineTranslation(0,
                 new TranslationState(-40,-63.5),
                 new TranslationState(-14, -48),
-                new TranslationState(-10, -37)
+                new TranslationState(-10, -38)
         );
 
         LinearRotation still = new LinearRotation(0,
@@ -84,16 +84,16 @@ public class AutoRedBasket extends LinearOpMode {
 
         LinearLift liftPreload1 = new LinearLift(new TimeSpan(spline1.getStartTime(), spline1.getEndTime()-0.5),
                 new LiftState(0),
-                new LiftState(1500)
+                new LiftState(1400)
         );
 
         LinearLift liftPreload2 = new LinearLift(spline1.getEndTime()-0.5,
-                new LiftState(1500),
+                new LiftState(1400),
                 new LiftState(0)
         );
 
         CRSplineTranslation splinePark = new CRSplineTranslation(liftPreload2.getEndTime(),
-                new TranslationState(-10, -37),
+                new TranslationState(-10, -38),
                 new TranslationState(-36, -36),
                 new TranslationState(-36, -14),
                 new TranslationState(-24, -10)

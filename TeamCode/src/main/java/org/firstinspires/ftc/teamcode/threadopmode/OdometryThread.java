@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.threadopmode;
 
+import static java.lang.Thread.sleep;
+
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -63,18 +65,26 @@ public class OdometryThread {
 
         public void run() {
             boolean started = false;
-            while(!t.isInterrupted() && (!started || opMode.opModeIsActive())) {
-                if (!opMode.gamepad1.cross) localization.update();
-                if (opMode.opModeIsActive()) started = true;
+            double targetTPS = 100;
+            try {
+                while(!t.isInterrupted() && (!started || opMode.opModeIsActive())) {
+                    localization.update();
+                    if (opMode.opModeIsActive()) started = true;
 
-                /////////////////
-                // TPS COUNTER //
-                /////////////////
+                    /////////////////
+                    // TPS COUNTER //
+                    /////////////////
 
-                double currentTime = runtime.seconds();
-                loopTicks.add(currentTime);
-                while (!loopTicks.isEmpty() && currentTime - loopTicks.getFirst() > 1d) loopTicks.removeFirst();
-                robot.setTPS(loopTicks.size());
+                    double currentTime = runtime.seconds();
+                    loopTicks.add(currentTime);
+                    while (!loopTicks.isEmpty() && currentTime - loopTicks.getFirst() > 1d) loopTicks.removeFirst();
+                    robot.setTPS(loopTicks.size());
+
+                    sleep((int)(1000d/targetTPS));
+
+                }
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
             }
             stop();
         }
@@ -88,9 +98,6 @@ public class OdometryThread {
             loopTicks = new ArrayDeque<>();
             runtime = new ElapsedTime(0);
             runtime.reset();
-
-            telemetry.addData("TPS", 0);
-            telemetry.update();
         }
 
         public void stop() {
