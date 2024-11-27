@@ -9,15 +9,24 @@ import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 
+import org.firstinspires.ftc.robotcore.external.Function;
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Position;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
+import org.firstinspires.ftc.teamcode.RobotSystem;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 import org.opencv.core.Point;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
 
 public class CVSubsystem extends SubsystemBase {
@@ -35,21 +44,24 @@ public class CVSubsystem extends SubsystemBase {
 
     public final Size CAM_SZ = new Size(640, 480);
 
+    private RobotSystem robot;
+
     //////////////////
     // INIT METHODS //
     //////////////////
 
-    public CVSubsystem(Limelight3A limelight, double initialHeading, boolean isRedTeam, Telemetry telemetry) {
+    public CVSubsystem(Limelight3A limelight, double initialHeading, boolean isRedTeam, Telemetry telemetry, RobotSystem robot) {
         this.limelight = limelight;
         this.limelight.updateRobotOrientation(Math.toDegrees(initialHeading));
         this.telemetry = telemetry;
+
+        this.robot = robot;
   
         // Switch to AprilTag
         this.limelight.pipelineSwitch(0);
         this.limelight.start();
 
         currentTargetColor = isRedTeam ? SampleColor.RY : SampleColor.BY;
-
     }
 
 
@@ -57,6 +69,114 @@ public class CVSubsystem extends SubsystemBase {
     //////////////////
     // MAIN METHODS //
     //////////////////
+
+
+    private final Double DNE = -1.;
+    ArrayList<Double> ttsPrevTX, ttsPrevTY, ttsPrevDT;
+    private void resetTTSVars() {
+        ttsPrevTX = new ArrayList<>();
+        ttsPrevTY = new ArrayList<>();
+        ttsPrevDT = new ArrayList<>();
+        ttsPrevTX.addAll(Collections.nCopies(5, DNE));
+        ttsPrevTY.addAll(Collections.nCopies(5, DNE));
+        ttsPrevDT.addAll(Collections.nCopies(5, DNE));
+    }
+
+    private double derivative(ArrayList<Double> prevpos, ArrayList<Double> prevtime) {
+        return (
+                -prevpos.get(0) + 8*prevpos.get(1) - 8*prevpos.get(3) + prevpos.get(4)
+        ) / (
+                12*(prevtime.get(4) - prevtime.get(0))
+        );
+    }
+
+    public enum Color { RED, YELLOW, BLUE }
+
+    private double ttsLastTime = new Date().getTime();
+    public boolean tickTowardsSample(boolean active, double maxSpeed, Set<Color> colors) {
+        double KPX = 0.03, KDX = 0.00;
+        double KPY = 0.60, KDY = 0.30;
+
+        Function<Double, Double> clamp = (v) -> Math.max(Math.min(v, maxSpeed), -maxSpeed);
+        Runnable pause = () -> {
+            robot.drive.driveRobotCentricPowers(0, 0, 0);
+            telemetry.addData("NOTE","NO RESULT");
+            telemetry.update();
+        };
+
+        if (!active) {
+            resetTTSVars();
+            return false;
+        }
+
+        telemetry.addData("state","running");
+        LLResult result = limelight.getLatestResult();
+
+        if (result == null || result.isValid()) {
+            pause.run();
+            return true;
+        }
+
+        List<LLResultTypes.DetectorResult> detections = result.getDetectorResults();
+        List<LLResultTypes.DetectorResult> selected = new ArrayList<>();
+
+        for (LLResultTypes.DetectorResult detection : detections) {
+            String className = detection.getClassName();
+            Color detectedColor;
+            switch (className) {
+                case "red":
+                    detectedColor = Color.RED;
+                    break;
+                case "blue":
+                    detectedColor = Color.BLUE;
+                    break;
+                default:
+                    detectedColor = Color.YELLOW;
+            }
+
+            if (colors.contains(detectedColor)) selected.add(detection);
+        }
+
+        if (selected.isEmpty()) {
+            pause.run();
+            return true;
+        }
+
+        double closestDetectionDist = Double.MAX_VALUE;
+        LLResultTypes.DetectorResult closestDetection = detections.get(0);
+        for (LLResultTypes.DetectorResult detection : selected) {
+            double tx = detection.getTargetXDegrees(); // Where it is (left-right)
+            double ty = detection.getTargetYDegrees(); // Where it is (up-down)
+            double d = Math.sqrt(Math.pow(tx, 2) + Math.pow(ty, 2));  // could have just done tx*tx + ty*ty but this way of writing imo shows the formula much clearer to warrant the extra text
+            if (d < closestDetectionDist) {
+                closestDetectionDist = d;
+                closestDetection = detection;
+            }
+        }
+//        telemetry.addData("cdd", closestDetectionDist);
+
+        double tx = closestDetection.getTargetXDegrees(); // Where it is (left-right)
+        double ty = closestDetection.getTargetYDegrees(); // Where it is (up-down)
+
+        double t = new Date().getTime();
+        double dt = (t - ttsLastTime) / 1000.;
+        ttsLastTime = t;
+        ttsPrevDT.remove(0); ttsPrevDT.add(dt);
+        ttsPrevTX.remove(0); ttsPrevTX.add(dt);
+
+        boolean derv_vld = !Objects.equals(ttsPrevTX.get(0), DNE);//what does this do?
+
+        double dx = derv_vld ? derivative(ttsPrevTX, ttsPrevDT) : 0;//what does this do?
+        double dy = derv_vld ? derivative(ttsPrevTY, ttsPrevDT) : 0;//what does this do?
+
+        double u_tx = KPX*tx + KDX*dx; clamp.apply(u_tx);
+        double u_ty = KPY*ty + KDY*dy; clamp.apply(u_ty);
+
+        robot.drive.driveRobotCentricPowers(u_tx,-u_ty,0);
+        telemetry.update();
+
+        return true;
+    }
 
     /**
      * Updates the Limelight's heading for the MT2 algorithm.
