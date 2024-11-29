@@ -58,10 +58,7 @@ public class CVSubsystem extends SubsystemBase {
         this.robot = robot;
   
         // Switch to AprilTag
-        this.limelight.pipelineSwitch(2);
         this.limelight.start();
-
-        currentTargetColor = isRedTeam ? SampleColor.RY : SampleColor.BY;
     }
 
 
@@ -177,7 +174,6 @@ public class CVSubsystem extends SubsystemBase {
         double u_ty = KPY*ty + KDY*dy; clamp.apply(u_ty);
 
         robot.drive.driveRobotCentricPowers(u_tx,-u_ty,0);
-        telemetry.update();
 
         return true;
     }

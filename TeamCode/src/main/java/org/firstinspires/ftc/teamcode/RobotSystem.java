@@ -31,7 +31,8 @@ public class RobotSystem {
                 initialPose.getHeading(),
                 isRedTeam,
                 telemetry,
-                this);
+                this
+        );
         this.localization = new LocalizationSubsystem(
                 initialPose,
                 hardwareRobot.leftOdometer,

@@ -112,6 +112,6 @@ public class HardwareRobot {
         // CAMERA //
         ////////////
         limelight = hardwareMap.get(Limelight3A.class, "limelight");
-
+        limelight.pipelineSwitch(2);
     }
 }
