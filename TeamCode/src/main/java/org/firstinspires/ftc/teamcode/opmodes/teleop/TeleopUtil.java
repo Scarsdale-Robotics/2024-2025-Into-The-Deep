@@ -48,8 +48,8 @@ public class TeleopUtil {
         this.isRedTeam = isRedTeam;
         gamepad1 = opMode.gamepad1; gamepad2 = opMode.gamepad2;
 
-        this.telemetry = new MultipleTelemetry(this.telemetry, FtcDashboard.getInstance().getTelemetry());
-        this.robot = new RobotSystem(hardwareMap, new Pose2d(0, 0, new Rotation2d(Math.toRadians(-90))), false, opMode);
+        this.telemetry = new MultipleTelemetry(opMode.telemetry, FtcDashboard.getInstance().getTelemetry());
+        this.robot = new RobotSystem(opMode.hardwareMap, new Pose2d(0, 0, new Rotation2d(Math.toRadians(-90))), false, opMode);
 
         telemetry.setMsTransmissionInterval(11);
 

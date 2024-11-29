@@ -58,7 +58,7 @@ public class CVSubsystem extends SubsystemBase {
         this.robot = robot;
   
         // Switch to AprilTag
-        this.limelight.pipelineSwitch(0);
+        this.limelight.pipelineSwitch(2);
         this.limelight.start();
 
         currentTargetColor = isRedTeam ? SampleColor.RY : SampleColor.BY;
@@ -101,7 +101,7 @@ public class CVSubsystem extends SubsystemBase {
         Runnable pause = () -> {
             robot.drive.driveRobotCentricPowers(0, 0, 0);
             telemetry.addData("NOTE","NO RESULT");
-            telemetry.update();
+//            telemetry.update();
         };
 
         if (!active) {
@@ -113,7 +113,7 @@ public class CVSubsystem extends SubsystemBase {
         LLResult result = limelight.getLatestResult();
 
         if (result == null || result.isValid()) {
-            pause.run();
+            telemetry.addData("PLoc", "0");
             return true;
         }
 
@@ -134,10 +134,14 @@ public class CVSubsystem extends SubsystemBase {
                     detectedColor = Color.YELLOW;
             }
 
+            telemetry.addData("CL", className);
+
             if (colors.contains(detectedColor)) selected.add(detection);
         }
 
         if (selected.isEmpty()) {
+            telemetry.addData("PLoc", "1");
+            telemetry.addData("DS", detections.size());
             pause.run();
             return true;
         }
