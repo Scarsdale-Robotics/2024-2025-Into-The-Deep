@@ -106,4 +106,11 @@ public abstract class Movement {
 	 */
 	public abstract String getDisplayName();
 
+	/**
+	 * @return this Movement's TimeSpan.
+	 */
+	public TimeSpan getTimeSpan() {
+		return timeSpan;
+	}
+
 }

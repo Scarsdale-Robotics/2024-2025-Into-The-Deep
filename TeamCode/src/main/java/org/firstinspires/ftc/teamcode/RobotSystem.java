@@ -14,13 +14,8 @@ import org.firstinspires.ftc.teamcode.subsystems.CVSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.DriveSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.InDepSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.LocalizationSubsystem;
-import org.firstinspires.ftc.teamcode.threadopmode.OdometryThread;
 
 public class RobotSystem {
-
-    private double TPS = 0;
-
-    private final OdometryThread odometryThread;
 
     public final LinearOpMode opMode;
     public final Telemetry telemetry;
@@ -59,21 +54,10 @@ public class RobotSystem {
                 drive,
                 cv
         );
-
-        // asynchronously run odometry
-        telemetry.addData("[ODO] TPS", TPS);
-        telemetry.update();
-        odometryThread = new OdometryThread(this.opMode, this.telemetry, this.localization, this);
-        odometryThread.start();
-    }
-
-    public void setTPS(double TPS) {
-        this.TPS = TPS;
     }
 
     public void logOdometry() {
         Pose2d currentPose = localization.getPose();
-        telemetry.addData("[ODO] TPS", TPS);
         telemetry.addData("[ODO] X", currentPose.getX());
         telemetry.addData("[ODO] Y", currentPose.getY());
         telemetry.addData("[ODO] H", Math.toDegrees(currentPose.getHeading()));

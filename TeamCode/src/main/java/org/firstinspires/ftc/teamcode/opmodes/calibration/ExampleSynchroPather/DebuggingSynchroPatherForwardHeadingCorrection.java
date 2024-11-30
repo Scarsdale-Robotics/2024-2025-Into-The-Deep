@@ -48,11 +48,13 @@ public class DebuggingSynchroPatherForwardHeadingCorrection extends LinearOpMode
         while (opModeIsActive()) {
             while (opModeIsActive() && !gamepad1.square) {
                 updateTPS();
+                robot.localization.update();
                 robot.logOdometry();
             }
             synchronizer.start();
             while (opModeIsActive() && synchronizer.update()) {
                 updateTPS();
+                robot.localization.update();
                 robot.logOdometry();
                 TelemetryPacket packet = new TelemetryPacket();
                 packet.fieldOverlay().setStroke("#3F51B5");
@@ -62,6 +64,7 @@ public class DebuggingSynchroPatherForwardHeadingCorrection extends LinearOpMode
                 FtcDashboard.getInstance().sendTelemetryPacket(packet);
             }
             synchronizer.stop();
+            robot.localization.update();
             updateTPS();
             robot.logOdometry();
         }

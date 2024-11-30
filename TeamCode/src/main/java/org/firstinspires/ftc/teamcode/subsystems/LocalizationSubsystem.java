@@ -311,26 +311,18 @@ public class LocalizationSubsystem extends SubsystemBase {
         double odom_dx = currentPose.getX() - lastOdometryPose.getX();
         double odom_dy = currentPose.getY() - lastOdometryPose.getY();
         double beta = normalizeAngle(h - lastOdometryPose.getHeading());
-//        telemetry.addData("_DX", odom_dx);
-//        telemetry.addData("_DY", odom_dy);
-//        telemetry.addData("_BETA", beta);
         double dx = odom_dx*Math.cos(beta) - odom_dy*Math.sin(beta);
         double dy = odom_dx*Math.sin(beta) + odom_dy*Math.cos(beta);
         x += dx;
         y += dy;
 
         double odom_dh = normalizeAngle(currentPose.getHeading() - lastOdometryPose.getHeading());
-//        telemetry.addData("_DH", odom_dh);
         h = normalizeAngle(h + odom_dh);
-//        telemetry.addData("_PREDICT_H", h);
 
         lastOdometryPose = currentPose;
 
 
-//        telemetry.update();
-
         // Add uncertainty
-        // TODO: TUNE
         P_translation += Math.hypot(dx, dy) * Q_translation;
         P_heading += Math.abs(odom_dh) * Q_heading;
 
@@ -347,16 +339,9 @@ public class LocalizationSubsystem extends SubsystemBase {
     /**
      * Update step for the heading Kalman Filter.
      */
-    private void updateHeadingKF() {
-        CVSubsystem.PoseEstimation cameraEstimation = null;
-        if (cameraEnabled) cameraEstimation = cv.getPoseEstimation();
-        if (cameraEstimation ==null) return;
-
+    private void updateHeadingKF(CVSubsystem.PoseEstimation cameraEstimation) {
         Pose2d cameraPose = cameraEstimation.pose;
-//        telemetry.addData("heading covariance original", cameraEstimation.headingCovariance);
-//        telemetry.addData("heading covariance increase", Math.pow(normalizeAngle(cameraPose.getHeading() - h), 2));
-//        telemetry.update();
-        cameraEstimation.headingCovariance += Math.pow(normalizeAngle(cameraPose.getHeading() - h), 2);
+        cameraEstimation.headingCovariance += 0.25*Math.pow(normalizeAngle(cameraPose.getHeading() - h), 2);
 
         // Update heading
         double R_camera_heading = cameraEstimation.headingCovariance;
@@ -377,11 +362,7 @@ public class LocalizationSubsystem extends SubsystemBase {
     /**
      * Update step for the translation Kalman Filter.
      */
-    private void updateTranslationKF() {
-        CVSubsystem.PoseEstimation cameraEstimation = null;
-        if (cameraEnabled) cameraEstimation = cv.getPoseEstimation();
-        if (cameraEstimation ==null) return;
-
+    private void updateTranslationKF(CVSubsystem.PoseEstimation cameraEstimation) {
         Pose2d cameraPose = cameraEstimation.pose;
         cameraEstimation.translationCovariance += Math.pow(Math.hypot(cameraPose.getX() - x, cameraPose.getY() - y), 2);
 
@@ -438,11 +419,16 @@ public class LocalizationSubsystem extends SubsystemBase {
      * Update the pose and velocity.
      */
     public void update() {
+        // Get AprilTag result
+        CVSubsystem.PoseEstimation cameraEstimation = null;
+        if (cameraEnabled) cameraEstimation = cv.getPoseEstimation();
 
         // Kalman Filter steps
         predictKF();
-        updateHeadingKF();
-        updateTranslationKF();
+        if (cameraEstimation != null) {
+            updateHeadingKF(cameraEstimation);
+            updateTranslationKF(cameraEstimation);
+        }
 
         // Calculate velocity
         updateVelocity();

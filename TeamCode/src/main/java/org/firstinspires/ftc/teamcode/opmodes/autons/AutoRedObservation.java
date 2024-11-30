@@ -45,13 +45,14 @@ public class AutoRedObservation extends LinearOpMode {
     public void runOpMode() throws InterruptedException {
         this.robot = new RobotSystem(hardwareMap, new Pose2d(24, -63.5, new Rotation2d(Math.toRadians(90))), true, this);
         robot.inDep.setClawPosition(clawClosed);
-        robot.inDep.setElbowPosition(elbowUp-0.2);
+        robot.inDep.setElbowPosition(elbowUp-0.04);
         initSynchronizer();
 
         waitForStart();
 
         synchronizer.start();
         while (opModeIsActive() && synchronizer.update()) {
+            robot.localization.update();
             robot.logOdometry();
             TelemetryPacket packet = new TelemetryPacket();
             packet.fieldOverlay().setStroke("#3F51B5");

@@ -21,17 +21,17 @@ public class BlueTeleop extends LinearOpMode {
     public static double clawOpen = ClawConstants.OPEN_POSITION;
     public static double clawClosed = ClawConstants.CLOSED_POSITION;
 
-    public static double elbowUp = ElbowConstants.UP_POSITION;
+    public static double elbowUp = ElbowConstants.UP_POSITION-0.04;
     public static double elbowDown = ElbowConstants.DOWN_POSITION;
     private double elbowPosition = elbowUp;
 
     @Override
     public void runOpMode() throws InterruptedException {
         this.telemetry = new MultipleTelemetry(this.telemetry, FtcDashboard.getInstance().getTelemetry());
-        this.robot = new RobotSystem(hardwareMap, new Pose2d(0, 0, new Rotation2d(Math.toRadians(-90))), false, this);
+        this.robot = new RobotSystem(hardwareMap, new Pose2d(48, 63.5, new Rotation2d(Math.toRadians(-90))), false, this);
 
         robot.inDep.setClawPosition(clawClosed);
-        robot.inDep.setElbowPosition(elbowPosition-0.2);
+        robot.inDep.setElbowPosition(elbowPosition);
 
         waitForStart();
 
@@ -43,6 +43,7 @@ public class BlueTeleop extends LinearOpMode {
         boolean liftMacroRunning = false; //while liftMacroRunning is true, other acts are not allowed during the movement
 
         while (opModeIsActive()) {
+            robot.localization.update();
             robot.logOdometry();
 
             ////////////////////
@@ -85,7 +86,14 @@ public class BlueTeleop extends LinearOpMode {
             // LB: Lower elbow
             double friction = 0.02;
             if (gamepad1.right_bumper) elbowPosition += friction*(elbowUp-elbowPosition);
-            if (gamepad1.left_bumper) elbowPosition += friction*(elbowDown-elbowPosition);
+
+            if (gamepad1.left_bumper) {
+                double threshold = 0.1;
+                if (elbowPosition > elbowUp-threshold)
+                    elbowPosition += friction*threshold;
+                else
+                    elbowPosition += friction*(elbowDown-elbowPosition);
+            }
 
             // Control elbow
             robot.inDep.setElbowPosition(elbowPosition);

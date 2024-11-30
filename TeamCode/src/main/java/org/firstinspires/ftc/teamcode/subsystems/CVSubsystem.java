@@ -19,6 +19,9 @@ import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 import org.opencv.core.Point;
 
+import java.util.ArrayList;
+import java.util.List;
+
 
 public class CVSubsystem extends SubsystemBase {
 
@@ -80,17 +83,17 @@ public class CVSubsystem extends SubsystemBase {
         double heading = orientation.getYaw(AngleUnit.RADIANS);
         double distanceToTag = Double.MAX_VALUE;
         double tagYaw = -1;
-        double tagSkew = -69;
+        List<List<Double>> tagCorners = new ArrayList<>();
         for (LLResultTypes.FiducialResult fiducialResult : result.getFiducialResults()) {
             Position tagPosition = fiducialResult.getRobotPoseTargetSpace().getPosition().toUnit(DistanceUnit.INCH);
             double distance = Math.hypot(tagPosition.x, Math.hypot(tagPosition.y, tagPosition.z));
             distanceToTag = Math.min(distanceToTag, distance);
             tagYaw = fiducialResult.getRobotPoseTargetSpace().getOrientation().getPitch();
-            tagSkew = fiducialResult.getSkew();
+            tagCorners = fiducialResult.getTargetCorners();
         }
         telemetry.addData("distanceToTag", distanceToTag);
         telemetry.addData("tagYaw", tagYaw);
-        telemetry.addData("tagSkew", tagSkew);
+        telemetry.addData("tagCorners", tagCorners.toString());
         double estimatedError = 3.67e-3*distanceToTag + 1.34;
 
         double dx = estimatedError * Math.cos(heading);
