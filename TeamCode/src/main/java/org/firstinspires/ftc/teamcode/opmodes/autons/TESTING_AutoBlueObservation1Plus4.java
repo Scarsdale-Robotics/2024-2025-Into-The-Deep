@@ -73,7 +73,6 @@ public class TESTING_AutoBlueObservation1Plus4 extends LinearOpMode {
 
     private void initSynchronizer() {
 
-
         // Set kinematic constraints
 
         TranslationConstants.MAX_VELOCITY = 0.5*40d;
@@ -91,16 +90,13 @@ public class TESTING_AutoBlueObservation1Plus4 extends LinearOpMode {
         ElbowConstants.MAX_VELOCITY = 1;
         ElbowConstants.MAX_ACCELERATION = 1;
 
-
         // Set tuning variables
         double elbowClipDrive = 0.1;
         double clawClipElbow = 0.1;
 
-
-
-        //////////////////////////////
-        // PLACE PRELOADED SPECIMEN //
-        //////////////////////////////
+        ///////////////////////////////////////
+        // PLACE PRELOADED SPECIMEN  (STEP 1)//
+        ///////////////////////////////////////
 
         LinearLift liftUpPreload = new LinearLift(0,
                 new LiftState(0),
@@ -132,11 +128,9 @@ public class TESTING_AutoBlueObservation1Plus4 extends LinearOpMode {
                 new ClawState(clawOpen)
         );
 
-
-
-        ////////////////////////
-        // GO TO BLUE SAMPLES //
-        ////////////////////////
+        ////////////////////////////////
+        // GO TO BLUE SAMPLES (Step 2)//
+        ////////////////////////////////
 
         CRSplineTranslation splineApproachSamples = new CRSplineTranslation(clawOpenPreload.getEndTime(),
                 new TranslationState(-10, 37),
@@ -155,12 +149,9 @@ public class TESTING_AutoBlueObservation1Plus4 extends LinearOpMode {
         );
 //        System.out.println("elbowApproachSamples.getDuration(): " + elbowApproachSamples.getDuration());
 
-
-
-
-        ////////////////////////////////////////////
-        // MOVE EACH SAMPLE INTO OBSERVATION ZONE //
-        ////////////////////////////////////////////
+        ////////////////////////////////////////////////////
+        // MOVE EACH SAMPLE INTO OBSERVATION ZONE (Step 3)//
+        ////////////////////////////////////////////////////
 
         double splineMoveSamplesStartTime = splineApproachSamples.getEndTime();
         CRSplineTranslation splineMoveSamples = new CRSplineTranslation(new TimeSpan(splineMoveSamplesStartTime, splineMoveSamplesStartTime+5.4),
@@ -271,11 +262,9 @@ public class TESTING_AutoBlueObservation1Plus4 extends LinearOpMode {
                 new ClawState(clawOpen)
         );
 
-
-
-        ////////////////////////////
-        // PICK UP FIRST SPECIMEN //
-        ////////////////////////////
+        ////////////////////////////////////
+        // PICK UP FIRST SPECIMEN (Step 4)//
+        ////////////////////////////////////
 
         LinearElbow elbowDownFirstSpecimen = new LinearElbow(splineMoveSamples.getEndTime()-0.1, // clip end of spline
                 new ElbowState(elbowPartiallyUp),
@@ -287,11 +276,9 @@ public class TESTING_AutoBlueObservation1Plus4 extends LinearOpMode {
                 new ClawState(clawClosed)
         );
 
-
-
-        //////////////////////////
-        // SCORE FIRST SPECIMEN //
-        //////////////////////////
+        //////////////////////////////////
+        // SCORE FIRST SPECIMEN (Step 5)//
+        //////////////////////////////////
 
         // Approach
         LinearTranslation lineScoreFirstSpecimen = new LinearTranslation(clawCloseFirstSpecimen.getEndTime(),
@@ -329,11 +316,9 @@ public class TESTING_AutoBlueObservation1Plus4 extends LinearOpMode {
                 new ClawState(clawOpen)
         );
 
-
-
-        /////////////////////////////
-        // PICK UP SECOND SPECIMEN //
-        /////////////////////////////
+        /////////////////////////////////////
+        // PICK UP SECOND SPECIMEN (Step 6)//
+        /////////////////////////////////////
 
         LinearTranslation lineApproachSecondSpecimen = new LinearTranslation(clawOpenFirstSpecimen.getEndTime(),
                 new TranslationState(-10, 37),
@@ -356,12 +341,9 @@ public class TESTING_AutoBlueObservation1Plus4 extends LinearOpMode {
                 new ClawState(clawClosed)
         );
 
-
-
-
-        ///////////////////////////
-        // SCORE SECOND SPECIMEN //
-        ///////////////////////////
+        ///////////////////////////////////
+        // SCORE SECOND SPECIMEN (Step 7)//
+        ///////////////////////////////////
 
         // Approach
         LinearTranslation lineScoreSecondSpecimen = new LinearTranslation(clawCloseSecondSpecimen.getEndTime(),
@@ -395,13 +377,9 @@ public class TESTING_AutoBlueObservation1Plus4 extends LinearOpMode {
                 new ClawState(clawOpen)
         );
 
-
-
-
-
-        ////////////////////////////
-        // PICK UP THIRD SPECIMEN //
-        ////////////////////////////
+        ////////////////////////////////////
+        // PICK UP THIRD SPECIMEN (Step 8)//
+        ////////////////////////////////////
 
         LinearTranslation lineApproachThirdSpecimen = new LinearTranslation(clawOpenSecondSpecimen.getEndTime(),
                 new TranslationState(-10, 37),
@@ -423,13 +401,9 @@ public class TESTING_AutoBlueObservation1Plus4 extends LinearOpMode {
                 new ClawState(clawClosed)
         );
 
-
-
-
-
-        //////////////////////////
-        // SCORE THIRD SPECIMEN //
-        //////////////////////////
+        //////////////////////////////////
+        // SCORE THIRD SPECIMEN (Step 9)//
+        //////////////////////////////////
 
         // Approach
         LinearTranslation lineScoreThirdSpecimen = new LinearTranslation(clawCloseThirdSpecimen.getEndTime(),
@@ -463,13 +437,9 @@ public class TESTING_AutoBlueObservation1Plus4 extends LinearOpMode {
                 new ClawState(clawOpen)
         );
 
-
-
-
-
-        /////////////////////////////
-        // PICK UP FOURTH SPECIMEN //
-        /////////////////////////////
+        //////////////////////////////////////
+        // PICK UP FOURTH SPECIMEN (Step 10)//
+        //////////////////////////////////////
 
         LinearTranslation lineApproachFourthSpecimen = new LinearTranslation(clawOpenThirdSpecimen.getEndTime(),
                 new TranslationState(-10, 37),
@@ -491,13 +461,9 @@ public class TESTING_AutoBlueObservation1Plus4 extends LinearOpMode {
                 new ClawState(clawClosed)
         );
 
-
-
-
-
-        ///////////////////////////
-        // SCORE FOURTH SPECIMEN //
-        ///////////////////////////
+        ////////////////////////////////////
+        // SCORE FOURTH SPECIMEN (Step 11)//
+        ////////////////////////////////////
 
         // Approach
         LinearTranslation lineScoreFourthSpecimen = new LinearTranslation(clawCloseFourthSpecimen.getEndTime(),
@@ -531,16 +497,13 @@ public class TESTING_AutoBlueObservation1Plus4 extends LinearOpMode {
                 new ClawState(clawOpen)
         );
 
-
-
-
-        //////////////////////////////
-        // PARK IN OBSERVATION ZONE //
-        //////////////////////////////
+        ///////////////////////////////////////
+        // PARK IN OBSERVATION ZONE (Step 12)//
+        ///////////////////////////////////////
 
         LinearTranslation linePark = new LinearTranslation(clawOpenFourthSpecimen.getEndTime(),
                 new TranslationState(-10, 37),
-                new TranslationState(-48, 63.5)
+                new TranslationState(-42, 53)
         );
 
         LinearClaw clawPark = new LinearClaw(linePark.getStartTime(),
@@ -552,11 +515,6 @@ public class TESTING_AutoBlueObservation1Plus4 extends LinearOpMode {
                 new ElbowState(elbowUp),
                 new ElbowState(elbowUp-0.2)
         );
-
-
-
-
-
 
         //////////////////
         // CREATE PLANS //
