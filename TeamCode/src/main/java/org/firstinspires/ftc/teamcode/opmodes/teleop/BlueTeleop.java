@@ -21,7 +21,7 @@ public class BlueTeleop extends LinearOpMode {
     public static double clawOpen = ClawConstants.OPEN_POSITION;
     public static double clawClosed = ClawConstants.CLOSED_POSITION;
 
-    public static double elbowUp = ElbowConstants.UP_POSITION-0.04;
+    public static double elbowUp = ElbowConstants.UP_POSITION;
     public static double elbowDown = ElbowConstants.DOWN_POSITION;
     private double elbowPosition = elbowUp;
 
@@ -37,14 +37,26 @@ public class BlueTeleop extends LinearOpMode {
 
         double speed = 1;
         boolean claw = true, toggleClaw = false; // false = claw open
-        boolean toggleMacro = false; //false = not in picking up position
-        boolean toggleMacroBasket = false;//false = not in reaching mode
         double liftTargetPosition = 0;  //set lift pos to 0;
-        boolean liftMacroRunning = false; //while liftMacroRunning is true, other acts are not allowed during the movement
+
+        boolean toggleLiftUpMacro = false, // Lifting to submersible high chamber
+                liftUpMacroRunning = false;
+
+        boolean toggleLiftDownMacro = false, // Go down to specimen
+                liftDownMacroRunning = false;
+
+        boolean autoClawReleaseAvailable = false;
 
         while (opModeIsActive()) {
             robot.localization.update();
             robot.logOdometry();
+
+            // options+circle (gamepad2) = Reset IMU
+            if (gamepad2.square && gamepad2.circle) {
+                robot.localization.resetH(Math.toRadians(-90));
+                gamepad1.rumble(1500);
+                gamepad2.rumble(1500);
+            }
 
             ////////////////////
             // DRIVE CONTROLS //
@@ -52,11 +64,15 @@ public class BlueTeleop extends LinearOpMode {
 
             // Turn speed down proportional to lift height
             speed = 1 - Math.max(0,robot.inDep.getLeftLiftPosition()/6000d);
-            double turnSpeedArmMultiplier = 0.3 + 0.7 * (elbowPosition - elbowDown) / (elbowUp - elbowDown);
 
-            double forward = -speed * gamepad1.left_stick_y;
-            double strafe = -speed * gamepad1.left_stick_x;
-            double turn = turnSpeedArmMultiplier * speed * gamepad1.right_stick_x;
+            double speedArmMultiplier;
+            double elbowProportionalPosition = (elbowPosition - elbowDown) / (elbowUp - elbowDown);
+            if (elbowProportionalPosition < 0.2) speedArmMultiplier = 0.3;
+            else speedArmMultiplier = 1;
+
+            double forward = speedArmMultiplier * -speed * gamepad1.left_stick_y;
+            double strafe = speedArmMultiplier * -speed * gamepad1.left_stick_x;
+            double turn = speedArmMultiplier * speed * gamepad1.right_stick_x;
 
             robot.drive.driveFieldCentricPowers(forward, strafe, turn, Math.toDegrees(robot.localization.getH()));
             telemetry.addData("forward", forward);
@@ -82,17 +98,26 @@ public class BlueTeleop extends LinearOpMode {
             else
                 robot.inDep.setClawPosition(clawOpen);
 
+
             // RB: Raise elbow
             // LB: Lower elbow
-            double friction = 0.02;
-            if (gamepad1.right_bumper) elbowPosition += friction*(elbowUp-elbowPosition);
+            double slowElbowSpeed = 0.0025;
+            double fastElbowSpeed = 0.01;
+            double speedThreshold = 0.5; // proportion between up and down
+            double speedGradient = slowElbowSpeed+(elbowProportionalPosition-speedThreshold)*(fastElbowSpeed-slowElbowSpeed); // linearly connect speeds when elbow is higher than threshold
+
+            if (gamepad1.right_bumper) {
+                if (elbowProportionalPosition < speedThreshold)
+                    elbowPosition = Math.max(elbowUp, elbowPosition - slowElbowSpeed);
+                else
+                    elbowPosition = Math.max(elbowUp, elbowPosition - speedGradient);
+            }
 
             if (gamepad1.left_bumper) {
-                double threshold = 0.1;
-                if (elbowPosition > elbowUp-threshold)
-                    elbowPosition += friction*threshold;
+                if (elbowProportionalPosition < speedThreshold)
+                    elbowPosition = Math.min(elbowDown, elbowPosition + slowElbowSpeed);
                 else
-                    elbowPosition += friction*(elbowDown-elbowPosition);
+                    elbowPosition = Math.min(elbowDown, elbowPosition + speedGradient);
             }
 
             // Control elbow
@@ -124,27 +149,40 @@ public class BlueTeleop extends LinearOpMode {
             leftPower += triggerPower;
             rightPower += triggerPower;
 
-            // Clamp powers
-        	  /*
-        	  leftPower = clamp(leftPower);
-        	  rightPower = clamp(rightPower);
-        	  */
 
 
-            if (gamepad1.square && !toggleMacro) {
-                claw = false;
-                liftTargetPosition = 0;
-                liftMacroRunning = true;
-                toggleMacro = true;
+            // LIFT UP MACRO
+            if (gamepad1.square && !toggleLiftUpMacro) {
+                liftTargetPosition = 1350;
+                liftUpMacroRunning = true; // enable lift up macro
+                liftDownMacroRunning = false; // disable lift down macro
+                toggleLiftUpMacro = true;
+                elbowPosition = elbowUp;
             }
             if (!gamepad1.square)
-                toggleMacro = false;
+                toggleLiftUpMacro = false;
 
-            if (!liftMacroRunning) {
-                // Set powers
-                robot.inDep.setLeftLiftPower(leftPower);
-                robot.inDep.setRightLiftPower(rightPower);
-            } else {
+
+            // LIFT DOWN MACRO
+            if (gamepad1.circle && !toggleLiftDownMacro) {
+                liftTargetPosition = -10;
+                liftUpMacroRunning = false; // disable lift up macro
+                liftDownMacroRunning = true; // enable lift down macro
+                toggleLiftDownMacro = true;
+                elbowPosition = elbowDown - 0.04;
+            }
+            if (!gamepad1.circle)
+                toggleLiftDownMacro = false;
+
+
+            // CONTROL LIFT
+            boolean triggerPressed = gamepad1.left_trigger != 0 || gamepad1.right_trigger != 0;
+            if (triggerPressed) {
+                liftUpMacroRunning = false;
+                liftDownMacroRunning = false;
+            }
+            if (liftUpMacroRunning || liftDownMacroRunning) {
+                // A MACRO IS RUNNING
                 //p controller
                 double liftPosition = robot.inDep.getLeftLiftPosition(); //get current position
                 double error = liftTargetPosition - liftPosition;
@@ -155,30 +193,27 @@ public class BlueTeleop extends LinearOpMode {
                 robot.inDep.setRightLiftPower(u_t);
 
                 if (Math.abs(error) < 50) {
-                    liftMacroRunning = false;
+                    if (liftUpMacroRunning) autoClawReleaseAvailable = true;
+                    liftUpMacroRunning = false;
+                    liftDownMacroRunning = false;
                 }
-
+            }
+            else {
+                // TRIGGER CONTROLS
+                // Set powers
+                robot.inDep.setLeftLiftPower(leftPower);
+                robot.inDep.setRightLiftPower(rightPower);
+                if (autoClawReleaseAvailable && robot.inDep.getLeftLiftPosition() < 650) {
+                    claw = false;
+                    robot.inDep.setClawPosition(clawOpen);
+                    autoClawReleaseAvailable = false;
+                }
             }
 
 
-            if (gamepad1.right_stick_button && !toggleMacroBasket) {
-                triggerPower = 20; //lift goes up
-                sleep(5000);
-                claw = true; //claw open
-                toggleMacroBasket = !toggleMacroBasket; //set toggle to true
-            }
-            /*else if (gamepad1.right_stick_button && toggleMacroBasket){
-                triggerPower = -20;
-                sleep(5000);
-                claw = true; //claw open
-                toggleMacroBasket = !toggleMacroBasket;
-            } */
-            if(!gamepad1.right_stick_button) {
-                toggleMacroBasket = false;
-            }
+
 
         }
-
 
     }
 

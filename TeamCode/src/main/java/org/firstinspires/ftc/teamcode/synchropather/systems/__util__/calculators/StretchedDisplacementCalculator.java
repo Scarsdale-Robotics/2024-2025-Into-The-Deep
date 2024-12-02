@@ -21,6 +21,7 @@ public class StretchedDisplacementCalculator extends DisplacementCalculator {
 	public StretchedDisplacementCalculator(double targetDisplacement, TimeSpan timeSpan, double MV, double MA) {
 		super(targetDisplacement, MV, MA);
 		this.timeSpan = timeSpan;
+		this.duration = timeSpan.getDuration();
 		init();
 	}
 

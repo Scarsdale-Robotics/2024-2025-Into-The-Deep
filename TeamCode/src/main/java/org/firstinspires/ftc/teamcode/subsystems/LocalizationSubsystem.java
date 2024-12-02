@@ -9,6 +9,9 @@ import com.arcrobotics.ftclib.kinematics.HolonomicOdometry;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 
 import java.util.ArrayList;
 
@@ -90,6 +93,22 @@ public class LocalizationSubsystem extends SubsystemBase {
 
     private Telemetry telemetry = null;
 
+
+
+    //////////////
+    // PINPOINT //
+    //////////////
+
+    private static final double xOffset = 144.0, yOffset = -120.0;
+    private static final double ENCODER_CPR = 4096; // Optii v1
+    private static final double ODOM_DIAMETER = 35.0; // mm
+    private static final double TICKS_PER_MM = ENCODER_CPR / (Math.PI * ODOM_DIAMETER);
+
+    private GoBildaPinpointDriver pinpoint;
+
+
+
+
     /**
      * Creates a new LocalizationSubsystem object with the given parameters.
      * @param initialPose The robot's starting pose.
@@ -103,7 +122,8 @@ public class LocalizationSubsystem extends SubsystemBase {
             Encoder leftOdometer,
             Encoder rightOdometer,
             Encoder centerOdometer,
-            CVSubsystem cv) {
+            CVSubsystem cv,
+            GoBildaPinpointDriver pinpoint) {
 
         // Init KF
         this.P_translation = 2;
@@ -140,6 +160,19 @@ public class LocalizationSubsystem extends SubsystemBase {
         this.lastOdometryPose = new Pose2d(0,0,new Rotation2d(0));
 
 
+
+        // Init pinpoint
+        /*
+        this.pinpoint = pinpoint;
+        this.pinpoint.setOffsets(xOffset, yOffset);
+        this.pinpoint.setEncoderResolution(TICKS_PER_MM);
+        this.pinpoint.resetPosAndIMU();
+        Pose2D initialPose2D = new Pose2D(DistanceUnit.INCH, initialPose.getX(), initialPose.getY(), AngleUnit.RADIANS, initialPose.getHeading());
+        this.pinpoint.setPosition(initialPose2D);
+         */
+
+
+
         // Store camera
         this.cv = cv;
         enableCamera();
@@ -174,13 +207,15 @@ public class LocalizationSubsystem extends SubsystemBase {
             Encoder rightOdometer,
             Encoder centerOdometer,
             CVSubsystem cv,
+            GoBildaPinpointDriver pinpoint,
             Telemetry telemetry) {
         this(
                 initialPose,
                 leftOdometer,
                 rightOdometer,
                 centerOdometer,
-                cv
+                cv,
+                pinpoint
         );
         this.telemetry = telemetry;
     }
@@ -198,13 +233,15 @@ public class LocalizationSubsystem extends SubsystemBase {
             Encoder leftOdometer,
             Encoder rightOdometer,
             Encoder centerOdometer,
+            GoBildaPinpointDriver pinpoint,
             Telemetry telemetry) {
         this(
                 initialPose,
                 leftOdometer,
                 rightOdometer,
                 centerOdometer,
-                (CVSubsystem) null
+                (CVSubsystem) null,
+                pinpoint
         );
         this.telemetry = telemetry;
         disableCamera();
@@ -261,6 +298,14 @@ public class LocalizationSubsystem extends SubsystemBase {
      */
     public double getH() {
         return h;
+    }
+
+    /**
+     * Reset the heading to the given value.
+     * @param H
+     */
+    public void resetH(double H) {
+        h = H;
     }
 
     /**
