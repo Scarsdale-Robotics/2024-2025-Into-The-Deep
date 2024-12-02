@@ -38,6 +38,7 @@ public class PinpointLogger extends LinearOpMode {
         pinpoint.setOffsets(xOffset, yOffset);
 
         // Optii v1
+        telemetry.addData("Encoder res", TICKS_PER_MM);
         pinpoint.setEncoderResolution(TICKS_PER_MM);
 
         /*
@@ -136,6 +137,10 @@ public class PinpointLogger extends LinearOpMode {
             telemetry.addData("Pinpoint Frequency", pinpoint.getFrequency()); //prints/gets the current refresh rate of the Pinpoint
 
             telemetry.addData("REV Hub Frequency: ", frequency); //prints the control system refresh rate
+
+
+            telemetry.addData("X ticks", pinpoint.getEncoderX());
+            telemetry.addData("Y ticks", pinpoint.getEncoderY());
             telemetry.update();
 
         }

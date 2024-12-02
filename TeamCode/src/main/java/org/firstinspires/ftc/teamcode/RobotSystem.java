@@ -36,12 +36,9 @@ public class RobotSystem {
                 telemetry);
         this.localization = new LocalizationSubsystem(
                 initialPose,
-                hardwareRobot.leftOdometer,
-                hardwareRobot.rightOdometer,
-                hardwareRobot.centerOdometer,
                 cv,
                 hardwareRobot.pinpoint
-//                ,telemetry
+                ,telemetry
         );
         this.drive = new DriveSubsystem(
                 hardwareRobot.leftFront,

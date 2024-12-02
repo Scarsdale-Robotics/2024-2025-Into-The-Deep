@@ -20,10 +20,6 @@ public class HardwareRobot {
     public final MotorEx leftLift;
     public final MotorEx rightLift;
 
-    public final Encoder leftOdometer;
-    public final Encoder rightOdometer;
-    public final Encoder centerOdometer;
-
     public final GoBildaPinpointDriver pinpoint;
 
     public final Limelight3A limelight;
@@ -94,22 +90,10 @@ public class HardwareRobot {
 
 
         //////////////
-        // ODOMETRY //
-        //////////////
-        leftOdometer = rightFront.encoder;
-        rightOdometer = leftFront.encoder;
-        centerOdometer = leftBack.encoder;
-
-        leftOdometer.setDirection(Motor.Direction.REVERSE);
-        rightOdometer.setDirection(Motor.Direction.REVERSE);
-
-
-        //////////////
         // PINPOINT //
         //////////////
-//        pinpoint = hardwareMap.get(GoBildaPinpointDriver.class,"pinpoint");
-//        pinpoint.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.FORWARD, GoBildaPinpointDriver.EncoderDirection.FORWARD);
-        pinpoint = null;
+        pinpoint = hardwareMap.get(GoBildaPinpointDriver.class,"pinpoint");
+        pinpoint.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.FORWARD, GoBildaPinpointDriver.EncoderDirection.FORWARD);
 
 
         ////////////

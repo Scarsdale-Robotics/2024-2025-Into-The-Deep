@@ -29,9 +29,9 @@ public class LocalizationSubsystem extends SubsystemBase {
     private boolean cameraEnabled = true;
 
     // Model covariance for translation
-    private static final double Q_translation = 0.0625;
+    private static final double Q_translation = 0.01849838438;
     // Model covariance for heading
-    private static final double Q_heading = 0.0003;
+    private static final double Q_heading = 0.0001;
 
     // Uncertainty
     private double P_translation;
@@ -53,26 +53,18 @@ public class LocalizationSubsystem extends SubsystemBase {
     private double vh;
 
 
+
     //////////////
-    // ODOMETRY //
+    // PINPOINT //
     //////////////
 
-    // Distance between parallel odometers
-    public static double TRACK_WIDTH = 11.315;
-    // Signed distance from the point of rotation (positive=forward)
-    public static double CENTER_WHEEL_OFFSET = 0.9675;
-    // Measured in inches
-    private static final double WHEEL_DIAMETER = 1.37795;
-    // Odometer encoder resolution
-    private static final double TICKS_PER_REV = 4096;
-    // Circumference divided by encoder resolution [inches/tick]
-    private static final double DISTANCE_PER_PULSE = (Math.PI * WHEEL_DIAMETER) / TICKS_PER_REV;
+    private static final double xOffset = 144.0, yOffset = -120.0;
+    private static final double ENCODER_CPR = 4096; // Optii v1
+    private static final double ODOM_DIAMETER = 35.0; // mm
+    private static final double TICKS_PER_MM = ENCODER_CPR / (Math.PI * ODOM_DIAMETER);
 
-    // Inbuilt odometry object
-    private final Encoder leftOdometer;
-    private final Encoder rightOdometer;
-    private final Encoder centerOdometer;
-    private final HolonomicOdometry odometry;
+    private GoBildaPinpointDriver pinpoint;
+
     private Pose2d lastOdometryPose;
 
 
@@ -95,33 +87,16 @@ public class LocalizationSubsystem extends SubsystemBase {
 
 
 
-    //////////////
-    // PINPOINT //
-    //////////////
-
-    private static final double xOffset = 144.0, yOffset = -120.0;
-    private static final double ENCODER_CPR = 4096; // Optii v1
-    private static final double ODOM_DIAMETER = 35.0; // mm
-    private static final double TICKS_PER_MM = ENCODER_CPR / (Math.PI * ODOM_DIAMETER);
-
-    private GoBildaPinpointDriver pinpoint;
-
 
 
 
     /**
      * Creates a new LocalizationSubsystem object with the given parameters.
      * @param initialPose The robot's starting pose.
-     * @param leftOdometer Encoder object.
-     * @param rightOdometer Encoder object.
-     * @param centerOdometer Encoder object.
      * @param cv The CVSubsystem of the robot.
      */
     public LocalizationSubsystem(
             Pose2d initialPose,
-            Encoder leftOdometer,
-            Encoder rightOdometer,
-            Encoder centerOdometer,
             CVSubsystem cv,
             GoBildaPinpointDriver pinpoint) {
 
@@ -142,35 +117,14 @@ public class LocalizationSubsystem extends SubsystemBase {
         this.vh = 0;
 
 
-        // Init odometry
-        // Encoders
-        this.leftOdometer = leftOdometer.setDistancePerPulse(DISTANCE_PER_PULSE);
-        this.rightOdometer = rightOdometer.setDistancePerPulse(DISTANCE_PER_PULSE);
-        this.centerOdometer = centerOdometer.setDistancePerPulse(DISTANCE_PER_PULSE);
-
-        this.leftOdometer.reset();
-        this.rightOdometer.reset();
-        this.centerOdometer.reset();
-        this.odometry = new HolonomicOdometry(
-                this.leftOdometer::getDistance,
-                this.rightOdometer::getDistance,
-                this.centerOdometer::getDistance,
-                TRACK_WIDTH, CENTER_WHEEL_OFFSET
-        );
-        this.lastOdometryPose = new Pose2d(0,0,new Rotation2d(0));
-
-
-
         // Init pinpoint
-        /*
         this.pinpoint = pinpoint;
         this.pinpoint.setOffsets(xOffset, yOffset);
         this.pinpoint.setEncoderResolution(TICKS_PER_MM);
         this.pinpoint.resetPosAndIMU();
         Pose2D initialPose2D = new Pose2D(DistanceUnit.INCH, initialPose.getX(), initialPose.getY(), AngleUnit.RADIANS, initialPose.getHeading());
         this.pinpoint.setPosition(initialPose2D);
-         */
-
+        this.lastOdometryPose = initialPose;
 
 
         // Store camera
@@ -195,25 +149,16 @@ public class LocalizationSubsystem extends SubsystemBase {
     /**
      * Creates a new LocalizationSubsystem object with the given parameters.
      * @param initialPose The robot's starting pose.
-     * @param leftOdometer Encoder object.
-     * @param rightOdometer Encoder object.
-     * @param centerOdometer Encoder object.
      * @param cv The CVSubsystem of the robot.
      * @param telemetry The opmode's Telemetry object.
      */
     public LocalizationSubsystem(
             Pose2d initialPose,
-            Encoder leftOdometer,
-            Encoder rightOdometer,
-            Encoder centerOdometer,
             CVSubsystem cv,
             GoBildaPinpointDriver pinpoint,
             Telemetry telemetry) {
         this(
                 initialPose,
-                leftOdometer,
-                rightOdometer,
-                centerOdometer,
                 cv,
                 pinpoint
         );
@@ -223,23 +168,14 @@ public class LocalizationSubsystem extends SubsystemBase {
     /**
      * Creates a new LocalizationSubsystem object with the given parameters.
      * @param initialPose The robot's starting pose.
-     * @param leftOdometer Encoder object.
-     * @param rightOdometer Encoder object.
-     * @param centerOdometer Encoder object.
      * @param telemetry The opmode's Telemetry object.
      */
     public LocalizationSubsystem(
             Pose2d initialPose,
-            Encoder leftOdometer,
-            Encoder rightOdometer,
-            Encoder centerOdometer,
             GoBildaPinpointDriver pinpoint,
             Telemetry telemetry) {
         this(
                 initialPose,
-                leftOdometer,
-                rightOdometer,
-                centerOdometer,
                 (CVSubsystem) null,
                 pinpoint
         );
@@ -347,9 +283,9 @@ public class LocalizationSubsystem extends SubsystemBase {
      */
     private void predictKF() {
         // Get odometry pose
-        odometry.updatePose();
-        Pose2d currentPose = odometry.getPose();
-        currentPose = new Pose2d(currentPose.getX(), -currentPose.getY(), new Rotation2d(-currentPose.getHeading()));
+        pinpoint.update();
+        Pose2D pinpointPose = pinpoint.getPosition();
+        Pose2d currentPose = new Pose2d(pinpointPose.getX(DistanceUnit.INCH), pinpointPose.getY(DistanceUnit.INCH), new Rotation2d(pinpointPose.getHeading(AngleUnit.RADIANS)));
 
         // Calculate model
         // rotate odometry displacement by h-lastOdometryPose.getHeading()
@@ -378,6 +314,9 @@ public class LocalizationSubsystem extends SubsystemBase {
             telemetry.addData("Odom H", Math.toDegrees(h)+"°");
             telemetry.addData("P_translation", P_translation);
             telemetry.addData("P_heading", P_heading);
+            telemetry.addData("PP X", currentPose.getX());
+            telemetry.addData("PP Y", currentPose.getY());
+            telemetry.addData("PP H", currentPose.getHeading());
         }
     }
 
