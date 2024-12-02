@@ -39,7 +39,8 @@ public class RobotSystem {
                 hardwareRobot.leftOdometer,
                 hardwareRobot.rightOdometer,
                 hardwareRobot.centerOdometer,
-                cv
+                cv,
+                hardwareRobot.pinpoint
 //                ,telemetry
         );
         this.drive = new DriveSubsystem(
