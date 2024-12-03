@@ -31,10 +31,10 @@ public class LiftPlan extends Plan<LiftState> {
         this.robot = robot;
         this.leHistory = new ArrayList<>();
         this.reHistory = new ArrayList<>();
-        robot.telemetry.addData("[SYNCHROPATHER] LiftPlan leftHeight", 0);
-        robot.telemetry.addData("[SYNCHROPATHER] LiftPlan rightHeight", 0);
-        robot.telemetry.addData("[SYNCHROPATHER] LiftPlan desiredState.getHeight()", 0);
-        robot.telemetry.update();
+//        robot.telemetry.addData("[SYNCHROPATHER] LiftPlan leftHeight", 0);
+//        robot.telemetry.addData("[SYNCHROPATHER] LiftPlan rightHeight", 0);
+//        robot.telemetry.addData("[SYNCHROPATHER] LiftPlan desiredState.getHeight()", 0);
+//        robot.telemetry.update();
     }
 
     public void loop() {
@@ -96,5 +96,9 @@ public class LiftPlan extends Plan<LiftState> {
     public void stop() {
         robot.inDep.setLeftLiftPower(0);
         robot.inDep.setRightLiftPower(0);
+    }
+
+    public void setRobot(RobotSystem robot) {
+        this.robot = robot;
     }
 }

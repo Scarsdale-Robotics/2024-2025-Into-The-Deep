@@ -39,22 +39,35 @@ public class TESTING_AutoBlueObservation1Plus4 extends LinearOpMode {
 
     RobotSystem robot;
     Synchronizer synchronizer;
+    private TranslationPlan translationPlan;
+    private RotationPlan rotationPlan;
+    private LiftPlan liftPlan;
+    private ClawPlan clawPlan;
+    private ElbowPlan elbowPlan;
 
     public static double clawOpen = ClawConstants.OPEN_POSITION;
     public static double clawClosed = ClawConstants.CLOSED_POSITION;
 
     public static double elbowUp = ElbowConstants.UP_POSITION;
-    public static double elbowPartiallyUp = 0.34;
+    public static double elbowPartiallyUp = 0.64;
     public static double elbowDown = ElbowConstants.DOWN_POSITION;
 
     @Override
     public void runOpMode() throws InterruptedException {
-        this.robot = new RobotSystem(hardwareMap, new Pose2d(-24, 63.5, new Rotation2d(Math.toRadians(-90))), false, this);
-        robot.inDep.setClawPosition(clawClosed);
-        robot.inDep.setElbowPosition(elbowUp-0.04);
         initSynchronizer();
-
-        waitForStart();
+        this.robot = new RobotSystem(hardwareMap, new Pose2d(-15.5, 63.5, new Rotation2d(Math.toRadians(-90))), false, this);
+        this.translationPlan.setRobot(robot);
+        this.rotationPlan.setRobot(robot);
+        this.liftPlan.setRobot(robot);
+        this.clawPlan.setRobot(robot);
+        this.elbowPlan.setRobot(robot);
+        this.synchronizer = new Synchronizer(
+                translationPlan,
+                rotationPlan,
+                liftPlan,
+                elbowPlan,
+                clawPlan
+        );
 
         synchronizer.start();
         while (opModeIsActive() && synchronizer.update()) {
@@ -84,11 +97,11 @@ public class TESTING_AutoBlueObservation1Plus4 extends LinearOpMode {
         LiftConstants.MAX_VELOCITY = 2200;
         LiftConstants.MAX_ACCELERATION = 2200;
 
-        ClawConstants.MAX_VELOCITY = 8;
-        ClawConstants.MAX_ACCELERATION = 16;
+        ClawConstants.MAX_VELOCITY = 15.111111111;
+        ClawConstants.MAX_ACCELERATION = 30.22222;
 
-        ElbowConstants.MAX_VELOCITY = 1;
-        ElbowConstants.MAX_ACCELERATION = 1;
+        ElbowConstants.MAX_VELOCITY = 1.021739;
+        ElbowConstants.MAX_ACCELERATION = 1.021739;
 
         // Set tuning variables
         double elbowClipDrive = 0.1;
@@ -520,7 +533,7 @@ public class TESTING_AutoBlueObservation1Plus4 extends LinearOpMode {
         // CREATE PLANS //
         //////////////////
 
-        TranslationPlan translationPlan = new TranslationPlan(robot,
+        translationPlan = new TranslationPlan(robot,
                 // PRELOAD
                 splinePreload,
 
@@ -543,7 +556,7 @@ public class TESTING_AutoBlueObservation1Plus4 extends LinearOpMode {
                 linePark
         );
 
-        RotationPlan rotationPlan = new RotationPlan(robot,
+        rotationPlan = new RotationPlan(robot,
                 // PRELOAD
                 rotationStillPreload,
 
@@ -568,7 +581,7 @@ public class TESTING_AutoBlueObservation1Plus4 extends LinearOpMode {
                 rotationScoreFourthSpecimen
         );
 
-        LiftPlan liftPlan = new LiftPlan(robot,
+        liftPlan = new LiftPlan(robot,
                 // PRELOAD
                 liftUpPreload,
                 liftDownPreload,
@@ -588,7 +601,7 @@ public class TESTING_AutoBlueObservation1Plus4 extends LinearOpMode {
         );
 
 
-        ClawPlan clawPlan = new ClawPlan(robot,
+        clawPlan = new ClawPlan(robot,
                 // PRELOAD
                 clawOpenPreload,
 
@@ -617,7 +630,7 @@ public class TESTING_AutoBlueObservation1Plus4 extends LinearOpMode {
         );
 
 
-        ElbowPlan elbowPlan = new ElbowPlan(robot,
+        elbowPlan = new ElbowPlan(robot,
                 // PRELOAD
                 elbowStillPreload,
 
@@ -647,13 +660,6 @@ public class TESTING_AutoBlueObservation1Plus4 extends LinearOpMode {
                 elbowPark
         );
 
-        this.synchronizer = new Synchronizer(
-                translationPlan,
-                rotationPlan,
-                liftPlan,
-                elbowPlan,
-                clawPlan
-        );
     }
 
 }

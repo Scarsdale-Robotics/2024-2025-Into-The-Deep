@@ -6,6 +6,7 @@ import com.arcrobotics.ftclib.geometry.Pose2d;
 import com.arcrobotics.ftclib.geometry.Rotation2d;
 import com.arcrobotics.ftclib.hardware.motors.Motor.Encoder;
 import com.arcrobotics.ftclib.kinematics.HolonomicOdometry;
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
@@ -63,7 +64,7 @@ public class LocalizationSubsystem extends SubsystemBase {
     private static final double ODOM_DIAMETER = 35.0; // mm
     private static final double TICKS_PER_MM = ENCODER_CPR / (Math.PI * ODOM_DIAMETER);
 
-    private GoBildaPinpointDriver pinpoint;
+    public GoBildaPinpointDriver pinpoint;
 
     private Pose2d lastOdometryPose;
 
@@ -94,11 +95,17 @@ public class LocalizationSubsystem extends SubsystemBase {
      * Creates a new LocalizationSubsystem object with the given parameters.
      * @param initialPose The robot's starting pose.
      * @param cv The CVSubsystem of the robot.
+     * @param telemetry The opmode's Telemetry object.
      */
     public LocalizationSubsystem(
             Pose2d initialPose,
             CVSubsystem cv,
-            GoBildaPinpointDriver pinpoint) {
+            GoBildaPinpointDriver pinpoint,
+            LinearOpMode opMode,
+            Telemetry telemetry) {
+
+        // Init telemetry
+        this.telemetry = telemetry;
 
         // Init KF
         this.P_translation = 2;
@@ -122,8 +129,22 @@ public class LocalizationSubsystem extends SubsystemBase {
         this.pinpoint.setOffsets(xOffset, yOffset);
         this.pinpoint.setEncoderResolution(TICKS_PER_MM);
         this.pinpoint.resetPosAndIMU();
+        while (this.pinpoint.getDeviceStatus() != GoBildaPinpointDriver.DeviceStatus.READY && opMode.opModeInInit()) {
+            this.pinpoint.update();
+            this.telemetry.addData("[L. SUB STATUS]", "init pinpoint");
+            this.telemetry.addData("[PP STATUS]", this.pinpoint.getDeviceStatus());
+            this.telemetry.update();
+        }
+        this.telemetry.addData("[L. SUB STATUS]", "finished pp");
         Pose2D initialPose2D = new Pose2D(DistanceUnit.INCH, initialPose.getX(), initialPose.getY(), AngleUnit.RADIANS, initialPose.getHeading());
+        this.pinpoint.update();
         this.pinpoint.setPosition(initialPose2D);
+        this.pinpoint.update();
+        this.telemetry.addData("initialPose2D.getH(AngleUnit.RADIANS)", initialPose2D.getHeading(AngleUnit.RADIANS));
+        this.telemetry.addData("this.pinpoint.getPosX()", this.pinpoint.getPosX());
+        this.telemetry.addData("this.pinpoint.getPosY()", this.pinpoint.getPosY());
+        this.telemetry.addData("this.pinpoint.getHeading()", this.pinpoint.getHeading());
+        this.telemetry.update();
         this.lastOdometryPose = initialPose;
 
 
@@ -141,47 +162,8 @@ public class LocalizationSubsystem extends SubsystemBase {
         this.dtHistory.add(1d);
         this.averageDeltaTime = 1;
 
-        // Init telemetry
-        this.telemetry = null;
-
     }
 
-    /**
-     * Creates a new LocalizationSubsystem object with the given parameters.
-     * @param initialPose The robot's starting pose.
-     * @param cv The CVSubsystem of the robot.
-     * @param telemetry The opmode's Telemetry object.
-     */
-    public LocalizationSubsystem(
-            Pose2d initialPose,
-            CVSubsystem cv,
-            GoBildaPinpointDriver pinpoint,
-            Telemetry telemetry) {
-        this(
-                initialPose,
-                cv,
-                pinpoint
-        );
-        this.telemetry = telemetry;
-    }
-
-    /**
-     * Creates a new LocalizationSubsystem object with the given parameters.
-     * @param initialPose The robot's starting pose.
-     * @param telemetry The opmode's Telemetry object.
-     */
-    public LocalizationSubsystem(
-            Pose2d initialPose,
-            GoBildaPinpointDriver pinpoint,
-            Telemetry telemetry) {
-        this(
-                initialPose,
-                (CVSubsystem) null,
-                pinpoint
-        );
-        this.telemetry = telemetry;
-        disableCamera();
-    }
 
 
     ////////////////////
@@ -314,9 +296,9 @@ public class LocalizationSubsystem extends SubsystemBase {
             telemetry.addData("Odom H", Math.toDegrees(h)+"°");
             telemetry.addData("P_translation", P_translation);
             telemetry.addData("P_heading", P_heading);
-            telemetry.addData("PP X", currentPose.getX());
-            telemetry.addData("PP Y", currentPose.getY());
-            telemetry.addData("PP H", currentPose.getHeading());
+            telemetry.addData("PP X", pinpointPose.getX(DistanceUnit.INCH));
+            telemetry.addData("PP Y", pinpointPose.getY(DistanceUnit.INCH));
+            telemetry.addData("PP H", pinpointPose.getHeading(AngleUnit.DEGREES));
         }
     }
 

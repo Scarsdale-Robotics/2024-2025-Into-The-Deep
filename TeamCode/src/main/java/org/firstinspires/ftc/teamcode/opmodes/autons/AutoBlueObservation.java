@@ -34,6 +34,11 @@ public class AutoBlueObservation extends LinearOpMode{
 
     RobotSystem robot;
     Synchronizer synchronizer;
+    private TranslationPlan translationPlan;
+    private RotationPlan rotationPlan;
+    private LiftPlan liftPlan;
+    private ClawPlan clawPlan;
+    private ElbowPlan elbowPlan;
 
     public static double clawOpen = ClawConstants.OPEN_POSITION;
     public static double clawClosed = ClawConstants.CLOSED_POSITION;
@@ -43,12 +48,21 @@ public class AutoBlueObservation extends LinearOpMode{
 
     @Override
     public void runOpMode() throws InterruptedException {
-        this.robot = new RobotSystem(hardwareMap, new Pose2d(-24, 63.5, new Rotation2d(Math.toRadians(-90))), false, this);
-        robot.inDep.setClawPosition(clawClosed);
-        robot.inDep.setElbowPosition(elbowUp-0.04);
         initSynchronizer();
+        this.robot = new RobotSystem(hardwareMap, new Pose2d(-24, 63.5, new Rotation2d(Math.toRadians(-90))), false, this);
+        this.translationPlan.setRobot(robot);
+        this.rotationPlan.setRobot(robot);
+        this.liftPlan.setRobot(robot);
+        this.clawPlan.setRobot(robot);
+        this.elbowPlan.setRobot(robot);
+        this.synchronizer = new Synchronizer(
+                translationPlan,
+                rotationPlan,
+                liftPlan,
+                elbowPlan,
+                clawPlan
+        );
 
-        waitForStart();
 
         synchronizer.start();
         while (opModeIsActive() && synchronizer.update()) {
@@ -78,7 +92,7 @@ public class AutoBlueObservation extends LinearOpMode{
                 new RotationState(Math.toRadians(-90))
         );
 
-        RotationPlan rotationPlan = new RotationPlan(robot,
+        rotationPlan = new RotationPlan(robot,
                 still
         );
 
@@ -99,12 +113,12 @@ public class AutoBlueObservation extends LinearOpMode{
                 new TranslationState(-48, 63.5)
         );
 
-        TranslationPlan translationPlan = new TranslationPlan(robot,
+        translationPlan = new TranslationPlan(robot,
                 spline1,
                 splinePark
         );
 
-        LiftPlan liftPlan = new LiftPlan(robot,
+        liftPlan = new LiftPlan(robot,
                 liftPreload1,
                 liftPreload2
         );
@@ -117,7 +131,7 @@ public class AutoBlueObservation extends LinearOpMode{
         );
 
 
-        ClawPlan clawPlan = new ClawPlan(robot,
+        clawPlan = new ClawPlan(robot,
                 claw1
         );
 
@@ -133,18 +147,11 @@ public class AutoBlueObservation extends LinearOpMode{
         );
 
 
-        ElbowPlan elbowPlan = new ElbowPlan(robot,
+        elbowPlan = new ElbowPlan(robot,
                 elbowStill,
                 elbowEnd
         );
 
 
-        this.synchronizer = new Synchronizer(
-                translationPlan,
-                rotationPlan,
-                liftPlan,
-                elbowPlan,
-                clawPlan
-        );
     }
 }

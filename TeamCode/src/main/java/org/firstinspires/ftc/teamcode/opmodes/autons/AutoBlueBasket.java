@@ -37,6 +37,11 @@ public class AutoBlueBasket extends LinearOpMode {
 
     RobotSystem robot;
     Synchronizer synchronizer;
+    private TranslationPlan translationPlan;
+    private RotationPlan rotationPlan;
+    private LiftPlan liftPlan;
+    private ClawPlan clawPlan;
+    private ElbowPlan elbowPlan;
 
     public static double clawOpen = ClawConstants.OPEN_POSITION;
     public static double clawClosed = ClawConstants.CLOSED_POSITION;
@@ -49,19 +54,26 @@ public class AutoBlueBasket extends LinearOpMode {
 
     @Override
     public void runOpMode() throws InterruptedException {
-        this.robot = new RobotSystem(hardwareMap, new Pose2d(40, 63.5, new Rotation2d(Math.toRadians(-90))), false, this);
-        robot.inDep.setClawPosition(clawClosed);
-        robot.inDep.setElbowPosition(elbowUp-0.04);
         initSynchronizer();
-
         loopTicks = new ArrayDeque<>();
         runtime = new ElapsedTime(0);
         runtime.reset();
 
         robot.telemetry.addData("[MAIN] TPS", 0);
         robot.telemetry.update();
-
-        waitForStart();
+        this.robot = new RobotSystem(hardwareMap, new Pose2d(40, 63.5, new Rotation2d(Math.toRadians(-90))), false, this);
+        this.translationPlan.setRobot(robot);
+        this.rotationPlan.setRobot(robot);
+        this.liftPlan.setRobot(robot);
+        this.clawPlan.setRobot(robot);
+        this.elbowPlan.setRobot(robot);
+        this.synchronizer = new Synchronizer(
+                translationPlan,
+                rotationPlan,
+                liftPlan,
+                elbowPlan,
+                clawPlan
+        );
 
         synchronizer.start();
         while (opModeIsActive() && synchronizer.update()) {
@@ -107,7 +119,7 @@ public class AutoBlueBasket extends LinearOpMode {
                 new RotationState(Math.toRadians(-90))
         );
 
-        RotationPlan rotationPlan = new RotationPlan(robot,
+        rotationPlan = new RotationPlan(robot,
                 still
         );
 
@@ -129,12 +141,12 @@ public class AutoBlueBasket extends LinearOpMode {
                 new TranslationState(24, 10)
         );
 
-        TranslationPlan translationPlan = new TranslationPlan(robot,
+        translationPlan = new TranslationPlan(robot,
                 spline1,
                 splinePark
         );
 
-        LiftPlan liftPlan = new LiftPlan(robot,
+        liftPlan = new LiftPlan(robot,
                 liftPreload1,
                 liftPreload2
         );
@@ -147,7 +159,7 @@ public class AutoBlueBasket extends LinearOpMode {
         );
 
 
-        ClawPlan clawPlan = new ClawPlan(robot,
+        clawPlan = new ClawPlan(robot,
                 claw1
         );
 
@@ -163,19 +175,11 @@ public class AutoBlueBasket extends LinearOpMode {
         );
 
 
-        ElbowPlan elbowPlan = new ElbowPlan(robot,
+        elbowPlan = new ElbowPlan(robot,
                 elbowStill,
                 elbowEnd
         );
 
-
-        this.synchronizer = new Synchronizer(
-                translationPlan,
-                rotationPlan,
-                liftPlan,
-                elbowPlan,
-                clawPlan
-        );
     }
 
 

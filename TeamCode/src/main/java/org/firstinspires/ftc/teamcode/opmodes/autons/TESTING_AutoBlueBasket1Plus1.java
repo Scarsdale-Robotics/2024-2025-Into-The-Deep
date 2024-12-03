@@ -36,6 +36,11 @@ public class TESTING_AutoBlueBasket1Plus1 extends LinearOpMode {
 
     RobotSystem robot;
     Synchronizer synchronizer;
+    private TranslationPlan translationPlan;
+    private RotationPlan rotationPlan;
+    private LiftPlan liftPlan;
+    private ClawPlan clawPlan;
+    private ElbowPlan elbowPlan;
 
     public static double clawOpen = ClawConstants.OPEN_POSITION;
     public static double clawClosed = ClawConstants.CLOSED_POSITION;
@@ -45,12 +50,20 @@ public class TESTING_AutoBlueBasket1Plus1 extends LinearOpMode {
 
     @Override
     public void runOpMode() throws InterruptedException {
-        this.robot = new RobotSystem(hardwareMap, new Pose2d(40, 63.5, new Rotation2d(Math.toRadians(-90))), false, this);
-        robot.inDep.setClawPosition(clawClosed);
-        robot.inDep.setElbowPosition(elbowUp-0.04);
         initSynchronizer();
-
-        waitForStart();
+        this.robot = new RobotSystem(hardwareMap, new Pose2d(40, 63.5, new Rotation2d(Math.toRadians(-90))), false, this);
+        this.translationPlan.setRobot(robot);
+        this.rotationPlan.setRobot(robot);
+        this.liftPlan.setRobot(robot);
+        this.clawPlan.setRobot(robot);
+        this.elbowPlan.setRobot(robot);
+        this.synchronizer = new Synchronizer(
+                translationPlan,
+                rotationPlan,
+                liftPlan,
+                elbowPlan,
+                clawPlan
+        );
 
         synchronizer.start();
         while (opModeIsActive() && synchronizer.update()) {
@@ -89,7 +102,7 @@ public class TESTING_AutoBlueBasket1Plus1 extends LinearOpMode {
 
         LinearLift liftPreload2 = new LinearLift(splinePreload.getEndTime()-0.5,
                 new LiftState(1400),
-                new LiftState(0)
+                new LiftState(-50)
         );
 
         LinearClaw claw1 = new LinearClaw(liftPreload2.getStartTime()+.575,
@@ -108,7 +121,7 @@ public class TESTING_AutoBlueBasket1Plus1 extends LinearOpMode {
         CRSplineTranslation splineApproachSample1 = new CRSplineTranslation(claw1.getStartTime(),
                 new TranslationState(10, 37),
                 new TranslationState(40, 48),
-                new TranslationState(48.5, 43)
+                new TranslationState(48.5, 44)
         );
 
         LinearElbow elbowDownSample1 = new LinearElbow(splineApproachSample1.getEndTime()-1,
@@ -126,8 +139,8 @@ public class TESTING_AutoBlueBasket1Plus1 extends LinearOpMode {
         // Drop first sample in basket
 
         LinearLift liftUpSample1 = new LinearLift(clawCloseSample1.getEndTime(),
-                new LiftState(0),
-                new LiftState(4000)
+                new LiftState(-50),
+                new LiftState(4100)
         );
 
         LinearRotation rotateScoreSample1 = new LinearRotation(liftUpSample1.getStartTime(),
@@ -136,7 +149,7 @@ public class TESTING_AutoBlueBasket1Plus1 extends LinearOpMode {
         );
 
         CRSplineTranslation splineScoreSample1 = new CRSplineTranslation(new TimeSpan(liftUpSample1.getStartTime(), liftUpSample1.getEndTime()+1),
-                new TranslationState(48.5, 43),
+                new TranslationState(48.5, 44),
                 new TranslationState(50, 48),
                 new TranslationState(54, 56)
         );
@@ -157,14 +170,14 @@ public class TESTING_AutoBlueBasket1Plus1 extends LinearOpMode {
         // Pick up second tape mark sample
 
         LinearLift liftDownSample2 = new LinearLift(clawOpenSample1.getEndTime(),
-                new LiftState(4000),
+                new LiftState(4100),
                 new LiftState(-50)
         );
 
         CRSplineTranslation splineApproachSample2 = new CRSplineTranslation(liftDownSample2.getTimeSpan(),
                 new TranslationState(54, 56),
                 new TranslationState(56, 48),
-                new TranslationState(58.5, 43)
+                new TranslationState(58.5, 44)
         );
 
         LinearRotation rotateApproachSample2 = new LinearRotation(new TimeSpan(liftDownSample2.getStartTime(), liftDownSample2.getEndTime()-0.5),
@@ -189,7 +202,7 @@ public class TESTING_AutoBlueBasket1Plus1 extends LinearOpMode {
 
         LinearLift liftUpSample2 = new LinearLift(clawCloseSample2.getEndTime(),
                 new LiftState(-50),
-                new LiftState(4000)
+                new LiftState(4100)
         );
 
         LinearRotation rotateScoreSample2 = new LinearRotation(liftUpSample2.getStartTime(),
@@ -198,7 +211,7 @@ public class TESTING_AutoBlueBasket1Plus1 extends LinearOpMode {
         );
 
         CRSplineTranslation splineScoreSample2 = new CRSplineTranslation(new TimeSpan(liftUpSample2.getStartTime(), liftUpSample2.getEndTime()+1),
-                new TranslationState(58.5, 43),
+                new TranslationState(58.5, 44),
                 new TranslationState(56, 48),
                 new TranslationState(54, 56)
         );
@@ -219,14 +232,14 @@ public class TESTING_AutoBlueBasket1Plus1 extends LinearOpMode {
         // Pick up third tape mark sample
 
         LinearLift liftDownSample3 = new LinearLift(clawOpenSample2.getEndTime(),
-                new LiftState(4000),
+                new LiftState(4100),
                 new LiftState(-50)
         );
 
         CRSplineTranslation splineApproachSample3 = new CRSplineTranslation(liftDownSample3.getTimeSpan(),
                 new TranslationState(54, 56),
                 new TranslationState(56, 48),
-                new TranslationState(58, 38.5)
+                new TranslationState(57.5, 39.5)
         );
 
         LinearRotation rotateApproachSample3 = new LinearRotation(new TimeSpan(liftDownSample3.getStartTime(), liftDownSample3.getEndTime()-0.5),
@@ -251,7 +264,7 @@ public class TESTING_AutoBlueBasket1Plus1 extends LinearOpMode {
 
         LinearLift liftUpSample3 = new LinearLift(clawCloseSample3.getEndTime(),
                 new LiftState(-50),
-                new LiftState(4000)
+                new LiftState(4100)
         );
 
         LinearRotation rotateScoreSample3 = new LinearRotation(liftUpSample3.getStartTime(),
@@ -260,7 +273,7 @@ public class TESTING_AutoBlueBasket1Plus1 extends LinearOpMode {
         );
 
         CRSplineTranslation splineScoreSample3 = new CRSplineTranslation(new TimeSpan(liftUpSample3.getStartTime(), liftUpSample3.getEndTime()+1),
-                new TranslationState(58, 38.5),
+                new TranslationState(57.5, 39.5),
                 new TranslationState(56, 48),
                 new TranslationState(54, 56)
         );
@@ -295,7 +308,7 @@ public class TESTING_AutoBlueBasket1Plus1 extends LinearOpMode {
         );
 
         LinearLift liftPark = new LinearLift(splinePark.getStartTime(),
-                new LiftState(4000),
+                new LiftState(4100),
                 new LiftState(-50)
         );
 
@@ -315,7 +328,7 @@ public class TESTING_AutoBlueBasket1Plus1 extends LinearOpMode {
 
         // Create Plans
 
-        TranslationPlan translationPlan = new TranslationPlan(robot,
+        translationPlan = new TranslationPlan(robot,
                 splinePreload,
                 splineApproachSample1,
                 splineScoreSample1,
@@ -326,7 +339,7 @@ public class TESTING_AutoBlueBasket1Plus1 extends LinearOpMode {
                 splinePark
         );
 
-        RotationPlan rotationPlan = new RotationPlan(robot,
+        rotationPlan = new RotationPlan(robot,
                 still,
                 rotateScoreSample1,
                 rotateApproachSample2,
@@ -336,7 +349,7 @@ public class TESTING_AutoBlueBasket1Plus1 extends LinearOpMode {
                 rotatePark
         );
 
-        LiftPlan liftPlan = new LiftPlan(robot,
+        liftPlan = new LiftPlan(robot,
                 liftPreload1,
                 liftPreload2,
                 liftUpSample1,
@@ -347,7 +360,7 @@ public class TESTING_AutoBlueBasket1Plus1 extends LinearOpMode {
                 liftPark
         );
 
-        ClawPlan clawPlan = new ClawPlan(robot,
+        clawPlan = new ClawPlan(robot,
                 claw1,
                 clawCloseSample1,
                 clawOpenSample1,
@@ -358,7 +371,7 @@ public class TESTING_AutoBlueBasket1Plus1 extends LinearOpMode {
                 clawPark
         );
 
-        ElbowPlan elbowPlan = new ElbowPlan(robot,
+        elbowPlan = new ElbowPlan(robot,
                 elbowStill,
                 elbowDownSample1,
                 elbowUpSample1,
@@ -370,13 +383,6 @@ public class TESTING_AutoBlueBasket1Plus1 extends LinearOpMode {
         );
 
 
-        this.synchronizer = new Synchronizer(
-                translationPlan,
-                rotationPlan,
-                liftPlan,
-                elbowPlan,
-                clawPlan
-        );
     }
 
 }
