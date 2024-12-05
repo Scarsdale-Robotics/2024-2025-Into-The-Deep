@@ -172,6 +172,9 @@ public class StretchedDisplacementCalculator extends DisplacementCalculator {
 	 */
 	public double getAcceleration(double elapsedTime) {
 		if (distance == 0) return 0;
+		// Zero acceleration if outside of TimeSpan.
+		if (elapsedTime-getStartTime() < 0 || getDuration() < elapsedTime-getStartTime()) return 0;
+
 		elapsedTime = bound(elapsedTime-getStartTime(), 0, getDuration());
 
 		double acceleration;

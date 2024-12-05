@@ -105,7 +105,7 @@ public class TESTING_AutoBlueBasket1Plus1 extends LinearOpMode {
                 new LiftState(-50)
         );
 
-        LinearClaw claw1 = new LinearClaw(liftPreload2.getStartTime()+.575,
+        LinearClaw claw1 = new LinearClaw(liftPreload2.getStartTime()+.69,
                 new ClawState(clawClosed),
                 new ClawState(clawOpen)
         );
@@ -121,7 +121,7 @@ public class TESTING_AutoBlueBasket1Plus1 extends LinearOpMode {
         CRSplineTranslation splineApproachSample1 = new CRSplineTranslation(claw1.getStartTime(),
                 new TranslationState(10, 37),
                 new TranslationState(40, 48),
-                new TranslationState(48.5, 44)
+                new TranslationState(49, 44)
         );
 
         LinearElbow elbowDownSample1 = new LinearElbow(splineApproachSample1.getEndTime()-1,
@@ -274,7 +274,7 @@ public class TESTING_AutoBlueBasket1Plus1 extends LinearOpMode {
 
         CRSplineTranslation splineScoreSample3 = new CRSplineTranslation(new TimeSpan(liftUpSample3.getStartTime(), liftUpSample3.getEndTime()+1),
                 new TranslationState(57.5, 39.5),
-                new TranslationState(56, 48),
+                new TranslationState(53, 42),
                 new TranslationState(54, 56)
         );
 
@@ -302,19 +302,19 @@ public class TESTING_AutoBlueBasket1Plus1 extends LinearOpMode {
         );
 
         double rotateParkStartTime = splinePark.getStartTime();
-        LinearRotation rotatePark = new LinearRotation(new TimeSpan(rotateParkStartTime, rotateParkStartTime+2),
+        LinearRotation rotatePark = new LinearRotation(new TimeSpan(rotateParkStartTime, splinePark.getEndTime()-0.5),
                 new RotationState(Math.toRadians(45)),
-                new RotationState(Math.toRadians(-90))
+                new RotationState(Math.toRadians(-180))
         );
 
         LinearLift liftPark = new LinearLift(splinePark.getStartTime(),
                 new LiftState(4100),
-                new LiftState(-50)
+                new LiftState(1000)
         );
 
         LinearElbow elbowPark = new LinearElbow(splinePark.getEndTime()-1.5, //goes down to sample
                 new ElbowState(elbowUp),
-                new ElbowState(elbowDown)
+                new ElbowState(elbowUp+0.05)
         );
 
         LinearClaw clawPark = new LinearClaw(elbowPark.getStartTime(),

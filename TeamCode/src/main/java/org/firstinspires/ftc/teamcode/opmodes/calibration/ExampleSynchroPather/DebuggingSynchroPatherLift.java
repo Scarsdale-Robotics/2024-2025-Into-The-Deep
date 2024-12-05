@@ -20,7 +20,7 @@ import org.firstinspires.ftc.teamcode.synchropather.systems.translation.movement
 
 import java.util.ArrayDeque;
 
-@Autonomous(name="Debugging SynchroPather Forward OpMode", group = "Calibration")
+@Autonomous(name="Debugging SynchroPather Lift OpMode", group = "Calibration")
 public class DebuggingSynchroPatherLift extends LinearOpMode {
 
     RobotSystem robot;

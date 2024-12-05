@@ -12,9 +12,14 @@ import org.firstinspires.ftc.teamcode.RobotSystem;
 import org.firstinspires.ftc.teamcode.opmodes.calibration.Drawing;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.Synchronizer;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.TimeSpan;
+import org.firstinspires.ftc.teamcode.synchropather.systems.claw.ClawConstants;
+import org.firstinspires.ftc.teamcode.synchropather.systems.elbow.ElbowConstants;
+import org.firstinspires.ftc.teamcode.synchropather.systems.lift.LiftConstants;
+import org.firstinspires.ftc.teamcode.synchropather.systems.rotation.RotationConstants;
 import org.firstinspires.ftc.teamcode.synchropather.systems.rotation.RotationPlan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.rotation.RotationState;
 import org.firstinspires.ftc.teamcode.synchropather.systems.rotation.movements.LinearRotation;
+import org.firstinspires.ftc.teamcode.synchropather.systems.translation.TranslationConstants;
 import org.firstinspires.ftc.teamcode.synchropather.systems.translation.TranslationPlan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.translation.TranslationState;
 import org.firstinspires.ftc.teamcode.synchropather.systems.translation.movements.LinearTranslation;
@@ -26,14 +31,22 @@ public class DebuggingSynchroPatherForwardHeadingCorrection extends LinearOpMode
 
     RobotSystem robot;
     Synchronizer synchronizer;
+    TranslationPlan translationPlan;
+    RotationPlan rotationPlan;
 
     volatile ArrayDeque<Double> loopTicks;
     volatile ElapsedTime runtime;
 
     @Override
     public void runOpMode() throws InterruptedException {
-        this.robot = new RobotSystem(hardwareMap, new Pose2d(0, 0, new Rotation2d(0)), false, this);
         initSynchronizer();
+        this.robot = new RobotSystem(hardwareMap, new Pose2d(0, 0, new Rotation2d(0)), false, this);
+        this.translationPlan.setRobot(robot);
+        this.rotationPlan.setRobot(robot);
+        this.synchronizer = new Synchronizer(
+                translationPlan
+                ,rotationPlan
+        );
 
 
         loopTicks = new ArrayDeque<>();
@@ -84,6 +97,20 @@ public class DebuggingSynchroPatherForwardHeadingCorrection extends LinearOpMode
 
 
     private void initSynchronizer() {
+        TranslationConstants.MAX_VELOCITY = 0.5*40d;
+        TranslationConstants.MAX_ACCELERATION = 54d;
+
+        RotationConstants.MAX_ANGULAR_VELOCITY = 3.6;
+        RotationConstants.MAX_ANGULAR_ACCELERATION = 7.2;
+
+        LiftConstants.MAX_VELOCITY = 2200;
+        LiftConstants.MAX_ACCELERATION = 2200;
+
+        ClawConstants.MAX_VELOCITY = 15.111111111;
+        ClawConstants.MAX_ACCELERATION = 30.22222;
+
+        ElbowConstants.MAX_VELOCITY = 1.021739;
+        ElbowConstants.MAX_ACCELERATION = 1.021739;
         // Translation plan
         LinearTranslation line1 = new LinearTranslation(0,
                 new TranslationState(0, 0),
@@ -93,7 +120,7 @@ public class DebuggingSynchroPatherForwardHeadingCorrection extends LinearOpMode
                 new TranslationState(24, 0),
                 new TranslationState(0, 0)
         );
-        TranslationPlan translationPlan = new TranslationPlan(robot,
+        translationPlan = new TranslationPlan(robot,
                 line1,
                 line2
         );
@@ -103,15 +130,10 @@ public class DebuggingSynchroPatherForwardHeadingCorrection extends LinearOpMode
                 new RotationState(Math.toRadians(0)),
                 new RotationState(Math.toRadians(0))
         );
-        RotationPlan rotationPlan = new RotationPlan(robot,
+        rotationPlan = new RotationPlan(robot,
                 rotation
         );
 
-        // Synchronizer
-        this.synchronizer = new Synchronizer(
-                translationPlan
-                ,rotationPlan
-        );
     }
 
 }
