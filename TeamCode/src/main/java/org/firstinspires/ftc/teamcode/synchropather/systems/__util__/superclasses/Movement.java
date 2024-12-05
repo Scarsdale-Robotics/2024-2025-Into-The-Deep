@@ -113,4 +113,17 @@ public abstract class Movement {
 		return timeSpan;
 	}
 
+	/**
+	 * Gets this Movement's TimeSpan cropped within the specified margins (in seconds).
+	 * @param trimStart the TimeSpan starts this number of seconds after this Movement's startTime.
+	 * @param trimEnd the TimeSpan ends this number of seconds before this Movement's endTime.
+	 * @return the trimmed TimeSpan.
+	 */
+	public TimeSpan getTrimmedTimeSpan(double trimStart, double trimEnd) {
+		return new TimeSpan(
+				getStartTime() + trimStart,
+				getEndTime() - trimEnd
+		);
+	}
+
 }

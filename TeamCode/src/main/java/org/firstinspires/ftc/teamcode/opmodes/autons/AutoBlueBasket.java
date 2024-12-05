@@ -10,6 +10,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.RobotSystem;
 import org.firstinspires.ftc.teamcode.opmodes.calibration.Drawing;
+import org.firstinspires.ftc.teamcode.synchropather.DriveConstants;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.Synchronizer;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.TimeSpan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.claw.ClawConstants;
@@ -20,12 +21,15 @@ import org.firstinspires.ftc.teamcode.synchropather.systems.elbow.ElbowConstants
 import org.firstinspires.ftc.teamcode.synchropather.systems.elbow.ElbowPlan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.elbow.ElbowState;
 import org.firstinspires.ftc.teamcode.synchropather.systems.elbow.movements.LinearElbow;
+import org.firstinspires.ftc.teamcode.synchropather.systems.lift.LiftConstants;
 import org.firstinspires.ftc.teamcode.synchropather.systems.lift.LiftPlan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.lift.LiftState;
 import org.firstinspires.ftc.teamcode.synchropather.systems.lift.movements.LinearLift;
+import org.firstinspires.ftc.teamcode.synchropather.systems.rotation.RotationConstants;
 import org.firstinspires.ftc.teamcode.synchropather.systems.rotation.RotationPlan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.rotation.RotationState;
 import org.firstinspires.ftc.teamcode.synchropather.systems.rotation.movements.LinearRotation;
+import org.firstinspires.ftc.teamcode.synchropather.systems.translation.TranslationConstants;
 import org.firstinspires.ftc.teamcode.synchropather.systems.translation.TranslationPlan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.translation.TranslationState;
 import org.firstinspires.ftc.teamcode.synchropather.systems.translation.movements.CRSplineTranslation;
@@ -104,6 +108,24 @@ public class AutoBlueBasket extends LinearOpMode {
 
 
     private void initSynchronizer() {
+
+        DriveConstants.MAX_ANGULAR_VELOCITY = 3.6;
+        DriveConstants.MAX_ANGULAR_ACCELERATION = 4;
+
+        TranslationConstants.MAX_VELOCITY = 0.5*40d;
+        TranslationConstants.MAX_ACCELERATION = 0.5*54d;
+
+        RotationConstants.MAX_ANGULAR_VELOCITY = 0.65*3.6;
+        RotationConstants.MAX_ANGULAR_ACCELERATION = 0.65*4;
+
+        LiftConstants.MAX_VELOCITY = 2200;
+        LiftConstants.MAX_ACCELERATION = 2200;
+
+        ClawConstants.MAX_VELOCITY = 15.111111111;
+        ClawConstants.MAX_ACCELERATION = 30.22222;
+
+        ElbowConstants.MAX_VELOCITY = 1.021739;
+        ElbowConstants.MAX_ACCELERATION = 1.021739;
 
 
         // place preloaded specimen

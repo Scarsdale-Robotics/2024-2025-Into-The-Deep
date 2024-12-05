@@ -5,7 +5,6 @@ import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.arcrobotics.ftclib.geometry.Pose2d;
 import com.arcrobotics.ftclib.geometry.Rotation2d;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 import org.firstinspires.ftc.teamcode.RobotSystem;
@@ -36,8 +35,8 @@ import org.firstinspires.ftc.teamcode.synchropather.systems.translation.movement
 import org.firstinspires.ftc.teamcode.synchropather.systems.translation.movements.LinearTranslation;
 
 //@Disabled
-@Autonomous(name="[TESTING] Auto Blue Observation 1+3", group = "Autons")
-public class TESTING_AutoBlueObservation1Plus3 extends LinearOpMode {
+@Autonomous(name="[SF COLLAB.] Auto Blue Observation 1+3+sample for Solar Flare", group = "Autons")
+public class TESTING_AutoBlueObservation1Plus3PlusSolarFlare extends LinearOpMode {
 
     RobotSystem robot;
     Synchronizer synchronizer;
@@ -125,7 +124,7 @@ public class TESTING_AutoBlueObservation1Plus3 extends LinearOpMode {
 
         CRSplineTranslation splinePreload = new CRSplineTranslation(0,
                 new TranslationState(-15.5,63.5),
-                new TranslationState(-10, 37)
+                new TranslationState(-4, 37)
         );
 
         LinearLift liftUpPreload = new LinearLift(new TimeSpan(splinePreload.getStartTime(), splinePreload.getEndTime()-0.3),
@@ -145,7 +144,7 @@ public class TESTING_AutoBlueObservation1Plus3 extends LinearOpMode {
 
         LinearLift liftDownPreload = new LinearLift(liftUpPreload.getEndTime(),
                 new LiftState(1350),
-                new LiftState(0)
+                new LiftState(-50)
         );
 
         LinearClaw clawOpenPreload = new LinearClaw(liftDownPreload.getStartTime()+.69,
@@ -154,42 +153,102 @@ public class TESTING_AutoBlueObservation1Plus3 extends LinearOpMode {
         );
 
 
+
+        ///////////////////////////////////////////////
+        // TRANSFER SAMPLE TO SOLAR FLARE (Step 1.5) //
+        ///////////////////////////////////////////////
+
+        TranslationConstants.MAX_VELOCITY = 0.8*40d;
+
+        // Approach sample
+        LinearTranslation lineApproachTransferSample = new LinearTranslation(clawOpenPreload.getEndTime(),
+                new TranslationState(-4, 37),
+                new TranslationState(-31, 58)
+        );
+
+        LinearRotation rotationApproachTransferSample = new LinearRotation(lineApproachTransferSample.getTrimmedTimeSpan(0, 0.25),
+                new RotationState(Math.toRadians(-90)),
+                new RotationState(Math.toRadians(-180))
+        );
+
+        LinearElbow elbowApproachTransferSample = new LinearElbow(lineApproachTransferSample.getStartTime(),
+                new ElbowState(elbowUp),
+                new ElbowState(elbowPartiallyUp)
+        );
+
+        // Grab sample
+        LinearElbow elbowDownGrabTransferSample = new LinearElbow(lineApproachTransferSample.getEndTime()-0.2,
+                new ElbowState(elbowPartiallyUp),
+                new ElbowState(elbowDown)
+        );
+
+        LinearClaw clawCloseTransferSample = new LinearClaw(elbowDownGrabTransferSample.getEndTime()-0.1,
+                new ClawState(clawOpen),
+                new ClawState(clawClosed)
+        );
+
+        LinearElbow elbowUpGrabTransferSample = new LinearElbow(clawCloseTransferSample.getEndTime(),
+                new ElbowState(elbowDown),
+                new ElbowState(elbowUp)
+        );
+
+        // Deposit sample
+        TranslationConstants.MAX_VELOCITY = 0.5*40d;
+
+        LinearTranslation lineDepositTransferSample = new LinearTranslation(elbowUpGrabTransferSample.getStartTime(),
+                new TranslationState(-31, 58),
+                new TranslationState(-5, 48)
+        );
+
+        LinearRotation rotationDepositTransferSample = new LinearRotation(lineDepositTransferSample.getTrimmedTimeSpan(0, 0.25),
+                new RotationState(Math.toRadians(-180)),
+                new RotationState(Math.toRadians(0))
+        );
+
+        LinearElbow elbowDownDepositTransferSample = new LinearElbow(lineDepositTransferSample.getEndTime()-0.4,
+                new ElbowState(elbowUp),
+                new ElbowState(elbowDown)
+        );
+
+        LinearClaw clawOpenTransferSample = new LinearClaw(elbowDownDepositTransferSample.getEndTime()-0.1,
+                new ClawState(clawClosed),
+                new ClawState(clawOpen)
+        );
+
+        System.out.println(clawOpenTransferSample.getEndTime());
+
+
+
         /////////////////////////////////
         // GO TO BLUE SAMPLES (Step 2) //
         /////////////////////////////////
 
-        TranslationConstants.MAX_VELOCITY = 0.5*40d;
+        TranslationConstants.MAX_VELOCITY = 0.6*40d;
 
-        CRSplineTranslation splineApproachSamples = new CRSplineTranslation(clawOpenPreload.getEndTime(),
-                new TranslationState(-10, 37),
-                new TranslationState(-18, 39),
-                new TranslationState(-39.5, 40.5)
+        LinearTranslation lineApproachSamples = new LinearTranslation(clawOpenTransferSample.getEndTime()+0.1,
+                new TranslationState(-5, 48),
+                new TranslationState(-49, 44)
         );
 
-        LinearRotation rotationApproachSamples = new LinearRotation(splineApproachSamples.getStartTime(),
-                new RotationState(Math.toRadians(-90)),
-                new RotationState(Math.toRadians(-129))
+        LinearRotation rotationApproachSamples = new LinearRotation(lineApproachSamples.getTrimmedTimeSpan(0, 0.5),
+                new RotationState(Math.toRadians(0)),
+                new RotationState(Math.toRadians(-90))
         );
 
-        LinearElbow elbowApproachSamples = new LinearElbow(splineApproachSamples.getStartTime(),
-                new ElbowState(elbowUp),
+        LinearElbow elbowApproachSamples = new LinearElbow(lineApproachSamples.getStartTime()-0.1,
+                new ElbowState(elbowDown),
                 new ElbowState(elbowPartiallyUp)
         );
+
 
         /////////////////////////////////////////////////////
         // MOVE EACH SAMPLE INTO OBSERVATION ZONE (Step 3) //
         /////////////////////////////////////////////////////
 
-        double splineMoveFirstSampleStartTime = splineApproachSamples.getEndTime();
-        CRSplineTranslation splineMoveFirstSample = new CRSplineTranslation(new TimeSpan(splineMoveFirstSampleStartTime, splineMoveFirstSampleStartTime+2.1),
-                new TranslationState(-39.5, 40.5), // Pick up first
-                new TranslationState(-42, 49), // Deposit first
-                new TranslationState(-48.5, 39.5) // Pick up second
-        );
-        double[] splineMoveFirstSampleTimes = splineMoveFirstSample.getSegmentTimes();
+        TranslationConstants.MAX_VELOCITY = 0.5*40d;
 
         // Pick up first sample
-        LinearElbow elbowDownFirstSample = new LinearElbow(splineMoveFirstSampleTimes[0]-0.4,
+        LinearElbow elbowDownFirstSample = new LinearElbow(lineApproachSamples.getEndTime()-0.3,
                 new ElbowState(elbowPartiallyUp),
                 new ElbowState(elbowDown)
         );
@@ -200,9 +259,17 @@ public class TESTING_AutoBlueObservation1Plus3 extends LinearOpMode {
         );
 
         // Drop first sample
-        LinearRotation rotationMoveFirstSample = new LinearRotation(new TimeSpan(splineMoveFirstSampleTimes[0], splineMoveFirstSampleTimes[1]),
-                new RotationState(Math.toRadians(-129)),
-                new RotationState(Math.toRadians(-219))
+        double splineMoveFirstSampleStartTime = lineApproachSamples.getEndTime();
+        CRSplineTranslation splineMoveFirstSample = new CRSplineTranslation(new TimeSpan(splineMoveFirstSampleStartTime, splineMoveFirstSampleStartTime+2.25),
+                new TranslationState(-49, 44), // Pick up first
+                new TranslationState(-53.75, 44), // Deposit first
+                new TranslationState(-58.5, 44) // Approach second
+        );
+        double[] splineMoveFirstSampleTimes = splineMoveFirstSample.getSegmentTimes();
+
+        LinearRotation rotationMoveFirstSample = new LinearRotation(splineMoveFirstSample.getTimeSpan(),
+                new RotationState(Math.toRadians(-90)),
+                new RotationState(Math.toRadians(-450))
         );
 
         LinearElbow elbowUpFirstSample = new LinearElbow(clawCloseFirstSample.getEndTime(),
@@ -210,16 +277,12 @@ public class TESTING_AutoBlueObservation1Plus3 extends LinearOpMode {
                 new ElbowState(elbowPartiallyUp)
         );
 
-        LinearClaw clawOpenFirstSample = new LinearClaw(rotationMoveFirstSample.getEndTime() - 0.3,
+        LinearClaw clawOpenFirstSample = new LinearClaw(splineMoveFirstSampleTimes[1] - 0.3,
                 new ClawState(clawClosed),
                 new ClawState(clawOpen)
         );
 
         // Pick up second sample
-        LinearRotation rotationApproachSecondSample = new LinearRotation(new TimeSpan(splineMoveFirstSampleTimes[1], splineMoveFirstSampleTimes[2]),
-                new RotationState(Math.toRadians(-219)),
-                new RotationState(Math.toRadians(-129))
-        );
 
         LinearElbow elbowDownSecondSample = new LinearElbow(splineMoveFirstSampleTimes[2] - 0.4,
                 new ElbowState(elbowPartiallyUp),
@@ -233,17 +296,17 @@ public class TESTING_AutoBlueObservation1Plus3 extends LinearOpMode {
 
 
         double splineMoveSecondSampleStartTime = splineMoveFirstSample.getEndTime();
-        CRSplineTranslation splineMoveSecondSample = new CRSplineTranslation(new TimeSpan(splineMoveSecondSampleStartTime, splineMoveSecondSampleStartTime+1.8),
-                new TranslationState(-48.5, 39.5), // Pick up second
-                new TranslationState(-52, 49), // Deposit second
+        CRSplineTranslation splineMoveSecondSample = new CRSplineTranslation(new TimeSpan(splineMoveSecondSampleStartTime, splineMoveSecondSampleStartTime+2.75),
+                new TranslationState(-58.5, 44), // Pick up second
+                new TranslationState(-52, 44), // Deposit second
                 new TranslationState( -48, 41) // Go to cycle starting position
         );
         double[] splineMoveSecondSampleTimes = splineMoveSecondSample.getSegmentTimes();
 
         // Drop second sample
         LinearRotation rotationMoveSecondSample = new LinearRotation(new TimeSpan(splineMoveSecondSampleTimes[0], splineMoveSecondSampleTimes[1]),
-                new RotationState(Math.toRadians(-129)),
-                new RotationState(Math.toRadians(-219))
+                new RotationState(Math.toRadians(-90)),
+                new RotationState(Math.toRadians(90))
         );
 
         LinearElbow elbowUpSecondSample = new LinearElbow(clawCloseSecondSample.getEndTime(),
@@ -256,10 +319,9 @@ public class TESTING_AutoBlueObservation1Plus3 extends LinearOpMode {
                 new ClawState(clawOpen)
         );
 
-        // Turn to cycle starting position
-        LinearRotation rotationApproachCycleStart = new LinearRotation(new TimeSpan(splineMoveSecondSampleTimes[1], splineMoveSecondSampleTimes[2]),
-                new RotationState(Math.toRadians(-219)),
-                new RotationState(Math.toRadians(-270))
+        LinearElbow elbowUpWaitingForHP = new LinearElbow(clawOpenSecondSample.getEndTime(),
+                new ElbowState(elbowPartiallyUp),
+                new ElbowState(elbowUp)
         );
 
 
@@ -268,7 +330,7 @@ public class TESTING_AutoBlueObservation1Plus3 extends LinearOpMode {
         /////////////////////////////////////
 
         LinearElbow elbowDownFirstSpecimen = new LinearElbow(splineMoveSecondSample.getEndTime()-0.1, // clip end of spline
-                new ElbowState(elbowPartiallyUp),
+                new ElbowState(elbowUp),
                 new ElbowState(elbowDown)
         );
 
@@ -284,7 +346,7 @@ public class TESTING_AutoBlueObservation1Plus3 extends LinearOpMode {
         // Approach
         LinearTranslation lineScoreFirstSpecimen = new LinearTranslation(clawCloseFirstSpecimen.getEndTime(),
                 new TranslationState(-48, 41),
-                new TranslationState(-10, 37)
+                new TranslationState(-6, 37)
         );
 
         LinearRotation rotationScoreFirstSpecimen = new LinearRotation(new TimeSpan(lineScoreFirstSpecimen.getStartTime(), lineScoreFirstSpecimen.getEndTime()-0.2),
@@ -318,7 +380,7 @@ public class TESTING_AutoBlueObservation1Plus3 extends LinearOpMode {
         //////////////////////////////////////
 
         LinearTranslation lineApproachSecondSpecimen = new LinearTranslation(clawOpenFirstSpecimen.getEndTime(),
-                new TranslationState(-10, 37),
+                new TranslationState(-6, 37),
                 new TranslationState(-48, 41)
         );
 
@@ -344,7 +406,7 @@ public class TESTING_AutoBlueObservation1Plus3 extends LinearOpMode {
         // Approach
         LinearTranslation lineScoreSecondSpecimen = new LinearTranslation(clawCloseSecondSpecimen.getEndTime(),
                 new TranslationState(-48, 41),
-                new TranslationState(-10, 37)
+                new TranslationState(-8, 37)
         );
 
         LinearRotation rotationScoreSecondSpecimen = new LinearRotation(new TimeSpan(lineScoreSecondSpecimen.getStartTime(), lineScoreSecondSpecimen.getEndTime()-0.2),
@@ -378,7 +440,7 @@ public class TESTING_AutoBlueObservation1Plus3 extends LinearOpMode {
         /////////////////////////////////////
 
         LinearTranslation lineApproachThirdSpecimen = new LinearTranslation(clawOpenSecondSpecimen.getEndTime(),
-                new TranslationState(-10, 37),
+                new TranslationState(-8, 37),
                 new TranslationState(-48, 41)
         );
 
@@ -441,7 +503,7 @@ public class TESTING_AutoBlueObservation1Plus3 extends LinearOpMode {
 
         LinearTranslation linePark = new LinearTranslation(clawOpenThirdSpecimen.getEndTime(),
                 new TranslationState(-10, 37),
-                new TranslationState(-42, 53)
+                new TranslationState(-48, 63.5)
         );
 
         LinearClaw clawPark = new LinearClaw(linePark.getStartTime(),
@@ -456,7 +518,6 @@ public class TESTING_AutoBlueObservation1Plus3 extends LinearOpMode {
 
 
 
-
         //////////////////
         // CREATE PLANS //
         //////////////////
@@ -465,8 +526,12 @@ public class TESTING_AutoBlueObservation1Plus3 extends LinearOpMode {
                 // PRELOAD
                 splinePreload,
 
+                // TRANSFER SAMPLE TO SOLAR FLARE
+                lineApproachTransferSample,
+                lineDepositTransferSample,
+
                 // MOVING SAMPLES
-                splineApproachSamples,
+                lineApproachSamples,
                 splineMoveFirstSample,
                 splineMoveSecondSample,
 
@@ -486,12 +551,14 @@ public class TESTING_AutoBlueObservation1Plus3 extends LinearOpMode {
                 // PRELOAD
                 rotationStillPreload,
 
+                // TRANSFER SAMPLE TO SOLAR FLARE
+                rotationApproachTransferSample,
+                rotationDepositTransferSample,
+
                 // MOVING SAMPLES
                 rotationApproachSamples,
                 rotationMoveFirstSample,
-                rotationApproachSecondSample,
                 rotationMoveSecondSample,
-                rotationApproachCycleStart,
 
                 // SCORING SPECIMENS
                 rotationScoreFirstSpecimen,
@@ -524,6 +591,10 @@ public class TESTING_AutoBlueObservation1Plus3 extends LinearOpMode {
                 // PRELOAD
                 clawOpenPreload,
 
+                // TRANSFER SAMPLE TO SOLAR FLARE
+                clawCloseTransferSample,
+                clawOpenTransferSample,
+
                 // MOVING SAMPLES
                 clawCloseFirstSample,
                 clawOpenFirstSample,
@@ -548,6 +619,12 @@ public class TESTING_AutoBlueObservation1Plus3 extends LinearOpMode {
                 // PRELOAD
                 elbowStillPreload,
 
+                // TRANSFER SAMPLE TO SOLAR FLARE
+                elbowApproachTransferSample,
+                elbowDownGrabTransferSample,
+                elbowUpGrabTransferSample,
+                elbowDownDepositTransferSample,
+
                 // MOVING SAMPLES
                 elbowApproachSamples,
 
@@ -555,6 +632,7 @@ public class TESTING_AutoBlueObservation1Plus3 extends LinearOpMode {
                 elbowUpFirstSample,
                 elbowDownSecondSample,
                 elbowUpSecondSample,
+                elbowUpWaitingForHP,
 
                 // SCORING SPECIMENS
                 elbowDownFirstSpecimen,

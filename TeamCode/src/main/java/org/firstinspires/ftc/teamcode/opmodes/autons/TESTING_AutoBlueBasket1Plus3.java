@@ -28,11 +28,10 @@ import org.firstinspires.ftc.teamcode.synchropather.systems.rotation.movements.L
 import org.firstinspires.ftc.teamcode.synchropather.systems.translation.TranslationPlan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.translation.TranslationState;
 import org.firstinspires.ftc.teamcode.synchropather.systems.translation.movements.CRSplineTranslation;
-import org.firstinspires.ftc.teamcode.synchropather.systems.translation.movements.LinearTranslation;
 
 //@Disabled
-@Autonomous(name="[TESTING] Auto Blue Basket 1+1", group = "Autons")
-public class TESTING_AutoBlueBasket1Plus1 extends LinearOpMode {
+@Autonomous(name="[TESTING] Auto Blue Basket 1+3", group = "Autons")
+public class TESTING_AutoBlueBasket1Plus3 extends LinearOpMode {
 
     RobotSystem robot;
     Synchronizer synchronizer;
