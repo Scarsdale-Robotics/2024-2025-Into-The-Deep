@@ -9,14 +9,22 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.teamcode.RobotSystem;
+import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.Synchronizer;
 import org.firstinspires.ftc.teamcode.synchropather.systems.claw.ClawConstants;
 import org.firstinspires.ftc.teamcode.synchropather.systems.elbow.ElbowConstants;
+import org.firstinspires.ftc.teamcode.synchropather.systems.lift.LiftPlan;
+import org.firstinspires.ftc.teamcode.synchropather.systems.lift.LiftState;
+import org.firstinspires.ftc.teamcode.synchropather.systems.lift.movements.LinearLift;
+import org.firstinspires.ftc.teamcode.synchropather.systems.translation.TranslationPlan;
+import org.firstinspires.ftc.teamcode.synchropather.systems.translation.TranslationState;
+import org.firstinspires.ftc.teamcode.synchropather.systems.translation.movements.LinearTranslation;
 
 @Config
-@TeleOp(name="Blue TeleOp")
+@TeleOp(name="Main TeleOp")
 public class BlueTeleop extends LinearOpMode {
 
     private RobotSystem robot;
+    private Synchronizer realignMacro;
 
     public static double clawOpen = ClawConstants.OPEN_POSITION;
     public static double clawClosed = ClawConstants.CLOSED_POSITION;
@@ -28,7 +36,8 @@ public class BlueTeleop extends LinearOpMode {
     @Override
     public void runOpMode() throws InterruptedException {
         this.telemetry = new MultipleTelemetry(this.telemetry, FtcDashboard.getInstance().getTelemetry());
-        this.robot = new RobotSystem(hardwareMap, new Pose2d(48, 63.5, new Rotation2d(Math.toRadians(-90))), false, this);
+        this.robot = new RobotSystem(hardwareMap, new Pose2d(0, 0, new Rotation2d(Math.toRadians(-90))), false, this);
+        createRealignMacro();
 
         robot.inDep.setClawPosition(clawClosed);
         robot.inDep.setElbowPosition(elbowPosition);
@@ -156,6 +165,7 @@ public class BlueTeleop extends LinearOpMode {
                 liftTargetPosition = 1350;
                 liftUpMacroRunning = true; // enable lift up macro
                 liftDownMacroRunning = false; // disable lift down macro
+                realignMacro.stop();
                 toggleLiftUpMacro = true;
                 elbowPosition = elbowUp;
             }
@@ -168,6 +178,7 @@ public class BlueTeleop extends LinearOpMode {
                 liftTargetPosition = -10;
                 liftUpMacroRunning = false; // disable lift up macro
                 liftDownMacroRunning = true; // enable lift down macro
+                realignMacro.stop();
                 toggleLiftDownMacro = true;
                 elbowPosition = elbowDown - 0.04;
             }
@@ -180,6 +191,7 @@ public class BlueTeleop extends LinearOpMode {
             if (triggerPressed) {
                 liftUpMacroRunning = false;
                 liftDownMacroRunning = false;
+                realignMacro.stop();
             }
             if (liftUpMacroRunning || liftDownMacroRunning) {
                 // A MACRO IS RUNNING
@@ -212,9 +224,54 @@ public class BlueTeleop extends LinearOpMode {
 
 
 
+            // Gamepad2 both bumpers = Realign robot
+            if (gamepad2.left_bumper && gamepad2.right_bumper && !realignMacro.getIsRunning()) {
+                realignMacro.start();
+                liftUpMacroRunning = false;
+                liftDownMacroRunning = false;
+            }
+            if (realignMacro.getIsRunning()) {
+                if (!realignMacro.update()) {
+                    realignMacro.stop();
+                    robot.inDep.resetLiftEncoders();
+                }
+            }
+
+            // Gamepad drive input cancels the realign macro
+            if (gamepad1.left_stick_x != 0 || gamepad1.left_stick_y != 0 || gamepad1.right_stick_x != 0 || gamepad1.right_stick_y != 0) {
+                realignMacro.stop();
+            }
+
 
         }
 
+    }
+
+    private void createRealignMacro() {
+        robot.localization.resetH(Math.toRadians(-180));
+        Pose2d currentPose = robot.localization.getPose();
+
+        LinearTranslation backup = new LinearTranslation(0,
+                new TranslationState(currentPose.getX(), currentPose.getY()),
+                new TranslationState(currentPose.getX(), currentPose.getY())
+                        .minus(new TranslationState(18, currentPose.getHeading(), true))
+        );
+        TranslationPlan translationPlan = new TranslationPlan(robot,
+                backup
+        );
+
+        LinearLift liftDown = new LinearLift(0,
+                new LiftState(0),
+                new LiftState(-1050)
+        );
+        LiftPlan liftPlan = new LiftPlan(robot,
+                liftDown
+        );
+
+        this.realignMacro = new Synchronizer(
+                translationPlan,
+                liftPlan
+        );
     }
 
 }
