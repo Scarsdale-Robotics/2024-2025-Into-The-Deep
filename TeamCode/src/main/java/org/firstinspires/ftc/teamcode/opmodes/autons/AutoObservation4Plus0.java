@@ -35,8 +35,8 @@ import org.firstinspires.ftc.teamcode.synchropather.systems.translation.movement
 import org.firstinspires.ftc.teamcode.synchropather.systems.translation.movements.LinearTranslation;
 
 //@Disabled
-@Autonomous(name="Auto OBSERVATION 1+3", group = "Autons")
-public class AutoObservation1Plus3 extends LinearOpMode {
+@Autonomous(name="Auto OBSERVATION 4+0", group = "Autons")
+public class AutoObservation4Plus0 extends LinearOpMode {
 
     RobotSystem robot;
     Synchronizer synchronizer;
