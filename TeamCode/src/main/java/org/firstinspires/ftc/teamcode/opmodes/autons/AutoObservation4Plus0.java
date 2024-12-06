@@ -235,7 +235,7 @@ public class AutoObservation4Plus0 extends LinearOpMode {
         CRSplineTranslation splineMoveSecondSample = new CRSplineTranslation(new TimeSpan(splineMoveSecondSampleStartTime, splineMoveSecondSampleStartTime+2),
                 new TranslationState(-48, 39.5), // Pick up second
                 new TranslationState(-52, 49), // Deposit second
-                new TranslationState( -48, 44) // Go to cycle starting position
+                new TranslationState( -48, 46) // Go to cycle starting position
         );
         double[] splineMoveSecondSampleTimes = splineMoveSecondSample.getSegmentTimes();
 
