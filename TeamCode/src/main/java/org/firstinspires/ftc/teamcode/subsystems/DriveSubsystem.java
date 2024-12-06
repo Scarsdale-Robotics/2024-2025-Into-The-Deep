@@ -165,6 +165,7 @@ public class DriveSubsystem extends SubsystemBase {
         L *= factor;
         R *= factor;
 
+
         double[] wheelSpeeds = new double[4];
         wheelSpeeds[RobotDrive.MotorType.kFrontLeft.value] = L;
         wheelSpeeds[RobotDrive.MotorType.kFrontRight.value] = R;

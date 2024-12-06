@@ -282,7 +282,13 @@ public class LocalizationSubsystem extends SubsystemBase {
         double odom_dh = normalizeAngle(currentPose.getHeading() - lastOdometryPose.getHeading());
         h = normalizeAngle(h + odom_dh);
 
-        lastOdometryPose = currentPose;
+        if (Double.isNaN(x) || Double.isNaN(y) || Double.isNaN(h)) {
+            x = lastOdometryPose.getX();
+            y = lastOdometryPose.getY();
+            h = lastOdometryPose.getHeading();
+        } else {
+            lastOdometryPose = currentPose;
+        }
 
 
         // Add uncertainty

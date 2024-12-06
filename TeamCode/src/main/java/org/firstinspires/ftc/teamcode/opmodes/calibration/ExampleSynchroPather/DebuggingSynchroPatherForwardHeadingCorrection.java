@@ -98,10 +98,10 @@ public class DebuggingSynchroPatherForwardHeadingCorrection extends LinearOpMode
 
     private void initSynchronizer() {
         TranslationConstants.MAX_VELOCITY = 0.5*40d;
-        TranslationConstants.MAX_ACCELERATION = 54d;
+        TranslationConstants.MAX_ACCELERATION = 0.5*54d;
 
-        RotationConstants.MAX_ANGULAR_VELOCITY = 3.6;
-        RotationConstants.MAX_ANGULAR_ACCELERATION = 7.2;
+        RotationConstants.MAX_ANGULAR_VELOCITY = 0.65*3.6;
+        RotationConstants.MAX_ANGULAR_ACCELERATION = 0.65*4;
 
         LiftConstants.MAX_VELOCITY = 2200;
         LiftConstants.MAX_ACCELERATION = 2200;
@@ -116,7 +116,7 @@ public class DebuggingSynchroPatherForwardHeadingCorrection extends LinearOpMode
                 new TranslationState(0, 0),
                 new TranslationState(24, 0)
         );
-        LinearTranslation line2 = new LinearTranslation(line1.getEndTime(),
+        LinearTranslation line2 = new LinearTranslation(line1.getEndTime()+1,
                 new TranslationState(24, 0),
                 new TranslationState(0, 0)
         );

@@ -97,7 +97,7 @@ public class DebuggingSynchroPatherTurn extends LinearOpMode {
 
     private void initSynchronizer() {
         TranslationConstants.MAX_VELOCITY = 0.5*40d;
-        TranslationConstants.MAX_ACCELERATION = 54d;
+        TranslationConstants.MAX_ACCELERATION = 0.5*54d;
 
         RotationConstants.MAX_ANGULAR_VELOCITY = 3.6;
         RotationConstants.MAX_ANGULAR_ACCELERATION = 7.2;
@@ -129,15 +129,15 @@ public class DebuggingSynchroPatherTurn extends LinearOpMode {
                 new RotationState(Math.toRadians(0)),
                 new RotationState(Math.toRadians(180))
         );
-        LinearRotation rotation2 = new LinearRotation(rotation1.getEndTime(),
+        LinearRotation rotation2 = new LinearRotation(rotation1.getEndTime()+1,
                 new RotationState(Math.toRadians(180)),
                 new RotationState(Math.toRadians(0))
         );
-        LinearRotation rotation3 = new LinearRotation(rotation2.getEndTime(),
+        LinearRotation rotation3 = new LinearRotation(rotation2.getEndTime()+1,
                 new RotationState(Math.toRadians(0)),
                 new RotationState(Math.toRadians(-180))
         );
-        LinearRotation rotation4 = new LinearRotation(rotation3.getEndTime(),
+        LinearRotation rotation4 = new LinearRotation(rotation3.getEndTime()+1,
                 new RotationState(Math.toRadians(-180)),
                 new RotationState(Math.toRadians(0))
         );

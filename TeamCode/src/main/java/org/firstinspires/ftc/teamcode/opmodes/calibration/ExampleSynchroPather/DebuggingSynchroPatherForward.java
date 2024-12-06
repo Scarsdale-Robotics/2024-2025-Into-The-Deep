@@ -11,6 +11,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import org.firstinspires.ftc.teamcode.RobotSystem;
 import org.firstinspires.ftc.teamcode.opmodes.calibration.Drawing;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.Synchronizer;
+import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.TimeSpan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.claw.ClawConstants;
 import org.firstinspires.ftc.teamcode.synchropather.systems.elbow.ElbowConstants;
 import org.firstinspires.ftc.teamcode.synchropather.systems.lift.LiftConstants;
@@ -44,7 +45,7 @@ public class DebuggingSynchroPatherForward extends LinearOpMode {
         this.rotationPlan.setRobot(robot);
         this.synchronizer = new Synchronizer(
                 translationPlan
-//                ,rotationPlan
+                ,rotationPlan
         );
 
 
@@ -97,10 +98,10 @@ public class DebuggingSynchroPatherForward extends LinearOpMode {
 
     private void initSynchronizer() {
         TranslationConstants.MAX_VELOCITY = 0.5*40d;
-        TranslationConstants.MAX_ACCELERATION = 54d;
+        TranslationConstants.MAX_ACCELERATION = 0.5*54d;
 
-        RotationConstants.MAX_ANGULAR_VELOCITY = 3.6;
-        RotationConstants.MAX_ANGULAR_ACCELERATION = 7.2;
+        RotationConstants.MAX_ANGULAR_VELOCITY = 0.65*3.6;
+        RotationConstants.MAX_ANGULAR_ACCELERATION = 0.65*4;
 
         LiftConstants.MAX_VELOCITY = 2200;
         LiftConstants.MAX_ACCELERATION = 2200;
@@ -115,7 +116,7 @@ public class DebuggingSynchroPatherForward extends LinearOpMode {
                 new TranslationState(0, 0),
                 new TranslationState(24, 0)
         );
-        LinearTranslation line2 = new LinearTranslation(line1.getEndTime(),
+        LinearTranslation line2 = new LinearTranslation(line1.getEndTime()+1,
                 new TranslationState(24, 0),
                 new TranslationState(0, 0)
         );
@@ -125,7 +126,7 @@ public class DebuggingSynchroPatherForward extends LinearOpMode {
         );
 
         // Rotation plan
-        LinearRotation rotation = new LinearRotation(0,
+        LinearRotation rotation = new LinearRotation(new TimeSpan(line1.getStartTime(), line2.getEndTime()),
                 new RotationState(Math.toRadians(0)),
                 new RotationState(Math.toRadians(180))
         );

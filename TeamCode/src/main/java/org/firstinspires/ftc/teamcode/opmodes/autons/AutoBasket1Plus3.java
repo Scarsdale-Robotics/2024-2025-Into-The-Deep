@@ -30,8 +30,8 @@ import org.firstinspires.ftc.teamcode.synchropather.systems.translation.Translat
 import org.firstinspires.ftc.teamcode.synchropather.systems.translation.movements.CRSplineTranslation;
 
 //@Disabled
-@Autonomous(name="[TESTING] Auto Blue Basket 1+3", group = "Autons")
-public class TESTING_AutoBlueBasket1Plus3 extends LinearOpMode {
+@Autonomous(name="Auto BASKET 1+3", group = "Autons")
+public class AutoBasket1Plus3 extends LinearOpMode {
 
     RobotSystem robot;
     Synchronizer synchronizer;
@@ -120,10 +120,10 @@ public class TESTING_AutoBlueBasket1Plus3 extends LinearOpMode {
         CRSplineTranslation splineApproachSample1 = new CRSplineTranslation(claw1.getStartTime(),
                 new TranslationState(10, 37),
                 new TranslationState(40, 48),
-                new TranslationState(49, 44)
+                new TranslationState(48.5, 44)
         );
 
-        LinearElbow elbowDownSample1 = new LinearElbow(splineApproachSample1.getEndTime()-1,
+        LinearElbow elbowDownSample1 = new LinearElbow(splineApproachSample1.getEndTime()-0.75,
                 new ElbowState(elbowUp),
                 new ElbowState(elbowDown)
         );
@@ -184,7 +184,7 @@ public class TESTING_AutoBlueBasket1Plus3 extends LinearOpMode {
                 new RotationState(Math.toRadians(-90))
         );
 
-        LinearElbow elbowDownSample2 = new LinearElbow(splineApproachSample2.getEndTime()-1,
+        LinearElbow elbowDownSample2 = new LinearElbow(splineApproachSample2.getEndTime()-0.75,
                 new ElbowState(elbowUp),
                 new ElbowState(elbowDown)
         );
@@ -238,7 +238,7 @@ public class TESTING_AutoBlueBasket1Plus3 extends LinearOpMode {
         CRSplineTranslation splineApproachSample3 = new CRSplineTranslation(liftDownSample3.getTimeSpan(),
                 new TranslationState(54, 56),
                 new TranslationState(56, 48),
-                new TranslationState(57.5, 39.5)
+                new TranslationState(58.5, 40.5)
         );
 
         LinearRotation rotateApproachSample3 = new LinearRotation(new TimeSpan(liftDownSample3.getStartTime(), liftDownSample3.getEndTime()-0.5),
@@ -246,7 +246,7 @@ public class TESTING_AutoBlueBasket1Plus3 extends LinearOpMode {
                 new RotationState(Math.toRadians(-51))
         );
 
-        LinearElbow elbowDownSample3 = new LinearElbow(splineApproachSample3.getEndTime()-1,
+        LinearElbow elbowDownSample3 = new LinearElbow(splineApproachSample3.getEndTime()-0.75,
                 new ElbowState(elbowUp),
                 new ElbowState(elbowDown)
         );
@@ -272,7 +272,7 @@ public class TESTING_AutoBlueBasket1Plus3 extends LinearOpMode {
         );
 
         CRSplineTranslation splineScoreSample3 = new CRSplineTranslation(new TimeSpan(liftUpSample3.getStartTime(), liftUpSample3.getEndTime()+1),
-                new TranslationState(57.5, 39.5),
+                new TranslationState(58.5, 40.5),
                 new TranslationState(53, 42),
                 new TranslationState(54, 56)
         );

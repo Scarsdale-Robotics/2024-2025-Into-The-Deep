@@ -165,7 +165,7 @@ public class BlueTeleop extends LinearOpMode {
                 liftTargetPosition = 1350;
                 liftUpMacroRunning = true; // enable lift up macro
                 liftDownMacroRunning = false; // disable lift down macro
-                realignMacro.stop();
+                realignMacro.setRunningFalse();
                 toggleLiftUpMacro = true;
                 elbowPosition = elbowUp;
             }
@@ -178,7 +178,7 @@ public class BlueTeleop extends LinearOpMode {
                 liftTargetPosition = -10;
                 liftUpMacroRunning = false; // disable lift up macro
                 liftDownMacroRunning = true; // enable lift down macro
-                realignMacro.stop();
+                realignMacro.setRunningFalse();
                 toggleLiftDownMacro = true;
                 elbowPosition = elbowDown - 0.04;
             }
@@ -191,7 +191,7 @@ public class BlueTeleop extends LinearOpMode {
             if (triggerPressed) {
                 liftUpMacroRunning = false;
                 liftDownMacroRunning = false;
-                realignMacro.stop();
+                realignMacro.setRunningFalse();
             }
             if (liftUpMacroRunning || liftDownMacroRunning) {
                 // A MACRO IS RUNNING
@@ -226,20 +226,21 @@ public class BlueTeleop extends LinearOpMode {
 
             // Gamepad2 both bumpers = Realign robot
             if (gamepad2.left_bumper && gamepad2.right_bumper && !realignMacro.getIsRunning()) {
+                createRealignMacro();
                 realignMacro.start();
                 liftUpMacroRunning = false;
                 liftDownMacroRunning = false;
             }
             if (realignMacro.getIsRunning()) {
                 if (!realignMacro.update()) {
-                    realignMacro.stop();
+                    realignMacro.setRunningFalse();
                     robot.inDep.resetLiftEncoders();
                 }
             }
 
             // Gamepad drive input cancels the realign macro
             if (gamepad1.left_stick_x != 0 || gamepad1.left_stick_y != 0 || gamepad1.right_stick_x != 0 || gamepad1.right_stick_y != 0) {
-                realignMacro.stop();
+                realignMacro.setRunningFalse();
             }
 
 
