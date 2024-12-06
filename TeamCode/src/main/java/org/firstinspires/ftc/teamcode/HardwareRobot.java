@@ -9,6 +9,8 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.ServoImplEx;
 
+import org.firstinspires.ftc.teamcode.subsystems.GoBildaPinpointDriver;
+
 public class HardwareRobot {
     public final MotorEx leftFront;
     public final MotorEx rightFront;
@@ -18,9 +20,7 @@ public class HardwareRobot {
     public final MotorEx leftLift;
     public final MotorEx rightLift;
 
-    public final Encoder leftOdometer;
-    public final Encoder rightOdometer;
-    public final Encoder centerOdometer;
+    public final GoBildaPinpointDriver pinpoint;
 
     public final Limelight3A limelight;
 
@@ -90,15 +90,10 @@ public class HardwareRobot {
 
 
         //////////////
-        // ODOMETRY //
+        // PINPOINT //
         //////////////
-        leftOdometer = rightFront.encoder;
-        rightOdometer = leftFront.encoder;
-        centerOdometer = leftBack.encoder;
-
-        leftOdometer.setDirection(Motor.Direction.REVERSE);
-        rightOdometer.setDirection(Motor.Direction.REVERSE);
-
+        pinpoint = hardwareMap.get(GoBildaPinpointDriver.class,"pinpoint");
+        pinpoint.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.FORWARD, GoBildaPinpointDriver.EncoderDirection.FORWARD);
 
 
         ////////////

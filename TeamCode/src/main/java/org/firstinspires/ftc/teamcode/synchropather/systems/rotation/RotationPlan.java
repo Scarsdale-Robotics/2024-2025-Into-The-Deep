@@ -42,11 +42,11 @@ public class RotationPlan extends Plan<RotationState> {
 		this.robot = robot;
 		this.eHistory = new ArrayList<>();
 
-		robot.telemetry.addData("[SYNCHROPATHER] Rotation desiredVelocity.getHeading()", 0);
-		robot.telemetry.addData("[SYNCHROPATHER] Rotation desiredState.getHeading()", 0);
-		robot.telemetry.addData("[SYNCHROPATHER] Rotation error.getHeading()", 0);
-		robot.telemetry.addData("[SYNCHROPATHER] robot.drive.turnVelocity", 0);
-		robot.telemetry.update();
+//		robot.telemetry.addData("[SYNCHROPATHER] Rotation desiredVelocity.getHeading()", 0);
+//		robot.telemetry.addData("[SYNCHROPATHER] Rotation desiredState.getHeading()", 0);
+//		robot.telemetry.addData("[SYNCHROPATHER] Rotation error.getHeading()", 0);
+//		robot.telemetry.addData("[SYNCHROPATHER] robot.drive.turnVelocity", 0);
+//		robot.telemetry.update();
 	}
 
 	/**
@@ -110,6 +110,10 @@ public class RotationPlan extends Plan<RotationState> {
 		while (radians >= Math.PI) radians -= 2*Math.PI;
 		while (radians < -Math.PI) radians += 2*Math.PI;
 		return radians;
+	}
+
+	public void setRobot(RobotSystem robot) {
+		this.robot = robot;
 	}
 
 }

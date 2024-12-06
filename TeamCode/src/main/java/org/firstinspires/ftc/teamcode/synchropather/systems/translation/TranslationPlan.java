@@ -30,7 +30,7 @@ public class TranslationPlan extends Plan<TranslationState> {
 	// Positional PD constants
 	//TODO: TUNE
 	public static double kP = 8;
-	public static double kD = 1;
+	public static double kD = 0.125;
 
 	// Error history array
 	private final ArrayList<Double> exHistory;
@@ -49,14 +49,14 @@ public class TranslationPlan extends Plan<TranslationState> {
 		this.exHistory = new ArrayList<>();
 		this.eyHistory = new ArrayList<>();
 
-		robot.telemetry.addData("[SYNCHROPATHER] Translation desiredVelocity.getX()", 0);
-		robot.telemetry.addData("[SYNCHROPATHER] Translation desiredVelocity.getY()", 0);
-		robot.telemetry.addData("[SYNCHROPATHER] Translation ut.getX()", 0);
-		robot.telemetry.addData("[SYNCHROPATHER] Translation ut.getY()", 0);
-		robot.telemetry.addData("[SYNCHROPATHER] robot.drive.driveTheta", 0);
-		robot.telemetry.addData("[SYNCHROPATHER] robot.drive.driveSpeed", 0);
-		robot.telemetry.addData("[SYNCHROPATHER] currentPose.getHeading()", 0);
-		robot.telemetry.update();
+//		robot.telemetry.addData("[SYNCHROPATHER] Translation desiredVelocity.getX()", 0);
+//		robot.telemetry.addData("[SYNCHROPATHER] Translation desiredVelocity.getY()", 0);
+//		robot.telemetry.addData("[SYNCHROPATHER] Translation ut.getX()", 0);
+//		robot.telemetry.addData("[SYNCHROPATHER] Translation ut.getY()", 0);
+//		robot.telemetry.addData("[SYNCHROPATHER] robot.drive.driveTheta", 0);
+//		robot.telemetry.addData("[SYNCHROPATHER] robot.drive.driveSpeed", 0);
+//		robot.telemetry.addData("[SYNCHROPATHER] currentPose.getHeading()", 0);
+//		robot.telemetry.update();
 	}
 
 	/**
@@ -129,6 +129,10 @@ public class TranslationPlan extends Plan<TranslationState> {
 		robot.drive.driveTheta = 0;
 		robot.drive.driveSpeed = 0;
 		robot.drive.stopController();
+	}
+
+	public void setRobot(RobotSystem robot) {
+		this.robot = robot;
 	}
 
 }

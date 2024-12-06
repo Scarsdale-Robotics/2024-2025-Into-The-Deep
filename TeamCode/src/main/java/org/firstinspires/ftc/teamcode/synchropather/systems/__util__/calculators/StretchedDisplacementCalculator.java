@@ -21,6 +21,7 @@ public class StretchedDisplacementCalculator extends DisplacementCalculator {
 	public StretchedDisplacementCalculator(double targetDisplacement, TimeSpan timeSpan, double MV, double MA) {
 		super(targetDisplacement, MV, MA);
 		this.timeSpan = timeSpan;
+		this.duration = timeSpan.getDuration();
 		init();
 	}
 
@@ -171,6 +172,9 @@ public class StretchedDisplacementCalculator extends DisplacementCalculator {
 	 */
 	public double getAcceleration(double elapsedTime) {
 		if (distance == 0) return 0;
+		// Zero acceleration if outside of TimeSpan.
+		if (elapsedTime-getStartTime() < 0 || getDuration() < elapsedTime-getStartTime()) return 0;
+
 		elapsedTime = bound(elapsedTime-getStartTime(), 0, getDuration());
 
 		double acceleration;

@@ -95,6 +95,13 @@ public class Synchronizer {
 	}
 
 	/**
+	 * Set running to false.
+	 */
+	public void setRunningFalse() {
+		running = false;
+	}
+
+	/**
 	 * Gets the RobotState at the given elapsedTime within the Plan of the given movementType.
 	 * @param movementType
 	 * @param elapsedTime

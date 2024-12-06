@@ -5,10 +5,12 @@ import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.arcrobotics.ftclib.geometry.Pose2d;
 import com.arcrobotics.ftclib.geometry.Rotation2d;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 import org.firstinspires.ftc.teamcode.RobotSystem;
 import org.firstinspires.ftc.teamcode.opmodes.calibration.Drawing;
+import org.firstinspires.ftc.teamcode.synchropather.DriveConstants;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.Synchronizer;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.TimeSpan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.claw.ClawConstants;
@@ -19,21 +21,30 @@ import org.firstinspires.ftc.teamcode.synchropather.systems.elbow.ElbowConstants
 import org.firstinspires.ftc.teamcode.synchropather.systems.elbow.ElbowPlan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.elbow.ElbowState;
 import org.firstinspires.ftc.teamcode.synchropather.systems.elbow.movements.LinearElbow;
+import org.firstinspires.ftc.teamcode.synchropather.systems.lift.LiftConstants;
 import org.firstinspires.ftc.teamcode.synchropather.systems.lift.LiftPlan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.lift.LiftState;
 import org.firstinspires.ftc.teamcode.synchropather.systems.lift.movements.LinearLift;
+import org.firstinspires.ftc.teamcode.synchropather.systems.rotation.RotationConstants;
 import org.firstinspires.ftc.teamcode.synchropather.systems.rotation.RotationPlan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.rotation.RotationState;
 import org.firstinspires.ftc.teamcode.synchropather.systems.rotation.movements.LinearRotation;
+import org.firstinspires.ftc.teamcode.synchropather.systems.translation.TranslationConstants;
 import org.firstinspires.ftc.teamcode.synchropather.systems.translation.TranslationPlan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.translation.TranslationState;
 import org.firstinspires.ftc.teamcode.synchropather.systems.translation.movements.CRSplineTranslation;
 
+@Disabled
 @Autonomous(name="Auto Red (Basket)", group="Autons")
 public class AutoRedBasket extends LinearOpMode {
 
     RobotSystem robot;
     Synchronizer synchronizer;
+    private TranslationPlan translationPlan;
+    private RotationPlan rotationPlan;
+    private LiftPlan liftPlan;
+    private ClawPlan clawPlan;
+    private ElbowPlan elbowPlan;
 
     public static double clawOpen = ClawConstants.OPEN_POSITION;
     public static double clawClosed = ClawConstants.CLOSED_POSITION;
@@ -43,16 +54,25 @@ public class AutoRedBasket extends LinearOpMode {
 
     @Override
     public void runOpMode() throws InterruptedException {
-        this.robot = new RobotSystem(hardwareMap, new Pose2d(-40, -63.5, new Rotation2d(Math.toRadians(90))), true, this);
-        robot.inDep.setClawPosition(clawClosed);
-        robot.inDep.setElbowPosition(elbowUp);
         initSynchronizer();
-
-        waitForStart();
+        this.robot = new RobotSystem(hardwareMap, new Pose2d(-40, -63.5, new Rotation2d(Math.toRadians(90))), true, this);
+        this.translationPlan.setRobot(robot);
+        this.rotationPlan.setRobot(robot);
+        this.liftPlan.setRobot(robot);
+        this.clawPlan.setRobot(robot);
+        this.elbowPlan.setRobot(robot);
+        this.synchronizer = new Synchronizer(
+                translationPlan,
+                rotationPlan,
+                liftPlan,
+                elbowPlan,
+                clawPlan
+        );
 
         synchronizer.start();
         while (opModeIsActive() && synchronizer.update()) {
             robot.localization.update();
+            robot.logOdometry();
             TelemetryPacket packet = new TelemetryPacket();
             packet.fieldOverlay().setStroke("#3F51B5");
             Drawing.drawRobot(packet.fieldOverlay(), robot.localization.getPose());
@@ -65,11 +85,30 @@ public class AutoRedBasket extends LinearOpMode {
 
 
     private void initSynchronizer() {
+
+        DriveConstants.MAX_ANGULAR_VELOCITY = 3.6;
+        DriveConstants.MAX_ANGULAR_ACCELERATION = 4;
+
+        TranslationConstants.MAX_VELOCITY = 0.5*40d;
+        TranslationConstants.MAX_ACCELERATION = 0.5*54d;
+
+        RotationConstants.MAX_ANGULAR_VELOCITY = 0.65*3.6;
+        RotationConstants.MAX_ANGULAR_ACCELERATION = 0.65*4;
+
+        LiftConstants.MAX_VELOCITY = 2200;
+        LiftConstants.MAX_ACCELERATION = 2200;
+
+        ClawConstants.MAX_VELOCITY = 15.111111111;
+        ClawConstants.MAX_ACCELERATION = 30.22222;
+
+        ElbowConstants.MAX_VELOCITY = 1.021739;
+        ElbowConstants.MAX_ACCELERATION = 1.021739;
+
         // place preloaded specimen
         CRSplineTranslation spline1 = new CRSplineTranslation(0,
                 new TranslationState(-40,-63.5),
                 new TranslationState(-14, -48),
-                new TranslationState(-10, -34)
+                new TranslationState(-10, -38)
         );
 
         LinearRotation still = new LinearRotation(0,
@@ -77,34 +116,34 @@ public class AutoRedBasket extends LinearOpMode {
                 new RotationState(Math.toRadians(90))
         );
 
-        RotationPlan rotationPlan = new RotationPlan(robot,
+        rotationPlan = new RotationPlan(robot,
                 still
         );
 
 
         LinearLift liftPreload1 = new LinearLift(new TimeSpan(spline1.getStartTime(), spline1.getEndTime()-0.5),
                 new LiftState(0),
-                new LiftState(1500)
+                new LiftState(1400)
         );
 
         LinearLift liftPreload2 = new LinearLift(spline1.getEndTime()-0.5,
-                new LiftState(1500),
+                new LiftState(1400),
                 new LiftState(0)
         );
 
         CRSplineTranslation splinePark = new CRSplineTranslation(liftPreload2.getEndTime(),
-                new TranslationState(-10, -34),
+                new TranslationState(-10, -38),
                 new TranslationState(-36, -36),
                 new TranslationState(-36, -14),
                 new TranslationState(-24, -10)
         );
 
-        TranslationPlan translationPlan = new TranslationPlan(robot,
+        translationPlan = new TranslationPlan(robot,
                 spline1,
                 splinePark
         );
 
-        LiftPlan liftPlan = new LiftPlan(robot,
+        liftPlan = new LiftPlan(robot,
                 liftPreload1,
                 liftPreload2
         );
@@ -117,7 +156,7 @@ public class AutoRedBasket extends LinearOpMode {
         );
 
 
-        ClawPlan clawPlan = new ClawPlan(robot,
+        clawPlan = new ClawPlan(robot,
                 claw1
         );
 
@@ -133,17 +172,10 @@ public class AutoRedBasket extends LinearOpMode {
         );
 
 
-        ElbowPlan elbowPlan = new ElbowPlan(robot,
+        elbowPlan = new ElbowPlan(robot,
                 elbowStill,
                 elbowEnd
         );
 
-        this.synchronizer = new Synchronizer(
-                translationPlan,
-                rotationPlan,
-                liftPlan,
-                elbowPlan,
-                clawPlan
-        );
     }
 }

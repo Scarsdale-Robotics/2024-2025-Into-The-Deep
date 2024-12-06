@@ -247,6 +247,20 @@ public class CRSplineTranslation extends Movement {
 		
 		return n;
 	}
+
+	/**
+	 * Gets the elapsed time at each anchor point, relative to the global timeline.
+	 * @return the times in a double array.
+	 */
+	public double[] getSegmentTimes() {
+		double[] segmentTimes = new double[anchors.length];
+		segmentTimes[0] = timeSpan.getStartTime();
+		segmentTimes[anchors.length-1] = timeSpan.getEndTime();
+		for (int i = 1; i < partialProps.length; i++) {
+			segmentTimes[i] = timeSpan.getStartTime() + calculator.getElapsedTime(partialProps[i] * distance);
+		}
+		return segmentTimes;
+	}
 	
 	/**
 	 * Gets the proportion (between 0 and 1) of distance traveled within the local spline segment at the given elapsed time.

@@ -26,11 +26,7 @@ public class LocalizationLogger extends LinearOpMode {
 
         double speed = 1;
         while (opModeIsActive()) {
-
-
-            // Localize
-            robot.localization.update();
-
+            robot.logOdometry();
             // Draw robot on dashboard
             Pose2d currentPose = robot.localization.getPose();
             TelemetryPacket packet = new TelemetryPacket();

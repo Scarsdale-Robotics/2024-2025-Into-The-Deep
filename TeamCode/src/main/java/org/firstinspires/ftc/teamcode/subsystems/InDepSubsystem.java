@@ -95,6 +95,8 @@ public class InDepSubsystem extends SubsystemBase {
         }
     }
 
+
+
     //////////
     // CLAW //
     //////////
@@ -179,6 +181,11 @@ public class InDepSubsystem extends SubsystemBase {
 
     public void setRightLiftPower(double power) {
         HARDWARE_ROBOT.rightLift.motor.setPower(power);
+    }
+
+    public void resetLiftEncoders() {
+        HARDWARE_ROBOT.leftLift.resetEncoder();
+        HARDWARE_ROBOT.rightLift.resetEncoder();
     }
 
 

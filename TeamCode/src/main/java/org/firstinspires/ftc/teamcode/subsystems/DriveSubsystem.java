@@ -165,13 +165,14 @@ public class DriveSubsystem extends SubsystemBase {
         L *= factor;
         R *= factor;
 
+
         double[] wheelSpeeds = new double[4];
         wheelSpeeds[RobotDrive.MotorType.kFrontLeft.value] = L;
         wheelSpeeds[RobotDrive.MotorType.kFrontRight.value] = R;
         wheelSpeeds[RobotDrive.MotorType.kBackLeft.value] = R;
         wheelSpeeds[RobotDrive.MotorType.kBackRight.value] = L;
 
-        turn /= RotationConstants.MAX_ANGULAR_VELOCITY;
+        turn /= DriveConstants.MAX_ANGULAR_VELOCITY;
         turn = Math.max(-1, Math.min(1, turn));
         wheelSpeeds[RobotDrive.MotorType.kFrontLeft.value] -= turn;
         wheelSpeeds[RobotDrive.MotorType.kFrontRight.value] += turn;

@@ -7,7 +7,6 @@ import com.arcrobotics.ftclib.geometry.Rotation2d;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.RobotSystem;
 import org.firstinspires.ftc.teamcode.opmodes.calibration.Drawing;
@@ -34,12 +33,11 @@ import org.firstinspires.ftc.teamcode.synchropather.systems.translation.Translat
 import org.firstinspires.ftc.teamcode.synchropather.systems.translation.TranslationPlan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.translation.TranslationState;
 import org.firstinspires.ftc.teamcode.synchropather.systems.translation.movements.CRSplineTranslation;
-
-import java.util.ArrayDeque;
+import org.firstinspires.ftc.teamcode.synchropather.systems.translation.movements.LinearTranslation;
 
 @Disabled
-@Autonomous(name="Auto Blue (Basket)", group="Autons")
-public class AutoBlueBasket extends LinearOpMode {
+@Autonomous(name="Auto Blue Observation 1+1", group = "Autons")
+public class AutoBlueObservation1Plus1 extends LinearOpMode {
 
     RobotSystem robot;
     Synchronizer synchronizer;
@@ -55,19 +53,11 @@ public class AutoBlueBasket extends LinearOpMode {
     public static double elbowUp = ElbowConstants.UP_POSITION;
     public static double elbowDown = ElbowConstants.DOWN_POSITION;
 
-    volatile ArrayDeque<Double> loopTicks;
-    volatile ElapsedTime runtime;
 
     @Override
     public void runOpMode() throws InterruptedException {
         initSynchronizer();
-        loopTicks = new ArrayDeque<>();
-        runtime = new ElapsedTime(0);
-        runtime.reset();
-
-        robot.telemetry.addData("[MAIN] TPS", 0);
-        robot.telemetry.update();
-        this.robot = new RobotSystem(hardwareMap, new Pose2d(40, 63.5, new Rotation2d(Math.toRadians(-90))), false, this);
+        this.robot = new RobotSystem(hardwareMap, new Pose2d(-24, 63.5, new Rotation2d(Math.toRadians(-90))), false, this);
         this.translationPlan.setRobot(robot);
         this.rotationPlan.setRobot(robot);
         this.liftPlan.setRobot(robot);
@@ -85,18 +75,6 @@ public class AutoBlueBasket extends LinearOpMode {
         while (opModeIsActive() && synchronizer.update()) {
             robot.localization.update();
             robot.logOdometry();
-
-            /////////////////
-            // TPS COUNTER //
-            /////////////////
-
-            double currentTime = runtime.seconds();
-            loopTicks.add(currentTime);
-            while (!loopTicks.isEmpty() && currentTime - loopTicks.getFirst() > 1d) loopTicks.removeFirst();
-            robot.telemetry.addData("[MAIN] TPS", loopTicks.size());
-            robot.telemetry.update();
-
-            robot.localization.update();
             TelemetryPacket packet = new TelemetryPacket();
             packet.fieldOverlay().setStroke("#3F51B5");
             Drawing.drawRobot(packet.fieldOverlay(), robot.localization.getPose());
@@ -106,7 +84,6 @@ public class AutoBlueBasket extends LinearOpMode {
         }
         synchronizer.stop();
     }
-
 
 
     private void initSynchronizer() {
@@ -129,13 +106,12 @@ public class AutoBlueBasket extends LinearOpMode {
         ElbowConstants.MAX_VELOCITY = 1.021739;
         ElbowConstants.MAX_ACCELERATION = 1.021739;
 
-
-        // place preloaded specimen
+        // Drive to submersible to deposit preloaded specimen
 
         CRSplineTranslation spline1 = new CRSplineTranslation(0,
-                new TranslationState(40,63.5),
-                new TranslationState(14, 48),
-                new TranslationState(10, 38)
+                new TranslationState(-24,63.5),
+                new TranslationState(-12, 50),
+                new TranslationState(-5, 37)
         );
 
         LinearRotation still = new LinearRotation(0,
@@ -143,68 +119,143 @@ public class AutoBlueBasket extends LinearOpMode {
                 new RotationState(Math.toRadians(-90))
         );
 
-        rotationPlan = new RotationPlan(robot,
-                still
-        );
-
-
         LinearLift liftPreload1 = new LinearLift(new TimeSpan(spline1.getStartTime(), spline1.getEndTime()-0.5),
                 new LiftState(0),
-                new LiftState(1400)
+                new LiftState(1350)
         );
 
         LinearLift liftPreload2 = new LinearLift(spline1.getEndTime()-0.5,
-                new LiftState(1400),
-                new LiftState(0)
+                new LiftState(1350),
+                new LiftState(-50)
         );
 
-        CRSplineTranslation splinePark = new CRSplineTranslation(liftPreload2.getEndTime(),
-                new TranslationState(10, 38),
-                new TranslationState(36, 36),
-                new TranslationState(36, 14),
-                new TranslationState(24, 10)
-        );
-
-        translationPlan = new TranslationPlan(robot,
-                spline1,
-                splinePark
-        );
-
-        liftPlan = new LiftPlan(robot,
-                liftPreload1,
-                liftPreload2
-        );
-
-
-        // claw
         LinearClaw claw1 = new LinearClaw(liftPreload2.getStartTime()+.66,
                 new ClawState(clawClosed),
                 new ClawState(clawOpen)
         );
 
-
-        clawPlan = new ClawPlan(robot,
-                claw1
-        );
-
-        //elbow
-        LinearElbow elbowStill = new LinearElbow(claw1.getStartTime(), //goes down to sample
+        LinearElbow elbowStill = new LinearElbow(claw1.getStartTime(),
                 new ElbowState(elbowUp),
                 new ElbowState(elbowUp)
         );
 
-        LinearElbow elbowEnd = new LinearElbow(splinePark.getEndTime()-1.5, //goes down to sample
+
+        // Pick up from observation zone
+
+        LinearTranslation lineToObservation = new LinearTranslation(liftPreload2.getEndTime(),
+                new TranslationState(-5, 37),
+                new TranslationState(-48, 48)
+        );
+
+        LinearRotation rotateToObservation = new LinearRotation(lineToObservation.getStartTime()+0.5,
+                new RotationState(Math.toRadians(-90)),
+                new RotationState(Math.toRadians(90))
+        );
+
+        LinearElbow elbowDownObservation = new LinearElbow(lineToObservation.getEndTime(), //goes down to specimen
                 new ElbowState(elbowUp),
                 new ElbowState(elbowDown)
         );
 
+        LinearClaw clawCloseObservation = new LinearClaw(elbowDownObservation.getEndTime()-0.1,
+                new ClawState(clawOpen),
+                new ClawState(clawClosed)
+        );
+
+        LinearElbow elbowUpObservation = new LinearElbow(clawCloseObservation.getEndTime()+0.2,
+                new ElbowState(elbowDown),
+                new ElbowState(elbowUp)
+        );
+
+
+
+
+        // Deposit specimen at submersible
+
+        CRSplineTranslation splineObservationToSubmersible = new CRSplineTranslation(clawCloseObservation.getEndTime()+0.5,
+                new TranslationState(-48, 48),
+                new TranslationState(-12, 48),
+                new TranslationState(-10, 37)
+        );
+
+        LinearRotation rotateToSubmersible = new LinearRotation(splineObservationToSubmersible.getStartTime()+0.1,
+                new RotationState(Math.toRadians(90)),
+                new RotationState(Math.toRadians(-90))
+        );
+
+        LinearLift liftCycleUp = new LinearLift(splineObservationToSubmersible.getStartTime(),
+                new LiftState(-50),
+                new LiftState(1350)
+        );
+
+        LinearLift liftCycleDown = new LinearLift(splineObservationToSubmersible.getEndTime()-0.5,
+                new LiftState(1350),
+                new LiftState(-50)
+        );
+
+        LinearClaw clawCycleOpen = new LinearClaw(liftCycleDown.getStartTime()+.66,
+                new ClawState(clawClosed),
+                new ClawState(clawOpen)
+        );
+
+
+        // Park in observation zone
+
+        CRSplineTranslation splinePark = new CRSplineTranslation(liftCycleDown.getEndTime(),
+                new TranslationState(-10, 37),
+                new TranslationState(-18, 48),
+                new TranslationState(-48, 63.5)
+        );
+
+        LinearElbow elbowPark = new LinearElbow(splinePark.getEndTime()-1.5, //goes down to sample
+                new ElbowState(elbowUp),
+                new ElbowState(elbowUp-0.2)
+        );
+
+        LinearClaw clawPark = new LinearClaw(elbowPark.getStartTime(),
+                new ClawState(clawOpen),
+                new ClawState(clawClosed)
+        );
+
+
+
+
+        // Create Plans
+
+        translationPlan = new TranslationPlan(robot,
+                spline1,
+                lineToObservation,
+                splineObservationToSubmersible,
+                splinePark
+        );
+
+        rotationPlan = new RotationPlan(robot,
+                still,
+                rotateToObservation,
+                rotateToSubmersible
+        );
+
+        liftPlan = new LiftPlan(robot,
+                liftPreload1,
+                liftPreload2,
+                liftCycleUp,
+                liftCycleDown
+        );
+
+        clawPlan = new ClawPlan(robot,
+                claw1,
+                clawCloseObservation,
+                clawCycleOpen,
+                clawPark
+        );
 
         elbowPlan = new ElbowPlan(robot,
                 elbowStill,
-                elbowEnd
+                elbowDownObservation,
+                elbowUpObservation,
+                elbowPark
         );
 
     }
-
 
 }
