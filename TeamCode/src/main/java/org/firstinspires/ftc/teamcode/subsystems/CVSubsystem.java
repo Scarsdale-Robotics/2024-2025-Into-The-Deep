@@ -58,6 +58,8 @@ public class CVSubsystem extends SubsystemBase {
         this.robot = robot;
   
         // Switch to AprilTag
+        limelight.close();
+        limelight.pipelineSwitch(2);
         this.limelight.start();
     }
 
@@ -109,8 +111,9 @@ public class CVSubsystem extends SubsystemBase {
         telemetry.addData("state","running");
         LLResult result = limelight.getLatestResult();
 
-        if (result == null || result.isValid()) {
-            telemetry.addData("PLoc", "0");
+        if (result == null || !result.isValid()) {
+            telemetry.addData("r", result);
+            telemetry.addData("PLoc", limelight.getStatus().getFps());
             return true;
         }
 
