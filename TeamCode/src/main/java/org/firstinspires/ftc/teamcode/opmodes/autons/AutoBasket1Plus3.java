@@ -120,7 +120,7 @@ public class AutoBasket1Plus3 extends LinearOpMode {
         CRSplineTranslation splineApproachSample1 = new CRSplineTranslation(claw1.getStartTime(),
                 new TranslationState(10, 37),
                 new TranslationState(40, 48),
-                new TranslationState(48.5, 44)
+                new TranslationState(49.5, 44)
         );
 
         LinearElbow elbowDownSample1 = new LinearElbow(splineApproachSample1.getEndTime()-0.75,
@@ -148,7 +148,7 @@ public class AutoBasket1Plus3 extends LinearOpMode {
         );
 
         CRSplineTranslation splineScoreSample1 = new CRSplineTranslation(new TimeSpan(liftUpSample1.getStartTime(), liftUpSample1.getEndTime()+1),
-                new TranslationState(48.5, 44),
+                new TranslationState(49.5, 44),
                 new TranslationState(50, 48),
                 new TranslationState(54, 56)
         );
@@ -176,7 +176,7 @@ public class AutoBasket1Plus3 extends LinearOpMode {
         CRSplineTranslation splineApproachSample2 = new CRSplineTranslation(liftDownSample2.getTimeSpan(),
                 new TranslationState(54, 56),
                 new TranslationState(56, 48),
-                new TranslationState(58.5, 44)
+                new TranslationState(59, 44)
         );
 
         LinearRotation rotateApproachSample2 = new LinearRotation(new TimeSpan(liftDownSample2.getStartTime(), liftDownSample2.getEndTime()-0.5),
@@ -210,7 +210,7 @@ public class AutoBasket1Plus3 extends LinearOpMode {
         );
 
         CRSplineTranslation splineScoreSample2 = new CRSplineTranslation(new TimeSpan(liftUpSample2.getStartTime(), liftUpSample2.getEndTime()+1),
-                new TranslationState(58.5, 44),
+                new TranslationState(59, 44),
                 new TranslationState(56, 48),
                 new TranslationState(54, 56)
         );
@@ -273,7 +273,7 @@ public class AutoBasket1Plus3 extends LinearOpMode {
 
         CRSplineTranslation splineScoreSample3 = new CRSplineTranslation(new TimeSpan(liftUpSample3.getStartTime(), liftUpSample3.getEndTime()+1),
                 new TranslationState(58.5, 40.5),
-                new TranslationState(53, 42),
+                new TranslationState(50, 42),
                 new TranslationState(54, 56)
         );
 

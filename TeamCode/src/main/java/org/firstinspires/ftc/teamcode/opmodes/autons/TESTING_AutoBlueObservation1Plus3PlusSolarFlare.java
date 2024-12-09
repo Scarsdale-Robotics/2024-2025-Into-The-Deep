@@ -35,8 +35,8 @@ import org.firstinspires.ftc.teamcode.synchropather.systems.translation.Translat
 import org.firstinspires.ftc.teamcode.synchropather.systems.translation.movements.CRSplineTranslation;
 import org.firstinspires.ftc.teamcode.synchropather.systems.translation.movements.LinearTranslation;
 
-@Disabled
-@Autonomous(name="[SF COLLAB.] Auto Blue Observation 1+3+sample for Solar Flare", group = "Autons")
+//@Disabled
+@Autonomous(name="[SF COLLAB.] Auto Blue Observation 4+0+sample for Solar Flare", group = "Autons")
 public class TESTING_AutoBlueObservation1Plus3PlusSolarFlare extends LinearOpMode {
 
     RobotSystem robot;
@@ -125,7 +125,7 @@ public class TESTING_AutoBlueObservation1Plus3PlusSolarFlare extends LinearOpMod
 
         CRSplineTranslation splinePreload = new CRSplineTranslation(0,
                 new TranslationState(-15.5,63.5),
-                new TranslationState(-4, 37)
+                new TranslationState(-2, 37)
         );
 
         LinearLift liftUpPreload = new LinearLift(new TimeSpan(splinePreload.getStartTime(), splinePreload.getEndTime()-0.3),
@@ -145,14 +145,13 @@ public class TESTING_AutoBlueObservation1Plus3PlusSolarFlare extends LinearOpMod
 
         LinearLift liftDownPreload = new LinearLift(liftUpPreload.getEndTime(),
                 new LiftState(1350),
-                new LiftState(-50)
+                new LiftState(0)
         );
 
-        LinearClaw clawOpenPreload = new LinearClaw(liftDownPreload.getStartTime()+.69,
+        LinearClaw clawOpenPreload = new LinearClaw(liftDownPreload.getStartTime()+.33,
                 new ClawState(clawClosed),
                 new ClawState(clawOpen)
         );
-
 
 
         ///////////////////////////////////////////////
@@ -163,8 +162,8 @@ public class TESTING_AutoBlueObservation1Plus3PlusSolarFlare extends LinearOpMod
 
         // Approach sample
         LinearTranslation lineApproachTransferSample = new LinearTranslation(clawOpenPreload.getEndTime(),
-                new TranslationState(-4, 37),
-                new TranslationState(-31, 58)
+                new TranslationState(-2, 37),
+                new TranslationState(-32.5, 60.5)
         );
 
         LinearRotation rotationApproachTransferSample = new LinearRotation(lineApproachTransferSample.getTrimmedTimeSpan(0, 0.25),
@@ -197,7 +196,7 @@ public class TESTING_AutoBlueObservation1Plus3PlusSolarFlare extends LinearOpMod
         TranslationConstants.MAX_VELOCITY = 0.5*40d;
 
         LinearTranslation lineDepositTransferSample = new LinearTranslation(elbowUpGrabTransferSample.getStartTime(),
-                new TranslationState(-31, 58),
+                new TranslationState(-32.5, 60.5),
                 new TranslationState(-5, 48)
         );
 
@@ -216,40 +215,44 @@ public class TESTING_AutoBlueObservation1Plus3PlusSolarFlare extends LinearOpMod
                 new ClawState(clawOpen)
         );
 
-        System.out.println(clawOpenTransferSample.getEndTime());
-
-
 
         /////////////////////////////////
         // GO TO BLUE SAMPLES (Step 2) //
         /////////////////////////////////
 
-        TranslationConstants.MAX_VELOCITY = 0.6*40d;
+        TranslationConstants.MAX_VELOCITY = 0.8*40d;
 
         LinearTranslation lineApproachSamples = new LinearTranslation(clawOpenTransferSample.getEndTime()+0.1,
                 new TranslationState(-5, 48),
-                new TranslationState(-49, 44)
+                new TranslationState(-38.5, 39)
         );
 
-        LinearRotation rotationApproachSamples = new LinearRotation(lineApproachSamples.getTrimmedTimeSpan(0, 0.5),
+        LinearRotation rotationApproachSamples = new LinearRotation(lineApproachSamples.getTrimmedTimeSpan(0, 0.4),
                 new RotationState(Math.toRadians(0)),
-                new RotationState(Math.toRadians(-90))
+                new RotationState(Math.toRadians(-129))
         );
 
-        LinearElbow elbowApproachSamples = new LinearElbow(lineApproachSamples.getStartTime()-0.1,
-                new ElbowState(elbowDown),
+        LinearElbow elbowApproachSamples = new LinearElbow(clawOpenTransferSample.getEndTime(),
+                new ElbowState(elbowUp),
                 new ElbowState(elbowPartiallyUp)
         );
-
 
         /////////////////////////////////////////////////////
         // MOVE EACH SAMPLE INTO OBSERVATION ZONE (Step 3) //
         /////////////////////////////////////////////////////
 
-        TranslationConstants.MAX_VELOCITY = 0.5*40d;
+        TranslationConstants.MAX_VELOCITY = 40d;
+
+        double splineMoveFirstSampleStartTime = lineApproachSamples.getEndTime()+0.3;
+        CRSplineTranslation splineMoveFirstSample = new CRSplineTranslation(new TimeSpan(splineMoveFirstSampleStartTime, splineMoveFirstSampleStartTime+2.25),
+                new TranslationState(-38.5, 39), // Pick up first
+                new TranslationState(-42, 49), // Deposit first
+                new TranslationState(-47, 40) // Pick up second
+        );
+        double[] splineMoveFirstSampleTimes = splineMoveFirstSample.getSegmentTimes();
 
         // Pick up first sample
-        LinearElbow elbowDownFirstSample = new LinearElbow(lineApproachSamples.getEndTime()-0.3,
+        LinearElbow elbowDownFirstSample = new LinearElbow(lineApproachSamples.getEndTime()-0.1,
                 new ElbowState(elbowPartiallyUp),
                 new ElbowState(elbowDown)
         );
@@ -260,17 +263,9 @@ public class TESTING_AutoBlueObservation1Plus3PlusSolarFlare extends LinearOpMod
         );
 
         // Drop first sample
-        double splineMoveFirstSampleStartTime = lineApproachSamples.getEndTime();
-        CRSplineTranslation splineMoveFirstSample = new CRSplineTranslation(new TimeSpan(splineMoveFirstSampleStartTime, splineMoveFirstSampleStartTime+2.25),
-                new TranslationState(-49, 44), // Pick up first
-                new TranslationState(-53.75, 44), // Deposit first
-                new TranslationState(-58.5, 44) // Approach second
-        );
-        double[] splineMoveFirstSampleTimes = splineMoveFirstSample.getSegmentTimes();
-
-        LinearRotation rotationMoveFirstSample = new LinearRotation(splineMoveFirstSample.getTimeSpan(),
-                new RotationState(Math.toRadians(-90)),
-                new RotationState(Math.toRadians(-450))
+        LinearRotation rotationMoveFirstSample = new LinearRotation(new TimeSpan(splineMoveFirstSampleTimes[0], splineMoveFirstSampleTimes[1]),
+                new RotationState(Math.toRadians(-129)),
+                new RotationState(Math.toRadians(-219))
         );
 
         LinearElbow elbowUpFirstSample = new LinearElbow(clawCloseFirstSample.getEndTime(),
@@ -278,36 +273,40 @@ public class TESTING_AutoBlueObservation1Plus3PlusSolarFlare extends LinearOpMod
                 new ElbowState(elbowPartiallyUp)
         );
 
-        LinearClaw clawOpenFirstSample = new LinearClaw(splineMoveFirstSampleTimes[1] - 0.3,
+        LinearClaw clawOpenFirstSample = new LinearClaw(rotationMoveFirstSample.getEndTime() - 0.3,
                 new ClawState(clawClosed),
                 new ClawState(clawOpen)
         );
 
         // Pick up second sample
+        LinearRotation rotationApproachSecondSample = new LinearRotation(new TimeSpan(splineMoveFirstSampleTimes[1], splineMoveFirstSampleTimes[2]),
+                new RotationState(Math.toRadians(-219)),
+                new RotationState(Math.toRadians(-129))
+        );
 
-        LinearElbow elbowDownSecondSample = new LinearElbow(splineMoveFirstSampleTimes[2] - 0.4,
+        LinearElbow elbowDownSecondSample = new LinearElbow(splineMoveFirstSampleTimes[2],
                 new ElbowState(elbowPartiallyUp),
                 new ElbowState(elbowDown)
         );
 
-        LinearClaw clawCloseSecondSample = new LinearClaw(elbowDownSecondSample.getEndTime() - 0.1,
+        LinearClaw clawCloseSecondSample = new LinearClaw(elbowDownSecondSample.getEndTime()-0.1,
                 new ClawState(clawOpen),
                 new ClawState(clawClosed)
         );
 
 
-        double splineMoveSecondSampleStartTime = splineMoveFirstSample.getEndTime();
-        CRSplineTranslation splineMoveSecondSample = new CRSplineTranslation(new TimeSpan(splineMoveSecondSampleStartTime, splineMoveSecondSampleStartTime+2.75),
-                new TranslationState(-58.5, 44), // Pick up second
-                new TranslationState(-52, 44), // Deposit second
-                new TranslationState( -48, 41) // Go to cycle starting position
+        double splineMoveSecondSampleStartTime = splineMoveFirstSample.getEndTime()+0.5;
+        CRSplineTranslation splineMoveSecondSample = new CRSplineTranslation(new TimeSpan(splineMoveSecondSampleStartTime, splineMoveSecondSampleStartTime+2.15),
+                new TranslationState(-47, 40), // Pick up second
+                new TranslationState(-52, 49), // Deposit second
+                new TranslationState( -48, 46) // Go to cycle starting position
         );
         double[] splineMoveSecondSampleTimes = splineMoveSecondSample.getSegmentTimes();
 
         // Drop second sample
         LinearRotation rotationMoveSecondSample = new LinearRotation(new TimeSpan(splineMoveSecondSampleTimes[0], splineMoveSecondSampleTimes[1]),
-                new RotationState(Math.toRadians(-90)),
-                new RotationState(Math.toRadians(90))
+                new RotationState(Math.toRadians(-129)),
+                new RotationState(Math.toRadians(-219))
         );
 
         LinearElbow elbowUpSecondSample = new LinearElbow(clawCloseSecondSample.getEndTime(),
@@ -320,6 +319,12 @@ public class TESTING_AutoBlueObservation1Plus3PlusSolarFlare extends LinearOpMod
                 new ClawState(clawOpen)
         );
 
+        // Turn to cycle starting position
+        LinearRotation rotationApproachCycleStart = new LinearRotation(new TimeSpan(splineMoveSecondSampleTimes[1], splineMoveSecondSampleTimes[2]),
+                new RotationState(Math.toRadians(-219)),
+                new RotationState(Math.toRadians(-270))
+        );
+
         LinearElbow elbowUpWaitingForHP = new LinearElbow(clawOpenSecondSample.getEndTime(),
                 new ElbowState(elbowPartiallyUp),
                 new ElbowState(elbowUp)
@@ -329,13 +334,15 @@ public class TESTING_AutoBlueObservation1Plus3PlusSolarFlare extends LinearOpMod
         /////////////////////////////////////
         // PICK UP FIRST SPECIMEN (Step 4) //
         /////////////////////////////////////
+        final double SPECIMEN_SCORING_SPEED = 0.65;
+        TranslationConstants.MAX_VELOCITY = SPECIMEN_SCORING_SPEED*40d;
 
-        LinearElbow elbowDownFirstSpecimen = new LinearElbow(splineMoveSecondSample.getEndTime()-0.1, // clip end of spline
+        LinearElbow elbowDownFirstSpecimen = new LinearElbow(elbowUpWaitingForHP.getEndTime()+0.5, // clip end of spline
                 new ElbowState(elbowUp),
                 new ElbowState(elbowDown)
         );
 
-        LinearClaw clawCloseFirstSpecimen = new LinearClaw(elbowDownFirstSpecimen.getEndTime()-0.1, // clip end of elbow
+        LinearClaw clawCloseFirstSpecimen = new LinearClaw(elbowDownFirstSpecimen.getEndTime(), // clip end of elbow
                 new ClawState(clawOpen),
                 new ClawState(clawClosed)
         );
@@ -344,10 +351,12 @@ public class TESTING_AutoBlueObservation1Plus3PlusSolarFlare extends LinearOpMod
         // SCORE FIRST SPECIMEN (Step 5) //
         ///////////////////////////////////
 
+        TranslationConstants.MAX_VELOCITY = SPECIMEN_SCORING_SPEED*40d;
+
         // Approach
-        LinearTranslation lineScoreFirstSpecimen = new LinearTranslation(clawCloseFirstSpecimen.getEndTime(),
-                new TranslationState(-48, 41),
-                new TranslationState(-6, 37)
+        LinearTranslation lineScoreFirstSpecimen = new LinearTranslation(clawCloseFirstSpecimen.getEndTime()+0.1,
+                new TranslationState(-48, 46),
+                new TranslationState(-4, 37)
         );
 
         LinearRotation rotationScoreFirstSpecimen = new LinearRotation(new TimeSpan(lineScoreFirstSpecimen.getStartTime(), lineScoreFirstSpecimen.getEndTime()-0.2),
@@ -355,12 +364,12 @@ public class TESTING_AutoBlueObservation1Plus3PlusSolarFlare extends LinearOpMod
                 new RotationState(Math.toRadians(-90))
         );
 
-        LinearLift liftUpFirstSpecimen = new LinearLift(lineScoreFirstSpecimen.getStartTime(),
+        LinearLift liftUpFirstSpecimen = new LinearLift(clawCloseFirstSpecimen.getEndTime(),
                 new LiftState(-50),
                 new LiftState(1350)
         );
 
-        LinearElbow elbowUpFirstSpecimen = new LinearElbow(lineScoreFirstSpecimen.getStartTime(),
+        LinearElbow elbowUpFirstSpecimen = new LinearElbow(clawCloseFirstSpecimen.getEndTime(),
                 new ElbowState(elbowDown),
                 new ElbowState(elbowUp)
         );
@@ -371,7 +380,7 @@ public class TESTING_AutoBlueObservation1Plus3PlusSolarFlare extends LinearOpMod
                 new LiftState(-50)
         );
 
-        LinearClaw clawOpenFirstSpecimen = new LinearClaw(liftDownFirstSpecimen.getStartTime()+.35,
+        LinearClaw clawOpenFirstSpecimen = new LinearClaw(liftDownFirstSpecimen.getStartTime()+.33,
                 new ClawState(clawClosed),
                 new ClawState(clawOpen)
         );
@@ -380,9 +389,11 @@ public class TESTING_AutoBlueObservation1Plus3PlusSolarFlare extends LinearOpMod
         // PICK UP SECOND SPECIMEN (Step 6) //
         //////////////////////////////////////
 
+        TranslationConstants.MAX_VELOCITY = SPECIMEN_SCORING_SPEED*40d;
+
         LinearTranslation lineApproachSecondSpecimen = new LinearTranslation(clawOpenFirstSpecimen.getEndTime(),
-                new TranslationState(-6, 37),
-                new TranslationState(-48, 41)
+                new TranslationState(-4, 37),
+                new TranslationState(-48, 46)
         );
 
         LinearRotation rotationApproachSecondSpecimen = new LinearRotation(new TimeSpan(lineApproachSecondSpecimen.getStartTime(), lineApproachSecondSpecimen.getEndTime()-0.2),
@@ -390,12 +401,12 @@ public class TESTING_AutoBlueObservation1Plus3PlusSolarFlare extends LinearOpMod
                 new RotationState(Math.toRadians(90))
         );
 
-        LinearElbow elbowDownSecondSpecimen = new LinearElbow(lineApproachSecondSpecimen.getEndTime()-0.8, // clip end of rotation
+        LinearElbow elbowDownSecondSpecimen = new LinearElbow(lineApproachSecondSpecimen.getEndTime(),
                 new ElbowState(elbowUp),
                 new ElbowState(elbowDown)
         );
 
-        LinearClaw clawCloseSecondSpecimen = new LinearClaw(elbowDownSecondSpecimen.getEndTime()-0.1, // clip end of elbow
+        LinearClaw clawCloseSecondSpecimen = new LinearClaw(elbowDownSecondSpecimen.getEndTime(),
                 new ClawState(clawOpen),
                 new ClawState(clawClosed)
         );
@@ -404,10 +415,12 @@ public class TESTING_AutoBlueObservation1Plus3PlusSolarFlare extends LinearOpMod
         // SCORE SECOND SPECIMEN (Step 7) //
         ////////////////////////////////////
 
+        TranslationConstants.MAX_VELOCITY = SPECIMEN_SCORING_SPEED*40d;
+
         // Approach
-        LinearTranslation lineScoreSecondSpecimen = new LinearTranslation(clawCloseSecondSpecimen.getEndTime(),
-                new TranslationState(-48, 41),
-                new TranslationState(-8, 37)
+        LinearTranslation lineScoreSecondSpecimen = new LinearTranslation(clawCloseSecondSpecimen.getEndTime()+0.1,
+                new TranslationState(-48, 46),
+                new TranslationState(-6, 37)
         );
 
         LinearRotation rotationScoreSecondSpecimen = new LinearRotation(new TimeSpan(lineScoreSecondSpecimen.getStartTime(), lineScoreSecondSpecimen.getEndTime()-0.2),
@@ -415,12 +428,12 @@ public class TESTING_AutoBlueObservation1Plus3PlusSolarFlare extends LinearOpMod
                 new RotationState(Math.toRadians(-90))
         );
 
-        LinearLift liftUpSecondSpecimen = new LinearLift(lineScoreSecondSpecimen.getStartTime(),
+        LinearLift liftUpSecondSpecimen = new LinearLift(clawCloseSecondSpecimen.getEndTime(),
                 new LiftState(-50),
                 new LiftState(1350)
         );
 
-        LinearElbow elbowUpSecondSpecimen = new LinearElbow(lineScoreSecondSpecimen.getStartTime(),
+        LinearElbow elbowUpSecondSpecimen = new LinearElbow(clawCloseSecondSpecimen.getEndTime(),
                 new ElbowState(elbowDown),
                 new ElbowState(elbowUp)
         );
@@ -431,7 +444,7 @@ public class TESTING_AutoBlueObservation1Plus3PlusSolarFlare extends LinearOpMod
                 new LiftState(-50)
         );
 
-        LinearClaw clawOpenSecondSpecimen = new LinearClaw(liftDownSecondSpecimen.getStartTime()+.35,
+        LinearClaw clawOpenSecondSpecimen = new LinearClaw(liftDownSecondSpecimen.getStartTime()+.33,
                 new ClawState(clawClosed),
                 new ClawState(clawOpen)
         );
@@ -440,9 +453,11 @@ public class TESTING_AutoBlueObservation1Plus3PlusSolarFlare extends LinearOpMod
         // PICK UP THIRD SPECIMEN (Step 8) //
         /////////////////////////////////////
 
+        TranslationConstants.MAX_VELOCITY = SPECIMEN_SCORING_SPEED*40d;
+
         LinearTranslation lineApproachThirdSpecimen = new LinearTranslation(clawOpenSecondSpecimen.getEndTime(),
-                new TranslationState(-8, 37),
-                new TranslationState(-48, 41)
+                new TranslationState(-6, 37),
+                new TranslationState(-48, 46)
         );
 
         LinearRotation rotationApproachThirdSpecimen = new LinearRotation(new TimeSpan(lineApproachThirdSpecimen.getStartTime(), lineApproachThirdSpecimen.getEndTime()-0.2),
@@ -450,12 +465,12 @@ public class TESTING_AutoBlueObservation1Plus3PlusSolarFlare extends LinearOpMod
                 new RotationState(Math.toRadians(90))
         );
 
-        LinearElbow elbowDownThirdSpecimen = new LinearElbow(lineApproachThirdSpecimen.getEndTime()-0.8, // clip end of rotation
+        LinearElbow elbowDownThirdSpecimen = new LinearElbow(lineApproachThirdSpecimen.getEndTime(),
                 new ElbowState(elbowUp),
                 new ElbowState(elbowDown)
         );
 
-        LinearClaw clawCloseThirdSpecimen = new LinearClaw(elbowDownThirdSpecimen.getEndTime()-0.1, // clip end of elbow
+        LinearClaw clawCloseThirdSpecimen = new LinearClaw(elbowDownThirdSpecimen.getEndTime(),
                 new ClawState(clawOpen),
                 new ClawState(clawClosed)
         );
@@ -464,10 +479,12 @@ public class TESTING_AutoBlueObservation1Plus3PlusSolarFlare extends LinearOpMod
         // SCORE THIRD SPECIMEN (Step 9) //
         ///////////////////////////////////
 
+        TranslationConstants.MAX_VELOCITY = SPECIMEN_SCORING_SPEED*40d;
+
         // Approach
-        LinearTranslation lineScoreThirdSpecimen = new LinearTranslation(clawCloseThirdSpecimen.getEndTime(),
-                new TranslationState(-48, 41),
-                new TranslationState(-10, 37)
+        LinearTranslation lineScoreThirdSpecimen = new LinearTranslation(clawCloseThirdSpecimen.getEndTime()+0.1,
+                new TranslationState(-48, 46),
+                new TranslationState(-8, 37)
         );
 
         LinearRotation rotationScoreThirdSpecimen = new LinearRotation(new TimeSpan(lineScoreThirdSpecimen.getStartTime(), lineScoreThirdSpecimen.getEndTime()-0.2),
@@ -475,12 +492,12 @@ public class TESTING_AutoBlueObservation1Plus3PlusSolarFlare extends LinearOpMod
                 new RotationState(Math.toRadians(-90))
         );
 
-        LinearLift liftUpThirdSpecimen = new LinearLift(lineScoreThirdSpecimen.getStartTime(),
+        LinearLift liftUpThirdSpecimen = new LinearLift(clawCloseThirdSpecimen.getEndTime(),
                 new LiftState(-50),
                 new LiftState(1350)
         );
 
-        LinearElbow elbowUpThirdSpecimen = new LinearElbow(lineScoreThirdSpecimen.getStartTime(),
+        LinearElbow elbowUpThirdSpecimen = new LinearElbow(clawCloseThirdSpecimen.getEndTime(),
                 new ElbowState(elbowDown),
                 new ElbowState(elbowUp)
         );
@@ -491,7 +508,7 @@ public class TESTING_AutoBlueObservation1Plus3PlusSolarFlare extends LinearOpMod
                 new LiftState(-50)
         );
 
-        LinearClaw clawOpenThirdSpecimen = new LinearClaw(liftDownThirdSpecimen.getStartTime()+.35,
+        LinearClaw clawOpenThirdSpecimen = new LinearClaw(liftDownThirdSpecimen.getStartTime()+.33,
                 new ClawState(clawClosed),
                 new ClawState(clawOpen)
         );
@@ -503,8 +520,13 @@ public class TESTING_AutoBlueObservation1Plus3PlusSolarFlare extends LinearOpMod
         TranslationConstants.MAX_VELOCITY = 40d;
 
         LinearTranslation linePark = new LinearTranslation(clawOpenThirdSpecimen.getEndTime(),
-                new TranslationState(-10, 37),
-                new TranslationState(-48, 63.5)
+                new TranslationState(-8, 37),
+                new TranslationState(-31, 63.5)
+        );
+
+        LinearTranslation standPark = new LinearTranslation(new TimeSpan(linePark.getEndTime(), 30),
+                new TranslationState(-31, 63.5),
+                new TranslationState(-31, 63.5)
         );
 
         LinearClaw clawPark = new LinearClaw(linePark.getStartTime(),
@@ -516,6 +538,7 @@ public class TESTING_AutoBlueObservation1Plus3PlusSolarFlare extends LinearOpMod
                 new ElbowState(elbowUp),
                 new ElbowState(elbowUp-0.2)
         );
+
 
 
 
@@ -545,7 +568,9 @@ public class TESTING_AutoBlueObservation1Plus3PlusSolarFlare extends LinearOpMod
                 lineApproachThirdSpecimen,
                 lineScoreThirdSpecimen,
 
-                linePark
+                // PARK
+                linePark,
+                standPark
         );
 
         rotationPlan = new RotationPlan(robot,
@@ -559,7 +584,9 @@ public class TESTING_AutoBlueObservation1Plus3PlusSolarFlare extends LinearOpMod
                 // MOVING SAMPLES
                 rotationApproachSamples,
                 rotationMoveFirstSample,
+                rotationApproachSecondSample,
                 rotationMoveSecondSample,
+                rotationApproachCycleStart,
 
                 // SCORING SPECIMENS
                 rotationScoreFirstSpecimen,
@@ -612,6 +639,7 @@ public class TESTING_AutoBlueObservation1Plus3PlusSolarFlare extends LinearOpMod
                 clawCloseThirdSpecimen,
                 clawOpenThirdSpecimen,
 
+                // PARK
                 clawPark
         );
 
@@ -645,6 +673,7 @@ public class TESTING_AutoBlueObservation1Plus3PlusSolarFlare extends LinearOpMod
                 elbowDownThirdSpecimen,
                 elbowUpThirdSpecimen,
 
+                // PARK
                 elbowPark
         );
 

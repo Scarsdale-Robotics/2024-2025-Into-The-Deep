@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.opmodes.autons;
+package org.firstinspires.ftc.teamcode.opmodes.calibration.ExampleSynchroPather;
 
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
