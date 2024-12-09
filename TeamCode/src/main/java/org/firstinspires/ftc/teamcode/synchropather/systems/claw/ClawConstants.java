@@ -17,7 +17,7 @@ public class ClawConstants {
      */
     public static double MAX_ACCELERATION = 8;
 
-    public static double OPEN_POSITION = 0.25;
-    public static double CLOSED_POSITION = 0.08;
+    public static double OPEN_POSITION = 0.21;
+    public static double CLOSED_POSITION = 0.02;
 
 }

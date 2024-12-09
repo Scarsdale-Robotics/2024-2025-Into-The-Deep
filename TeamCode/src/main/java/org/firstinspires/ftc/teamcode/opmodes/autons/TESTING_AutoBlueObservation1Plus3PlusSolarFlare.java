@@ -35,8 +35,8 @@ import org.firstinspires.ftc.teamcode.synchropather.systems.translation.Translat
 import org.firstinspires.ftc.teamcode.synchropather.systems.translation.movements.CRSplineTranslation;
 import org.firstinspires.ftc.teamcode.synchropather.systems.translation.movements.LinearTranslation;
 
-@Disabled
-@Autonomous(name="[SF COLLAB.] Auto Blue Observation 1+3+sample for Solar Flare", group = "Autons")
+//@Disabled
+@Autonomous(name="[SF COLLAB.] Auto Blue Observation 4+0+sample for Solar Flare", group = "Autons")
 public class TESTING_AutoBlueObservation1Plus3PlusSolarFlare extends LinearOpMode {
 
     RobotSystem robot;
@@ -163,7 +163,7 @@ public class TESTING_AutoBlueObservation1Plus3PlusSolarFlare extends LinearOpMod
         // Approach sample
         LinearTranslation lineApproachTransferSample = new LinearTranslation(clawOpenPreload.getEndTime(),
                 new TranslationState(-2, 37),
-                new TranslationState(-31, 58)
+                new TranslationState(-32.5, 60.5)
         );
 
         LinearRotation rotationApproachTransferSample = new LinearRotation(lineApproachTransferSample.getTrimmedTimeSpan(0, 0.25),
@@ -196,7 +196,7 @@ public class TESTING_AutoBlueObservation1Plus3PlusSolarFlare extends LinearOpMod
         TranslationConstants.MAX_VELOCITY = 0.5*40d;
 
         LinearTranslation lineDepositTransferSample = new LinearTranslation(elbowUpGrabTransferSample.getStartTime(),
-                new TranslationState(-31, 58),
+                new TranslationState(-32.5, 60.5),
                 new TranslationState(-5, 48)
         );
 
@@ -224,10 +224,10 @@ public class TESTING_AutoBlueObservation1Plus3PlusSolarFlare extends LinearOpMod
 
         LinearTranslation lineApproachSamples = new LinearTranslation(clawOpenTransferSample.getEndTime()+0.1,
                 new TranslationState(-5, 48),
-                new TranslationState(-38, 39.5)
+                new TranslationState(-38.5, 39)
         );
 
-        LinearRotation rotationApproachSamples = new LinearRotation(lineApproachSamples.getTrimmedTimeSpan(0, 0.5),
+        LinearRotation rotationApproachSamples = new LinearRotation(lineApproachSamples.getTrimmedTimeSpan(0, 0.4),
                 new RotationState(Math.toRadians(0)),
                 new RotationState(Math.toRadians(-129))
         );
@@ -243,16 +243,16 @@ public class TESTING_AutoBlueObservation1Plus3PlusSolarFlare extends LinearOpMod
 
         TranslationConstants.MAX_VELOCITY = 40d;
 
-        double splineMoveFirstSampleStartTime = lineApproachSamples.getEndTime()+0.1;
-        CRSplineTranslation splineMoveFirstSample = new CRSplineTranslation(new TimeSpan(splineMoveFirstSampleStartTime, splineMoveFirstSampleStartTime+2.1),
-                new TranslationState(-38, 39.5), // Pick up first
+        double splineMoveFirstSampleStartTime = lineApproachSamples.getEndTime()+0.3;
+        CRSplineTranslation splineMoveFirstSample = new CRSplineTranslation(new TimeSpan(splineMoveFirstSampleStartTime, splineMoveFirstSampleStartTime+2.25),
+                new TranslationState(-38.5, 39), // Pick up first
                 new TranslationState(-42, 49), // Deposit first
-                new TranslationState(-48, 39.5) // Pick up second
+                new TranslationState(-47, 40) // Pick up second
         );
         double[] splineMoveFirstSampleTimes = splineMoveFirstSample.getSegmentTimes();
 
         // Pick up first sample
-        LinearElbow elbowDownFirstSample = new LinearElbow(splineMoveFirstSampleTimes[0]-0.4,
+        LinearElbow elbowDownFirstSample = new LinearElbow(lineApproachSamples.getEndTime()-0.1,
                 new ElbowState(elbowPartiallyUp),
                 new ElbowState(elbowDown)
         );
@@ -295,9 +295,9 @@ public class TESTING_AutoBlueObservation1Plus3PlusSolarFlare extends LinearOpMod
         );
 
 
-        double splineMoveSecondSampleStartTime = splineMoveFirstSample.getEndTime()+0.1;
-        CRSplineTranslation splineMoveSecondSample = new CRSplineTranslation(new TimeSpan(splineMoveSecondSampleStartTime, splineMoveSecondSampleStartTime+2),
-                new TranslationState(-48, 39.5), // Pick up second
+        double splineMoveSecondSampleStartTime = splineMoveFirstSample.getEndTime()+0.5;
+        CRSplineTranslation splineMoveSecondSample = new CRSplineTranslation(new TimeSpan(splineMoveSecondSampleStartTime, splineMoveSecondSampleStartTime+2.15),
+                new TranslationState(-47, 40), // Pick up second
                 new TranslationState(-52, 49), // Deposit second
                 new TranslationState( -48, 46) // Go to cycle starting position
         );

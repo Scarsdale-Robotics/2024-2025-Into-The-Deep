@@ -124,7 +124,7 @@ public class AutoObservation4Plus0 extends LinearOpMode {
 
         CRSplineTranslation splinePreload = new CRSplineTranslation(0,
                 new TranslationState(-15.5,63.5),
-                new TranslationState(-10, 37)
+                new TranslationState(-4, 37)
         );
 
         LinearLift liftUpPreload = new LinearLift(new TimeSpan(splinePreload.getStartTime(), splinePreload.getEndTime()-0.3),
@@ -160,7 +160,7 @@ public class AutoObservation4Plus0 extends LinearOpMode {
         TranslationConstants.MAX_VELOCITY = 0.5*40d;
 
         CRSplineTranslation splineApproachSamples = new CRSplineTranslation(clawOpenPreload.getEndTime(),
-                new TranslationState(-10, 37),
+                new TranslationState(-4, 37),
                 new TranslationState(-18, 39),
                 new TranslationState(-38, 39.5)
         );
@@ -170,7 +170,7 @@ public class AutoObservation4Plus0 extends LinearOpMode {
                 new RotationState(Math.toRadians(-129))
         );
 
-        LinearElbow elbowApproachSamples = new LinearElbow(splineApproachSamples.getStartTime(),
+        LinearElbow elbowApproachSamples = new LinearElbow(splineApproachSamples.getStartTime()+0.25,
                 new ElbowState(elbowUp),
                 new ElbowState(elbowPartiallyUp)
         );
@@ -288,7 +288,7 @@ public class AutoObservation4Plus0 extends LinearOpMode {
         // Approach
         LinearTranslation lineScoreFirstSpecimen = new LinearTranslation(clawCloseFirstSpecimen.getEndTime(),
                 new TranslationState(-48, 46),
-                new TranslationState(-8, 37)
+                new TranslationState(-6, 37)
         );
 
         LinearRotation rotationScoreFirstSpecimen = new LinearRotation(new TimeSpan(lineScoreFirstSpecimen.getStartTime(), lineScoreFirstSpecimen.getEndTime()-0.2),
@@ -322,7 +322,7 @@ public class AutoObservation4Plus0 extends LinearOpMode {
         //////////////////////////////////////
 
         LinearTranslation lineApproachSecondSpecimen = new LinearTranslation(clawOpenFirstSpecimen.getEndTime(),
-                new TranslationState(-8, 37),
+                new TranslationState(-6, 37),
                 new TranslationState(-48, 46)
         );
 
@@ -348,7 +348,7 @@ public class AutoObservation4Plus0 extends LinearOpMode {
         // Approach
         LinearTranslation lineScoreSecondSpecimen = new LinearTranslation(clawCloseSecondSpecimen.getEndTime(),
                 new TranslationState(-48, 46),
-                new TranslationState(-6, 37)
+                new TranslationState(-8, 37)
         );
 
         LinearRotation rotationScoreSecondSpecimen = new LinearRotation(new TimeSpan(lineScoreSecondSpecimen.getStartTime(), lineScoreSecondSpecimen.getEndTime()-0.2),
@@ -382,7 +382,7 @@ public class AutoObservation4Plus0 extends LinearOpMode {
         /////////////////////////////////////
 
         LinearTranslation lineApproachThirdSpecimen = new LinearTranslation(clawOpenSecondSpecimen.getEndTime(),
-                new TranslationState(-6, 37),
+                new TranslationState(-8, 37),
                 new TranslationState(-48, 46)
         );
 
@@ -408,7 +408,7 @@ public class AutoObservation4Plus0 extends LinearOpMode {
         // Approach
         LinearTranslation lineScoreThirdSpecimen = new LinearTranslation(clawCloseThirdSpecimen.getEndTime(),
                 new TranslationState(-48, 46),
-                new TranslationState(-4, 37)
+                new TranslationState(-10, 37)
         );
 
         LinearRotation rotationScoreThirdSpecimen = new LinearRotation(new TimeSpan(lineScoreThirdSpecimen.getStartTime(), lineScoreThirdSpecimen.getEndTime()-0.2),
@@ -444,7 +444,7 @@ public class AutoObservation4Plus0 extends LinearOpMode {
         TranslationConstants.MAX_VELOCITY = 40d;
 
         LinearTranslation linePark = new LinearTranslation(clawOpenThirdSpecimen.getEndTime(),
-                new TranslationState(-4, 37),
+                new TranslationState(-10, 37),
                 new TranslationState(-42, 63.5)
         );
 

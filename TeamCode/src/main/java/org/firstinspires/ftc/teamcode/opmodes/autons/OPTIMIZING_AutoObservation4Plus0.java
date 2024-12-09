@@ -35,7 +35,7 @@ import org.firstinspires.ftc.teamcode.synchropather.systems.translation.Translat
 import org.firstinspires.ftc.teamcode.synchropather.systems.translation.movements.CRSplineTranslation;
 import org.firstinspires.ftc.teamcode.synchropather.systems.translation.movements.LinearTranslation;
 
-@Disabled
+//@Disabled
 @Autonomous(name="[DO NOT USE] Optimizing Auto OBSERVATION 4+0", group = "Autons")
 public class OPTIMIZING_AutoObservation4Plus0 extends LinearOpMode {
 
