@@ -4,7 +4,6 @@ import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.arcrobotics.ftclib.geometry.Pose2d;
-import com.arcrobotics.ftclib.geometry.Rotation2d;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
@@ -13,9 +12,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 import org.firstinspires.ftc.teamcode.opmodes.calibration.Drawing;
-import org.firstinspires.ftc.teamcode.subsystems.CVSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.DriveSubsystem;
-import org.firstinspires.ftc.teamcode.subsystems.InDepSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.LocalizationSubsystem;
 import org.firstinspires.ftc.teamcode.synchropather.systems.claw.ClawConstants;
 import org.firstinspires.ftc.teamcode.synchropather.systems.elbow.ElbowConstants;
@@ -26,7 +23,7 @@ public class RobotSystem {
     public final Telemetry telemetry;
 
     public final DriveSubsystem drive;
-    public final CVSubsystem cv;
+//    public final CVSubsystem cv;
     public final LocalizationSubsystem localization;
     public final InDepSubsystem inDep;
 
@@ -40,14 +37,13 @@ public class RobotSystem {
         this.opMode = opMode;
         this.telemetry = new MultipleTelemetry(opMode.telemetry, FtcDashboard.getInstance().getTelemetry());
         HardwareRobot hardwareRobot = new HardwareRobot(hardwareMap);
-        this.cv = new CVSubsystem(
-                hardwareRobot.limelight,
-                initialPose.getHeading(),
-                isRedTeam,
-                telemetry);
+//        this.cv = new CVSubsystem(
+//                hardwareRobot.limelight,
+//                initialPose.getHeading(),
+//                isRedTeam,
+//                telemetry);
         this.localization = new LocalizationSubsystem(
                 initialPose,
-                cv,
                 hardwareRobot.pinpoint,
                 opMode
                 ,telemetry
@@ -61,8 +57,7 @@ public class RobotSystem {
         this.inDep = new InDepSubsystem(
                 hardwareRobot,
                 opMode,
-                drive,
-                cv
+                drive
         );
 
         this.inDep.setClawPosition(clawClosed);

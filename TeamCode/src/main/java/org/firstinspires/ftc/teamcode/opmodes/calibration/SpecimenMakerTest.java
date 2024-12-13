@@ -11,17 +11,18 @@ import com.qualcomm.robotcore.hardware.ServoImplEx;
 public class SpecimenMakerTest extends LinearOpMode {
 
     Servo specimenClipper;
-    public static double servoPosition;
+    public static double open = 0.0;
+    public static double closed = 0.4;
+    public static boolean isOpen = true;
 
     @Override
     public void runOpMode() throws InterruptedException {
         specimenClipper = hardwareMap.get(ServoImplEx.class, "specimenClipper");
-        servoPosition = 0;
 
         waitForStart();
 
         while (opModeIsActive()) {
-            specimenClipper.setPosition(servoPosition);
+            specimenClipper.setPosition(isOpen ? open : closed);
         }
 
     }

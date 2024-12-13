@@ -17,15 +17,22 @@ public class HardwareRobot {
     public final MotorEx leftBack;
     public final MotorEx rightBack;
 
-    public final MotorEx leftLift;
-    public final MotorEx rightLift;
+    public final MotorEx leftDepositLift;
+    public final MotorEx rightDepositLift;
+    public final MotorEx leftIntakeLift;
+    public final MotorEx rightIntakeLift;
 
     public final GoBildaPinpointDriver pinpoint;
 
     public final Limelight3A limelight;
 
-    public final Servo elbow;
-    public final Servo claw;  // claw open/close servo
+    public final Servo intakePivot;
+    public final Servo intakeWrist;
+    public final Servo intakeClaw;
+    public final Servo depositWrist;
+    public final Servo depositClaw;
+    public final Servo clipIntake;
+    public final Servo clipPusher;
 
 
     public HardwareRobot(HardwareMap hardwareMap) {
@@ -71,22 +78,37 @@ public class HardwareRobot {
         //////////
         // LIFT //
         //////////
+        leftIntakeLift = new MotorEx(hardwareMap, "leftIntakeLift", Motor.GoBILDA.RPM_312);
+        leftIntakeLift.motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        leftIntakeLift.motor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        leftIntakeLift.setRunMode(Motor.RunMode.RawPower);
+        leftIntakeLift.motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        leftIntakeLift.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
+        leftIntakeLift.setInverted(false);
 
-        leftLift = new MotorEx(hardwareMap, "leftLift", Motor.GoBILDA.RPM_312);
-        leftLift.motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        leftLift.motor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        leftLift.setRunMode(Motor.RunMode.RawPower);
-        leftLift.motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        leftLift.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
-        leftLift.setInverted(false);
+        rightDepositLift = new MotorEx(hardwareMap, "rightDepositLift", Motor.GoBILDA.RPM_312);
+        rightDepositLift.motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightDepositLift.motor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        rightDepositLift.setRunMode(Motor.RunMode.RawPower);
+        rightDepositLift.motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        rightDepositLift.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
+        rightDepositLift.setInverted(true);
+        
+        leftDepositLift = new MotorEx(hardwareMap, "leftDepositLift", Motor.GoBILDA.RPM_312);
+        leftDepositLift.motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        leftDepositLift.motor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        leftDepositLift.setRunMode(Motor.RunMode.RawPower);
+        leftDepositLift.motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        leftDepositLift.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
+        leftDepositLift.setInverted(false);
 
-        rightLift = new MotorEx(hardwareMap, "rightLift", Motor.GoBILDA.RPM_312);
-        rightLift.motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        rightLift.motor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        rightLift.setRunMode(Motor.RunMode.RawPower);
-        rightLift.motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        rightLift.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
-        rightLift.setInverted(true);
+        rightIntakeLift = new MotorEx(hardwareMap, "rightIntakeLift", Motor.GoBILDA.RPM_312);
+        rightIntakeLift.motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightIntakeLift.motor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        rightIntakeLift.setRunMode(Motor.RunMode.RawPower);
+        rightIntakeLift.motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        rightIntakeLift.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
+        rightIntakeLift.setInverted(true);
 
 
         //////////////
@@ -99,8 +121,13 @@ public class HardwareRobot {
         ////////////
         // SERVOS //
         ////////////
-        elbow = hardwareMap.get(ServoImplEx.class, "elbow");
-        claw = hardwareMap.get(ServoImplEx.class, "claw");
+        intakePivot = hardwareMap.get(ServoImplEx.class, "intakePivot");
+        intakeWrist = hardwareMap.get(ServoImplEx.class, "intakeWrist");
+        intakeClaw = hardwareMap.get(ServoImplEx.class, "intakeClaw");
+        depositClaw = hardwareMap.get(ServoImplEx.class, "depositClaw");
+        depositWrist = hardwareMap.get(ServoImplEx.class, "depositWrist");
+        clipIntake = hardwareMap.get(ServoImplEx.class, "clipIntake");
+        clipPusher = hardwareMap.get(ServoImplEx.class, "clipPusher");
 
 
         ////////////
