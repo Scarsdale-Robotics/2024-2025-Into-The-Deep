@@ -5,11 +5,19 @@ package org.firstinspires.ftc.teamcode.opmodes.calibration;
 ///////////////////////////////////
 
 import com.acmerobotics.dashboard.canvas.Canvas;
+import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.Vector2d;
 
+import org.firstinspires.ftc.robotcore.external.Telemetry;
+
+import java.util.ArrayList;
+
+@Config
 public final class Drawing {
     private Drawing() {}
+
+    public static double HEATMAP_COLOR_THRESHOLD = 1;
 
 
     public static void drawRobot(Canvas c, com.arcrobotics.ftclib.geometry.Pose2d t) {
@@ -102,4 +110,69 @@ public final class Drawing {
         );
 
     }
+
+    public static void drawSampleHeatmap(Canvas canvas, double[][] sample_probability_distribution, double FIELD_RESOLUTION, int RESOLUTION_N, Telemetry telemetry) {
+        canvas.setStrokeWidth(1);
+
+        float h0 = 0.784167f;
+        float s0 = 0.722f;
+        float v0 = 0.212f;
+
+        float h1 = 0.14972f;
+        float s1 = 0.854f;
+        float v1 = 0.992f;
+
+        float dh = h1-h0;
+        float ds = s1-s0;
+        float dv = v1-v0;
+
+        for (int r = 0; r < RESOLUTION_N+1; r++) {
+            for (int c = 0; c < RESOLUTION_N+1; c++) {
+                float t = (float)Math.min(sample_probability_distribution[r][c]/HEATMAP_COLOR_THRESHOLD, 1);
+                String color = "#"+hsvToRgb(
+                        h0 + t*dh,
+                        s0 + t*ds,
+                        v0 + t*dv
+                );
+                canvas.setFill(color);
+                double px = FIELD_RESOLUTION * (c - (double)RESOLUTION_N/2);
+                double py = FIELD_RESOLUTION * (r - (double)RESOLUTION_N/2);
+                canvas.fillRect(px, py, FIELD_RESOLUTION, FIELD_RESOLUTION);
+            }
+        }
+
+
+    }
+
+
+
+    public static String hsvToRgb(float hue, float saturation, float value) {
+
+        int h = (int)(hue * 6);
+        float f = hue * 6 - h;
+        float p = value * (1 - saturation);
+        float q = value * (1 - f * saturation);
+        float t = value * (1 - (1 - f) * saturation);
+
+        switch (h) {
+            case 0: return rgbToString(value, t, p);
+            case 1: return rgbToString(q, value, p);
+            case 2: return rgbToString(p, value, t);
+            case 3: return rgbToString(p, q, value);
+            case 4: return rgbToString(t, p, value);
+            case 5: return rgbToString(value, p, q);
+            default: throw new RuntimeException("Something went wrong when converting from HSV to RGB. Input was " + hue + ", " + saturation + ", " + value);
+        }
+    }
+
+    public static String rgbToString(float r, float g, float b) {
+        String rs = Integer.toHexString((int)(r * 256));
+        if (rs.length()==1) rs = "0"+rs;
+        String gs = Integer.toHexString((int)(g * 256));
+        if (gs.length()==1) gs = "0"+gs;
+        String bs = Integer.toHexString((int)(b * 256));
+        if (bs.length()==1) bs = "0"+bs;
+        return rs + gs + bs;
+    }
+
 }
