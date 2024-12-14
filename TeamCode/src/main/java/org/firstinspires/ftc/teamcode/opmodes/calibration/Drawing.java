@@ -126,8 +126,8 @@ public final class Drawing {
         float ds = s1-s0;
         float dv = v1-v0;
 
-        for (int r = 0; r < RESOLUTION_N+1; r++) {
-            for (int c = 0; c < RESOLUTION_N+1; c++) {
+        for (int r = 2*RESOLUTION_N/5; r < 3*RESOLUTION_N/5; r++) {
+            for (int c = RESOLUTION_N/2; c < 5*RESOLUTION_N/6; c++) {
                 float t = (float)Math.min(sample_probability_distribution[r][c]/HEATMAP_COLOR_THRESHOLD, 1);
                 String color = "#"+hsvToRgb(
                         h0 + t*dh,

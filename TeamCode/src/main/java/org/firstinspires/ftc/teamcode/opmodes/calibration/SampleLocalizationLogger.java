@@ -27,7 +27,9 @@ public class SampleLocalizationLogger extends LinearOpMode {
     private Limelight3A limelight;
 
     // Sample pose estimation coefficients
-    public static double k_area = 2.6;
+    public static double k1 = 600;
+    public static double k2 = 0.001470588;
+    public static double cz = 3.5; // inches from above the field
 
     // Sample pose estimation probability function
     public static double FIELD_RESOLUTION = 1; // inches
@@ -48,7 +50,7 @@ public class SampleLocalizationLogger extends LinearOpMode {
     private ElapsedTime runtime;
 
     // Localization KF values
-    public static double translation_covariance = 0.1;
+    public static double translation_covariance = 1;
 
 
     @Override
@@ -91,12 +93,15 @@ public class SampleLocalizationLogger extends LinearOpMode {
                     telemetry.addData(String.format("[%s].getTargetCorners", i), detection.getTargetCorners());
 
                     // Pose estimation
-                    Pose2d samplePoseEstimation = calculateGlobalPosition(new Pose2d(), calculateSampleRelativePosition(detection));
-                    telemetry.addData(String.format("[%s]SAMPLE X", i), samplePoseEstimation.getX());
-                    telemetry.addData(String.format("[%s]SAMPLE Y", i), samplePoseEstimation.getY());
-
-                    if (gamepad1.cross)
-                        Drawing.drawSample(packet.fieldOverlay(), samplePoseEstimation);
+                    Pose2d relativeEstimation = calculateSampleRelativePosition(detection);
+                    if (relativeEstimation != null) {
+                        Pose2d samplePoseEstimation = calculateGlobalPosition(new Pose2d(), relativeEstimation);
+                        telemetry.addData(String.format("[%s]SAMPLE X", i), samplePoseEstimation.getX());
+                        telemetry.addData(String.format("[%s]SAMPLE Y", i), samplePoseEstimation.getY());
+                        if (gamepad1.cross) {
+                            Drawing.drawSample(packet.fieldOverlay(), samplePoseEstimation);
+                        }
+                    }
                 }
 
             } else {
@@ -167,22 +172,25 @@ public class SampleLocalizationLogger extends LinearOpMode {
      */
     private Pose2d calculateSampleRelativePosition(DetectorResult detection) {
 
+        // x'-320 = -y/x
+        // 240-y' = z/x
+        //
+        // x = k1*z/(y'-240)
+        // y = k2*x*(320-x')
+
+        // Get pixel coordinates of midpoint of top edge of bounding box.
         List<List<Double>> corners = detection.getTargetCorners();
-        double width = Math.abs(corners.get(1).get(0) - corners.get(0).get(0));
-        double height = Math.abs(corners.get(2).get(1) - corners.get(1).get(1));
-        double dimensionRatio = width / height;
-        double orientationProportion = (2.1538 - dimensionRatio) / 1.2638;
-        double orientationMultiplier = 1 - 3.2/12.6*orientationProportion;
+        double px = 0.5 * (corners.get(0).get(0) + corners.get(1).get(0));
+        double py = corners.get(0).get(1);
 
-        // Get pixel coordinates of the midpoint of the bounding box's top edge.
-        double theta_x = -Math.toRadians(detection.getTargetXDegreesNoCrosshair());
-        double area = detection.getTargetArea();
+        if (py == 240.0) return null;
 
-        double distance = orientationMultiplier * k_area/Math.sqrt(area);
+        double projectedX = k1*(cz-1.5)/(py-240);
+        double projectedY = k2*projectedX*(320-px);
 
         return new Pose2d(
-                distance * Math.cos(theta_x),
-                distance * Math.sin(theta_x),
+                projectedX,
+                projectedY,
                 new Rotation2d(Math.toRadians(0))
         );
     }
@@ -227,8 +235,12 @@ public class SampleLocalizationLogger extends LinearOpMode {
 
         // Get pose estimations for each sample
         List<Pose2d> poseEstimations = new ArrayList<>();
-        for (DetectorResult detection : detections)
-            poseEstimations.add(calculateGlobalPosition(currentPose, calculateSampleRelativePosition(detection)));
+        for (DetectorResult detection : detections) {
+            Pose2d relativePosition = calculateSampleRelativePosition(detection);
+            if (relativePosition != null) {
+                poseEstimations.add(calculateGlobalPosition(currentPose, relativePosition));
+            }
+        }
 
         // Update probability distribution array
         for (Pose2d pose : poseEstimations) {
