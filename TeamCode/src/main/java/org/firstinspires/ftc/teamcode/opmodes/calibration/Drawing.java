@@ -87,11 +87,11 @@ public final class Drawing {
         c.strokeLine(p1.x, p1.y, p2.x, p2.y);
     }
 
-    public static void drawSample(Canvas c, com.arcrobotics.ftclib.geometry.Pose2d t) {
+    public static void drawSample(Canvas c, com.arcrobotics.ftclib.geometry.Pose2d t, String color) {
         Pose2d t_rr = new Pose2d(t.getX(), t.getY(), t.getHeading());
 
         c.setStrokeWidth(1);
-        c.setStroke("#ffd32c");
+        c.setStroke(color);
         c.strokeLine(
                 t_rr.position.x+1.5, t_rr.position.y+2.5,
                 t_rr.position.x-1.5, t_rr.position.y+2.5
@@ -126,18 +126,20 @@ public final class Drawing {
         float ds = s1-s0;
         float dv = v1-v0;
 
-        for (int r = 2*RESOLUTION_N/5; r < 3*RESOLUTION_N/5; r++) {
+        for (int r = 4*RESOLUTION_N/9; r < 5*RESOLUTION_N/9; r++) {
             for (int c = RESOLUTION_N/2; c < 5*RESOLUTION_N/6; c++) {
-                float t = (float)Math.min(sample_probability_distribution[r][c]/HEATMAP_COLOR_THRESHOLD, 1);
-                String color = "#"+hsvToRgb(
-                        h0 + t*dh,
-                        s0 + t*ds,
-                        v0 + t*dv
-                );
-                canvas.setFill(color);
-                double px = FIELD_RESOLUTION * (c - (double)RESOLUTION_N/2);
-                double py = FIELD_RESOLUTION * (r - (double)RESOLUTION_N/2);
-                canvas.fillRect(px, py, FIELD_RESOLUTION, FIELD_RESOLUTION);
+                if (sample_probability_distribution[r][c] > 0.05) {
+                    float t = (float) Math.min(sample_probability_distribution[r][c] / HEATMAP_COLOR_THRESHOLD, 1);
+                    String color = "#" + hsvToRgb(
+                            h0 + t * dh,
+                            s0 + t * ds,
+                            v0 + t * dv
+                    );
+                    canvas.setFill(color);
+                    double px = FIELD_RESOLUTION * (c - (double) RESOLUTION_N / 2);
+                    double py = FIELD_RESOLUTION * (r - (double) RESOLUTION_N / 2);
+                    canvas.fillRect(px, py, FIELD_RESOLUTION, FIELD_RESOLUTION);
+                }
             }
         }
 
