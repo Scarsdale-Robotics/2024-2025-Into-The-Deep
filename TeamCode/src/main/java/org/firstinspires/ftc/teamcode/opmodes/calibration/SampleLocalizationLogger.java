@@ -30,9 +30,9 @@ public class SampleLocalizationLogger extends LinearOpMode {
     private Limelight3A limelight;
 
     // Sample pose estimation coefficients
-    public static double k0 = 0;
-    public static double k1 = 640;
-    public static double k2 = 0.0019;
+    public static double theta_incline = 0; // radians
+    public static double k1 = 480;
+    public static double k2 = 640;
     public static double cz = 3.625; // inches from above the field
 
     // Sample pose estimation probability function
@@ -118,7 +118,7 @@ public class SampleLocalizationLogger extends LinearOpMode {
                     telemetry.addData(String.format("[%s].getTargetCorners", i), detection.getTargetCorners());
 
                     // Pose estimation
-                    Pose2d relativeEstimation = calculateSampleRelativePosition(detection);
+                    Pose2d relativeEstimation = calculateSampleRelativePosition(detection, k1, k2, cz, theta_incline);
                     if (relativeEstimation != null) {
                         Pose2d samplePoseEstimation = calculateGlobalPosition(new Pose2d(), relativeEstimation);
                         telemetry.addData(String.format("[%s]SAMPLE X", i), samplePoseEstimation.getX());
@@ -196,23 +196,25 @@ public class SampleLocalizationLogger extends LinearOpMode {
      * @param detection The Limelight3A detector result for this sample.
      * @return the estimated position.
      */
-    private Pose2d calculateSampleRelativePosition(DetectorResult detection) {
+    private Pose2d calculateSampleRelativePosition(DetectorResult detection, double k1, double k2, double cz, double theta_incline) {
 
-        // x'-320 = -y/x
-        // 240-y' = z/x
-        //
-        // x = k1*z/(y'-240)
-        // y = k2*x*(320-x')
+        // math: https://www.desmos.com/calculator/hvfwopk7tw
 
         // Get pixel coordinates of midpoint of top edge of bounding box.
         List<List<Double>> corners = detection.getTargetCorners();
         double px = 0.5 * (corners.get(0).get(0) + corners.get(1).get(0));
         double py = corners.get(0).get(1);
 
-        if (py == 240.0) return null;
+        // Back-solve for projected coordinates
+        double c_px = (px - 320) / k2;
+        double c_py = (py - 240) / k1;
 
-        double projectedX = k0 + k1*(cz-1.5)/(py-240);
-        double projectedY = k2*projectedX*(320-px);
+        double projectedX_numer = -c_py*Math.sin(theta_incline) - Math.cos(theta_incline);
+        double projectedX_denom = c_py*Math.cos(theta_incline) - Math.sin(theta_incline);
+        if (projectedX_denom == 0) return null;
+
+        double projectedX = cz * projectedX_numer / projectedX_denom;
+        double projectedY = -(projectedX*Math.cos(theta_incline) + cz*Math.sin(theta_incline)) * c_px;
 
         return new Pose2d(
                 projectedX,
@@ -253,7 +255,7 @@ public class SampleLocalizationLogger extends LinearOpMode {
         // Get pose estimations for each sample
         List<Pose2d> poseEstimations = new ArrayList<>();
         for (DetectorResult detection : detections) {
-            Pose2d relativePosition = calculateSampleRelativePosition(detection);
+            Pose2d relativePosition = calculateSampleRelativePosition(detection, k1, k2, cz, theta_incline);
             if (relativePosition != null) {
                 poseEstimations.add(calculateGlobalPosition(currentPose, relativePosition));
             }
