@@ -17,10 +17,10 @@ public class HardwareRobot {
     public final MotorEx leftBack;
     public final MotorEx rightBack;
 
-    public final MotorEx leftDepositLift;
-    public final MotorEx rightDepositLift;
-    public final MotorEx leftIntakeLift;
-    public final MotorEx rightIntakeLift;
+    public final Servo leftDepositLift;
+    public final Servo rightDepositLift;
+    public final Servo leftIntakeLift;
+    public final Servo rightIntakeLift;
 
     public final GoBildaPinpointDriver pinpoint;
 
@@ -78,37 +78,42 @@ public class HardwareRobot {
         //////////
         // LIFT //
         //////////
-        leftIntakeLift = new MotorEx(hardwareMap, "leftIntakeLift", Motor.GoBILDA.RPM_312);
-        leftIntakeLift.motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        leftIntakeLift.motor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        leftIntakeLift.setRunMode(Motor.RunMode.RawPower);
-        leftIntakeLift.motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        leftIntakeLift.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
-        leftIntakeLift.setInverted(false);
+        leftIntakeLift = hardwareMap.get(ServoImplEx.class, "leftIntakeLift");
+        rightIntakeLift = hardwareMap.get(ServoImplEx.class, "rightIntakeLift");
+        leftDepositLift = hardwareMap.get(ServoImplEx.class, "leftDepositLift");
+        rightDepositLift = hardwareMap.get(ServoImplEx.class, "rightDepositLift");
 
-        rightDepositLift = new MotorEx(hardwareMap, "rightDepositLift", Motor.GoBILDA.RPM_312);
-        rightDepositLift.motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        rightDepositLift.motor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        rightDepositLift.setRunMode(Motor.RunMode.RawPower);
-        rightDepositLift.motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        rightDepositLift.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
-        rightDepositLift.setInverted(true);
-        
-        leftDepositLift = new MotorEx(hardwareMap, "leftDepositLift", Motor.GoBILDA.RPM_312);
-        leftDepositLift.motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        leftDepositLift.motor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        leftDepositLift.setRunMode(Motor.RunMode.RawPower);
-        leftDepositLift.motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        leftDepositLift.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
-        leftDepositLift.setInverted(false);
-
-        rightIntakeLift = new MotorEx(hardwareMap, "rightIntakeLift", Motor.GoBILDA.RPM_312);
-        rightIntakeLift.motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        rightIntakeLift.motor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        rightIntakeLift.setRunMode(Motor.RunMode.RawPower);
-        rightIntakeLift.motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        rightIntakeLift.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
-        rightIntakeLift.setInverted(true);
+//        leftIntakeLift = new MotorEx(hardwareMap, "leftIntakeLift", Motor.GoBILDA.RPM_312);
+//        leftIntakeLift.motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+//        leftIntakeLift.motor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+//        leftIntakeLift.setRunMode(Motor.RunMode.RawPower);
+//        leftIntakeLift.motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+//        leftIntakeLift.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
+//        leftIntakeLift.setInverted(false);
+//
+//        rightDepositLift = new MotorEx(hardwareMap, "rightDepositLift", Motor.GoBILDA.RPM_312);
+//        rightDepositLift.motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+//        rightDepositLift.motor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+//        rightDepositLift.setRunMode(Motor.RunMode.RawPower);
+//        rightDepositLift.motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+//        rightDepositLift.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
+//        rightDepositLift.setInverted(true);
+//
+//        leftDepositLift = new MotorEx(hardwareMap, "leftDepositLift", Motor.GoBILDA.RPM_312);
+//        leftDepositLift.motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+//        leftDepositLift.motor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+//        leftDepositLift.setRunMode(Motor.RunMode.RawPower);
+//        leftDepositLift.motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+//        leftDepositLift.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
+//        leftDepositLift.setInverted(false);
+//
+//        rightIntakeLift = new MotorEx(hardwareMap, "rightIntakeLift", Motor.GoBILDA.RPM_312);
+//        rightIntakeLift.motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+//        rightIntakeLift.motor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+//        rightIntakeLift.setRunMode(Motor.RunMode.RawPower);
+//        rightIntakeLift.motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+//        rightIntakeLift.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
+//        rightIntakeLift.setInverted(true);
 
 
         //////////////
