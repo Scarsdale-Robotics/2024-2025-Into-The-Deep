@@ -5,6 +5,7 @@ import android.util.Size;
 import com.arcrobotics.ftclib.command.SubsystemBase;
 import com.arcrobotics.ftclib.geometry.Pose2d;
 import com.arcrobotics.ftclib.geometry.Rotation2d;
+import com.arcrobotics.ftclib.geometry.Translation2d;
 import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
@@ -15,12 +16,14 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Position;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
+import org.firstinspires.ftc.teamcode.synchropather.systems.limelight.LimelightPlan;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 import org.opencv.core.Point;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 
 public class CVSubsystem extends SubsystemBase {
@@ -38,6 +41,27 @@ public class CVSubsystem extends SubsystemBase {
 
     public final Size CAM_SZ = new Size(640, 480);
 
+
+
+    /////////////////////
+    // SAMPLE DETECTOR //
+    /////////////////////
+
+    public Set<LimelightPlan.Color> desiredColors;
+    // Array of probabilities (not normalized to 1) of a sample being at that location.
+    //
+    // .. .. .. ..
+    // 30 31 32 33 ...
+    // 20 21 22 23 ...
+    // 10 11 12 13 ...
+    // 00 01 02 03 ...
+    //
+    // where bottom-left is (-72,-72)in
+    public double[][] sample_probability_distribution;
+    public ArrayList<Pose2d> detectedSamples;
+
+
+
     //////////////////
     // INIT METHODS //
     //////////////////
@@ -48,8 +72,8 @@ public class CVSubsystem extends SubsystemBase {
         this.telemetry = telemetry;
   
         // Switch to AprilTag
-        this.limelight.pipelineSwitch(0);
-        this.limelight.start();
+//        this.limelight.pipelineSwitch(0);
+//        this.limelight.start();
 
         currentTargetColor = isRedTeam ? SampleColor.RY : SampleColor.BY;
 
@@ -181,7 +205,9 @@ public class CVSubsystem extends SubsystemBase {
      * @return the normalized angle in radians.
      */
     private static double normalizeAngle(double radians) {
-        return (radians + Math.PI) % (2*Math.PI) - Math.PI;
+        while (radians > Math.PI) radians -= 2*Math.PI;
+        while (radians <= -Math.PI) radians += 2*Math.PI;
+        return radians;
     }
 
     /**
@@ -216,6 +242,34 @@ public class CVSubsystem extends SubsystemBase {
     public Point getSampleOffset() {
         // TODO: IMPLEMENT
         return null;
+    }
+
+    /**
+     * @return if the detectedSamples list contains any results.
+     */
+    public boolean detectedAnySamples() {
+        if (detectedSamples == null) return false;
+        return !detectedSamples.isEmpty();
+    }
+
+    /**
+     * @param currentPose the robot's current position
+     * @return null if there are no samples, otherwise the sample closest to the given position.
+     */
+    public Pose2d getClosestDetectedSample(Pose2d currentPose) {
+        if (detectedSamples == null) return null;
+        if (detectedSamples.isEmpty()) return null;
+        Pose2d closestPose = detectedSamples.get(0);
+        double closestDistance = detectedSamples.get(0).getTranslation().minus(currentPose.getTranslation()).getNorm();
+        for (int i = 1; i < detectedSamples.size(); i++) {
+            Pose2d samplePose = detectedSamples.get(i);
+            double distance = samplePose.getTranslation().minus(currentPose.getTranslation()).getNorm();
+            if (distance < closestDistance) {
+                closestPose = samplePose;
+                closestDistance = distance;
+            }
+        }
+        return closestPose;
     }
 
 }

@@ -1,22 +1,25 @@
-package org.firstinspires.ftc.teamcode.opmodes.calibration;
+package org.firstinspires.ftc.teamcode.synchropather.systems.limelight;
 
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
-import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.arcrobotics.ftclib.geometry.Pose2d;
 import com.arcrobotics.ftclib.geometry.Rotation2d;
 import com.arcrobotics.ftclib.geometry.Translation2d;
 import com.qualcomm.hardware.limelightvision.LLResult;
-import com.qualcomm.hardware.limelightvision.LLResultTypes.DetectorResult;
+import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
-import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
+
+import org.firstinspires.ftc.teamcode.RobotSystem;
+import org.firstinspires.ftc.teamcode.opmodes.calibration.Drawing;
+import org.firstinspires.ftc.teamcode.synchropather.systems.MovementType;
+import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.superclasses.Movement;
+import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.superclasses.Plan;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -24,137 +27,129 @@ import java.util.Map;
 import java.util.Set;
 
 @Config
-@TeleOp(name="Sample Localization Logger", group="Calibration")
-public class SampleLocalizationLogger extends LinearOpMode {
+public class LimelightPlan extends Plan<LimelightState> {
 
-    private Limelight3A limelight;
+    private final RobotSystem robot;
+    private final Limelight3A limelight;
 
+    private LimelightState lastState;
+
+
+    /**
+     * Creates a new LimelightPlan with the given parameters
+     * @param robot the RobotSystem.
+     * @param colorToDetect the color of the samples to detect.
+     * @param movements
+     */
+    public LimelightPlan(RobotSystem robot, Color colorToDetect, Movement... movements) {
+        super(MovementType.LIMELIGHT, movements);
+        this.robot = robot;
+        this.limelight = robot.cv.getLimelight();
+        this.lastState = null;
+        initSampleDetector(colorToDetect);
+    }
+
+    @Override
+    public void loop() {
+        LimelightState currentState = getCurrentState();
+
+        // Check if any state components have changed since last loop
+        boolean enabledChanged = false;
+        boolean pipelineChanged = false;
+        if (lastState == null) {
+            enabledChanged = true;
+            pipelineChanged = true;
+        } else if (lastState.getEnabled() != currentState.getEnabled()) {
+            enabledChanged = true;
+        } else if (!lastState.getPipeline().equals(currentState.getPipeline())) {
+            pipelineChanged = true;
+        }
+
+        // Handle enabling/disabling
+        if (enabledChanged) {
+            if (currentState.getEnabled()) {
+                limelight.start();
+            } else {
+                limelight.pause();
+            }
+        }
+
+        // Handle pipeline switching
+        if (pipelineChanged) {
+            limelight.pipelineSwitch(currentState.getPipeline().pipelineIndex);
+            limelight.reloadPipeline();
+        }
+
+
+        // Pipeline specific actions
+        if (limelight.isRunning() && currentState.getEnabled()) {
+            if (currentState.getPipeline() == LimelightPipeline.SAMPLE_DETECTOR) loopSampleDetector();
+        }
+
+
+        lastState = currentState;
+    }
+
+    @Override
+    public void stop() {
+        limelight.close();
+    }
+
+
+
+
+
+
+
+
+
+    ///////////////////////////
+    // DETECTOR PIPELINE (2) //
+    ///////////////////////////
     // Sample pose estimation coefficients
     public static double k0 = 0;
     public static double k1 = 640;
     public static double k2 = 0.0019;
     public static double cz = 3.625; // inches from above the field
+    public static double dist_covariance = 0.25;
 
     // Sample pose estimation probability function
     public static double FIELD_RESOLUTION = 1; // inches
     public static double DECAY_TIME = 0.5;
     private final int RESOLUTION_N = (int) (144.0 / FIELD_RESOLUTION);
 
-    // Array of probabilities (not normalized to 1) of a sample being at that location.
-    //
-    // .. .. .. ..
-    // 30 31 32 33 ...
-    // 20 21 22 23 ...
-    // 10 11 12 13 ...
-    // 00 01 02 03 ...
-    //
-    // where bottom-left is (-72,-72)in
-    private double[][] sample_probability_distribution;
-
     public static double SAMPLE_PROBABILITY_THRESHOLD = 3;
     public static double SAMPLE_CLUSTER_SIZE_THRESHOLD = 0.5; // inches^2
 
-    private ArrayList<Pose2d> detectedSamples;
-
     private ElapsedTime runtime;
 
-    // Localization KF values
-    public static double translation_covariance = 0.25;
-
-
-    @Override
-    public void runOpMode() throws InterruptedException {
-        this.telemetry = new MultipleTelemetry(this.telemetry, FtcDashboard.getInstance().getTelemetry());
-        this.limelight = hardwareMap.get(Limelight3A.class, "limelight");
-
-        // Switch to detector
-        this.limelight.pipelineSwitch(2);
-        this.limelight.start();
-
-        // Init math
-
-        waitForStart();
-
-        initSampleProbabilityDistribution();
-
-        Set<Color> colors = new HashSet<>(
-                Arrays.asList(Color.BLUE, Color.RED, Color.YELLOW)
-        );
-
-        boolean drawingToggled = false;
-        boolean toggleDrawing = false;
-
-        while (opModeIsActive()) {
-
-            List<DetectorResult> selectedDetections = getLimelightDetections(limelight, colors);
-            updateSampleProbabilityDistribution(new Pose2d(), selectedDetections);
-
-            // draw prob distribution
-            TelemetryPacket packet = new TelemetryPacket();
-            packet.fieldOverlay().setStroke("#3F51B5");
-            if (gamepad1.triangle || drawingToggled) {
-                Drawing.drawSampleHeatmap(packet.fieldOverlay(), sample_probability_distribution, FIELD_RESOLUTION, RESOLUTION_N, telemetry);
-
-                // draw each calculated sample
-                for (Pose2d detectedSample : detectedSamples) {
-                    Drawing.drawSample(packet.fieldOverlay(), detectedSample, "#90b270");
-                }
-            }
-            telemetry.addData("detectedSamples.size()", detectedSamples.size());
-            telemetry.addData("detectedSamples", detectedSamples);
-
-            if (gamepad1.circle && !toggleDrawing) {
-                toggleDrawing = true;
-                drawingToggled = !drawingToggled;
-            } else if (!gamepad1.circle) toggleDrawing = false;
-
-            if (!selectedDetections.isEmpty()) {
-                telemetry.addData("_", "SAMPLE DETECTED");
-
-                // Log each sample
-                for (int i = 0; i < selectedDetections.size(); i++) {
-                    // Corners
-                    DetectorResult detection = selectedDetections.get(i);
-                    telemetry.addData(String.format("[%s].getTargetCorners", i), detection.getTargetCorners());
-
-                    // Pose estimation
-                    Pose2d relativeEstimation = calculateSampleRelativePosition(detection);
-                    if (relativeEstimation != null) {
-                        Pose2d samplePoseEstimation = calculateGlobalPosition(new Pose2d(), relativeEstimation);
-                        telemetry.addData(String.format("[%s]SAMPLE X", i), samplePoseEstimation.getX());
-                        telemetry.addData(String.format("[%s]SAMPLE Y", i), samplePoseEstimation.getY());
-                        if (gamepad1.cross) {
-                            Drawing.drawSample(packet.fieldOverlay(), samplePoseEstimation, "#ffd32c");
-                        }
-                    }
-                }
-
-            } else {
-                telemetry.addData("_", "NO DETECTION");
-            }
-
-            telemetry.update();
-            FtcDashboard.getInstance().sendTelemetryPacket(packet);
-
-
-        }
-
-
-
-    }
-
-
-
-
-
-    private void initSampleProbabilityDistribution() {
-        sample_probability_distribution = new double[RESOLUTION_N+1][RESOLUTION_N+1];
-        detectedSamples = new ArrayList<>();
+    // METHODS //
+    private void initSampleDetector(Color colorToDetect) {
+        robot.cv.sample_probability_distribution = new double[RESOLUTION_N+1][RESOLUTION_N+1];
+        robot.cv.detectedSamples = new ArrayList<>();
 
         runtime = new ElapsedTime(0);
         runtime.reset();
+
+        robot.cv.desiredColors = new HashSet<>(
+                Collections.singletonList(colorToDetect)
+        );
     }
 
+    private void loopSampleDetector() {
+        List<LLResultTypes.DetectorResult> selectedDetections = getLimelightDetections(limelight, robot.cv.desiredColors);
+        updateSampleProbabilityDistribution(robot.localization.getPose(), selectedDetections);
+
+        // draw each calculated sample
+        if (robot.opMode.gamepad1.circle) {
+            TelemetryPacket packet = new TelemetryPacket();
+            packet.fieldOverlay().setStroke("#3F51B5");
+            for (Pose2d detectedSample : robot.cv.detectedSamples) {
+                Drawing.drawSample(packet.fieldOverlay(), detectedSample, "#90b270");
+            }
+            FtcDashboard.getInstance().sendTelemetryPacket(packet);
+        }
+    }
 
     /**
      * Gets the Limelight's detected samples of the given color.
@@ -162,14 +157,14 @@ public class SampleLocalizationLogger extends LinearOpMode {
      * @param colors
      * @return a List containing the specified DetectorResults.
      */
-    private List<DetectorResult> getLimelightDetections(Limelight3A limelight, Set<Color> colors) {
+    private List<LLResultTypes.DetectorResult> getLimelightDetections(Limelight3A limelight, Set<Color> colors) {
 
         LLResult result = limelight.getLatestResult();
-        List<DetectorResult> detections = result.getDetectorResults();
-        List<DetectorResult> selectedDetections = new ArrayList<>();
+        List<LLResultTypes.DetectorResult> detections = result.getDetectorResults();
+        List<LLResultTypes.DetectorResult> selectedDetections = new ArrayList<>();
 
         // Filter out samples
-        for (DetectorResult detection : detections) {
+        for (LLResultTypes.DetectorResult detection : detections) {
             String className = detection.getClassName();
             Color detectedColor;
             switch (className) {
@@ -196,7 +191,7 @@ public class SampleLocalizationLogger extends LinearOpMode {
      * @param detection The Limelight3A detector result for this sample.
      * @return the estimated position.
      */
-    private Pose2d calculateSampleRelativePosition(DetectorResult detection) {
+    private Pose2d calculateSampleRelativePosition(LLResultTypes.DetectorResult detection) {
 
         // x'-320 = -y/x
         // 240-y' = z/x
@@ -248,11 +243,11 @@ public class SampleLocalizationLogger extends LinearOpMode {
      * Update the sample probability distribution array to the next time step.
      * @param detections a List containing the latest sample detections.
      */
-    private void updateSampleProbabilityDistribution(Pose2d currentPose, List<DetectorResult> detections) {
+    private void updateSampleProbabilityDistribution(Pose2d currentPose, List<LLResultTypes.DetectorResult> detections) {
 
         // Get pose estimations for each sample
         List<Pose2d> poseEstimations = new ArrayList<>();
-        for (DetectorResult detection : detections) {
+        for (LLResultTypes.DetectorResult detection : detections) {
             Pose2d relativePosition = calculateSampleRelativePosition(detection);
             if (relativePosition != null) {
                 poseEstimations.add(calculateGlobalPosition(currentPose, relativePosition));
@@ -266,7 +261,7 @@ public class SampleLocalizationLogger extends LinearOpMode {
             double y = pose.getY();
 
             // Only update within a neighborhood of SD < 3.
-            double C = 2*Math.PI*translation_covariance;
+            double C = 2*Math.PI* dist_covariance;
             double T = 0.05; // probability threshold
             int d = (int)Math.ceil(Math.sqrt(Math.max(0, -C*Math.log(C*T))));
 
@@ -278,7 +273,7 @@ public class SampleLocalizationLogger extends LinearOpMode {
                 for (int c = cMin; c < cMax; c++) {
                     double px = FIELD_RESOLUTION * (c - (double)RESOLUTION_N/2);
                     double py = FIELD_RESOLUTION * (r - (double)RESOLUTION_N/2);
-                    sample_probability_distribution[r][c] += bivariateNormalDistribution(px, py, x, y, translation_covariance);
+                    robot.cv.sample_probability_distribution[r][c] += bivariateNormalDistribution(px, py, x, y, dist_covariance);
                 }
             }
         }
@@ -300,12 +295,12 @@ public class SampleLocalizationLogger extends LinearOpMode {
         for (int i = start; i < RESOLUTION_N+1; i+=step) {
             for (int j = start; j < RESOLUTION_N+1; j+=step) {
                 // only decay block if there is a significant value (P>0.05)
-                if (sample_probability_distribution[i][j]>0.05){
+                if (robot.cv.sample_probability_distribution[i][j]>0.05){
                     for (int i1 = i-start; i1 < Math.min(RESOLUTION_N+1, i-start+step); i1++) {
                         for (int j1 = j-start; j1 < Math.min(RESOLUTION_N+1, j-start+step); j1++) {
-                            sample_probability_distribution[i1][j1] *= decay;
+                            robot.cv.sample_probability_distribution[i1][j1] *= decay;
                             // Check if current index is valid for sample detection
-                            if (sample_probability_distribution[i1][j1]>=SAMPLE_PROBABILITY_THRESHOLD) {
+                            if (robot.cv.sample_probability_distribution[i1][j1]>=SAMPLE_PROBABILITY_THRESHOLD) {
                                 int shortenedIndex = i1*(RESOLUTION_N+1) + j1;
                                 visited.put(shortenedIndex, false);
                                 availableStartingPositions.add(shortenedIndex);
@@ -315,7 +310,7 @@ public class SampleLocalizationLogger extends LinearOpMode {
                 }
             }
         }
-        telemetry.addData("deltaTime", deltaTime);
+        robot.telemetry.addData("deltaTime", deltaTime);
 
 
         // FF to find samples (center of mass of clusters)
@@ -345,7 +340,7 @@ public class SampleLocalizationLogger extends LinearOpMode {
                     // Decode coordinates
                     int r0 = i0 / (RESOLUTION_N+1);
                     int c0 = i0 % (RESOLUTION_N+1);
-                    double weight = sample_probability_distribution[r0][c0];
+                    double weight = robot.cv.sample_probability_distribution[r0][c0];
                     double x0 = FIELD_RESOLUTION * (c0 - (double) RESOLUTION_N / 2);
                     double y0 = FIELD_RESOLUTION * (r0 - (double) RESOLUTION_N / 2);
 
@@ -376,25 +371,25 @@ public class SampleLocalizationLogger extends LinearOpMode {
                 }
             }
         }
-        this.detectedSamples = detectedSamples;
+        robot.cv.detectedSamples = detectedSamples;
 
 
         // telemetry -- remove later
-        if (gamepad1.square) {
+        if (robot.opMode.gamepad1.square) {
             double maxProbability = 0;
             double[] maxProbabilityCoordinates = new double[]{-99, -99};
             for (int r = 0; r < RESOLUTION_N + 1; r++) {
                 for (int c = 0; c < RESOLUTION_N + 1; c++) {
-                    if (sample_probability_distribution[r][c] > maxProbability) {
-                        maxProbability = sample_probability_distribution[r][c];
+                    if (robot.cv.sample_probability_distribution[r][c] > maxProbability) {
+                        maxProbability = robot.cv.sample_probability_distribution[r][c];
                         double px = FIELD_RESOLUTION * (c - (double) RESOLUTION_N / 2);
                         double py = FIELD_RESOLUTION * (r - (double) RESOLUTION_N / 2);
                         maxProbabilityCoordinates = new double[]{px, py};
                     }
                 }
             }
-            telemetry.addData("[PROB] maxProbability", maxProbability);
-            telemetry.addData("[PROB] maxProbabilityCoordinates", String.format("(%s,%s)", maxProbabilityCoordinates[0], maxProbabilityCoordinates[1]));
+            robot.telemetry.addData("[PROB] maxProbability", maxProbability);
+            robot.telemetry.addData("[PROB] maxProbabilityCoordinates", String.format("(%s,%s)", maxProbabilityCoordinates[0], maxProbabilityCoordinates[1]));
         }
 
     }
@@ -408,10 +403,5 @@ public class SampleLocalizationLogger extends LinearOpMode {
                 / (2*Math.PI*covariance);
     }
 
-
-
-
-
-    private enum Color { RED, YELLOW, BLUE }
-
+    public enum Color { RED, YELLOW, BLUE }
 }
