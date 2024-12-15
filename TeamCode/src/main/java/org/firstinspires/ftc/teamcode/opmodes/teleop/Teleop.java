@@ -5,17 +5,30 @@ import com.arcrobotics.ftclib.geometry.Rotation2d;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 import org.firstinspires.ftc.teamcode.RobotSystem;
+import org.firstinspires.ftc.teamcode.subsystems.indep.InDepSubsystem;
 
 public class Teleop extends LinearOpMode {
     private RobotSystem robot;
+    private InDepSubsystem indep;
 
     @Override
     public void runOpMode() throws InterruptedException {
         this.robot = new RobotSystem(hardwareMap, new Pose2d(0, 0, new Rotation2d(Math.toRadians(-90))), false, this);
 
+        this.indep = robot.inDep;
+
         waitForStart();
 
-
+        while (opModeIsActive()) {
+            // TODO: INDEP UNDOs
+            indep.tick(
+                    gamepad1.triangle,
+                    gamepad2.triangle,
+                    gamepad2.square,
+                    gamepad1.circle,
+                    gamepad1.square
+            );
+        }
     }
 
 }

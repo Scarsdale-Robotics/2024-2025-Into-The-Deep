@@ -12,12 +12,18 @@ public class InDepSubsystem {
 
     private IntakeSubsystem intake;
     private DepositSubsystem deposit;
+    private MagazineSubsystem mag;
+    private MakerSubsystem maker;
+    private ClipSubsystem clip;
 
     public InDepSubsystem(RobotSystem robot, HardwareRobot hardware) {
         this.robot = robot;
 
         this.intake = new IntakeSubsystem(hardware);
         this.deposit = new DepositSubsystem(hardware);
+        this.mag = new MagazineSubsystem(hardware);
+        this.maker = new MakerSubsystem(hardware);
+        this.clip = new ClipSubsystem(hardware);
     }
 
     private boolean
@@ -29,6 +35,9 @@ public class InDepSubsystem {
 
     private IntakeSubsystem.State intakeState;
     private DepositSubsystem.State depositState;
+    private MagazineSubsystem.State magState;
+    private MakerSubsystem.State makerState;
+    private ClipSubsystem.State clipState;
 
     public void tick(
             boolean intakeButton,
@@ -48,7 +57,7 @@ public class InDepSubsystem {
         if (lastFwdDeposit && !depositButton) fwdDeposit = true;
         if (lastFwdMag && !magButton) fwdMag = true;
         if (lastFwdMaker && !makerButton) fwdMaker = true;
-        if (lastFwdClip && !clipButton) fwdClip = true;
+        if (lastFwdClip && !clipButton) fwdMaker = true;
 
         // manual pass
         if (fwdIntake) {
@@ -63,10 +72,15 @@ public class InDepSubsystem {
                     intakeState = IntakeSubsystem.State.INTAKE_C;
                     break;
                 case APPROACH_C:
-                    intakeState = IntakeSubsystem.State.APPROACH_C;
+                    intakeState = IntakeSubsystem.State.TRANSFER_C;
+                    magState = MagazineSubsystem.State.DEQUEUE;
                     break;
                 case TRANSFER_C:
                     intakeState = IntakeSubsystem.State.TRANSFER_O;
+                    break;
+                case TRANSFER_O:
+                    intakeState = IntakeSubsystem.State.REST;
+                    makerState = MakerSubsystem.State.UNITE;
                     break;
             }
         }
@@ -76,8 +90,14 @@ public class InDepSubsystem {
                 case INTAKE_O:
                     intakeState = IntakeSubsystem.State.INTAKE_C;
                     break;
+                case APPROACH_C:
+                    magState = MagazineSubsystem.State.DEQUEUE;
+                    break;
                 case TRANSFER_C:
                     intakeState = IntakeSubsystem.State.TRANSFER_C;
+                    break;
+                case TRANSFER_O:
+                    makerState = MakerSubsystem.State.UNITE;
                     break;
             }
         }
@@ -112,8 +132,49 @@ public class InDepSubsystem {
             }
         }
 
+        if (fwdMag) {
+            switch (mag.getState()) {
+                case REST:
+                    magState = MagazineSubsystem.State.DEQUEUE;
+                    break;
+                case DEQUEUE:
+                    magState = MagazineSubsystem.State.REST;
+                    break;
+            }
+        }
+        if (mag.jobFulfilled()) {
+            switch (mag.getState()) {  // for consistent formatting
+                case DEQUEUE:
+                    magState = MagazineSubsystem.State.REST;
+                    break;
+            }
+        }
+
+        if (fwdMaker) {
+            switch (maker.getState()) {
+                case REST:
+                    makerState = MakerSubsystem.State.UNITE;
+                    break;
+                case UNITE:
+                    makerState = MakerSubsystem.State.REST;
+                    depositState = DepositSubsystem.State.TRANSFER_O;
+                    break;
+            }
+        }
+        if (maker.jobFulfilled()) {
+            switch (maker.getState()) {
+                case UNITE:
+                    makerState = MakerSubsystem.State.REST;
+                    depositState = DepositSubsystem.State.TRANSFER_O;
+                    break;
+            }
+        }
+
         intake.setState(intakeState);
         deposit.setState(depositState);
+        mag.setState(magState);
+        maker.setState(makerState);
+        clip.setState(clipState);
     }
 
 }

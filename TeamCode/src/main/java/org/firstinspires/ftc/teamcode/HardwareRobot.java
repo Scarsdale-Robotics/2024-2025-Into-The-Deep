@@ -33,6 +33,7 @@ public class HardwareRobot {
     public final Servo depositClaw;
     public final Servo clipIntake;
     public final Servo clipPusher;
+    public final Servo maker;
 
 
     public HardwareRobot(HardwareMap hardwareMap) {
@@ -133,6 +134,7 @@ public class HardwareRobot {
         depositWrist = hardwareMap.get(ServoImplEx.class, "depositWrist");
         clipIntake = hardwareMap.get(ServoImplEx.class, "clipIntake");
         clipPusher = hardwareMap.get(ServoImplEx.class, "clipPusher");
+        maker = hardwareMap.get(ServoImplEx.class, "maker");
 
 
         ////////////

@@ -2,7 +2,7 @@ package org.firstinspires.ftc.teamcode.subsystems.indep;
 
 import org.firstinspires.ftc.teamcode.HardwareRobot;
 
-public class IntakeSubsystem {
+public class IntakeSubsystem extends SubInDepSubsystem<IntakeSubsystem.State> {
 
     private HardwareRobot robot;
     private State state;
@@ -32,6 +32,7 @@ public class IntakeSubsystem {
     }
 
     public void setState(State state) {
+        this.state = state;
         robot.intakeClaw.setPosition(state.intakeClawPos);
         robot.intakeWrist.setPosition(state.intakeWristPos);
         robot.intakePivot.setPosition(state.intakePivotPos);
@@ -41,11 +42,6 @@ public class IntakeSubsystem {
 
     public State getState() {
         return state;
-    }
-
-    private boolean approxEq(double a, double b) {
-        double epsilon = 0.000001;
-        return Math.abs(a-b) <= epsilon;
     }
 
     public boolean jobFulfilled() {
