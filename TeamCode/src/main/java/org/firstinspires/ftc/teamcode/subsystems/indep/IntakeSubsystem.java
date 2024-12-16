@@ -13,6 +13,7 @@ public class IntakeSubsystem extends SubInDepSubsystem<IntakeSubsystem.State> {
     }
 
     public enum State {
+        //tune these
         APPROACH_O(0, 0, 0, 0),
         INTAKE_O(0, 0, 0, 0),
         INTAKE_C(0, 0, 0, 0),
