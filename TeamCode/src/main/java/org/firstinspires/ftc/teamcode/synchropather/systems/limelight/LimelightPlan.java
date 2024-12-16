@@ -106,25 +106,13 @@ public class LimelightPlan extends Plan<LimelightState> {
     ///////////////////////////
     // DETECTOR PIPELINE (2) //
     ///////////////////////////
-    // Sample pose estimation coefficients
-    public static double theta_incline = 0; // radians
-    public static double k1 = 480;
-    public static double k2 = 640;
-    public static double cz = 3.625; // inches from above the field
-    public static double dist_covariance = 0.25;
-
-    // Sample pose estimation probability function
-    public static double FIELD_RESOLUTION = 1; // inches
-    public static double DECAY_TIME = 0.5;
-    private final int RESOLUTION_N = (int) (144.0 / FIELD_RESOLUTION);
-
-    public static double SAMPLE_PROBABILITY_THRESHOLD = 3;
-    public static double SAMPLE_CLUSTER_SIZE_THRESHOLD = 0.5; // inches^2
 
     private ElapsedTime runtime;
 
     // METHODS //
     private void initSampleDetector(Color colorToDetect) {
+        int RESOLUTION_N = LimelightConstants.RESOLUTION_N;
+
         robot.cv.sample_probability_distribution = new double[RESOLUTION_N+1][RESOLUTION_N+1];
         robot.cv.detectedSamples = new ArrayList<>();
 
@@ -208,8 +196,8 @@ public class LimelightPlan extends Plan<LimelightState> {
         double projectedX_denom = c_py*Math.cos(theta_incline) - Math.sin(theta_incline);
         if (projectedX_denom == 0) return null;
 
-        double projectedX = cz * projectedX_numer / projectedX_denom;
-        double projectedY = -(projectedX*Math.cos(theta_incline) + cz*Math.sin(theta_incline)) * c_px;
+        double projectedX = (cz-1.5) * projectedX_numer / projectedX_denom;
+        double projectedY = -(projectedX*Math.cos(theta_incline) + (cz-1.5)*Math.sin(theta_incline)) * c_px;
 
         return new Pose2d(
                 projectedX,
@@ -246,11 +234,14 @@ public class LimelightPlan extends Plan<LimelightState> {
      * @param detections a List containing the latest sample detections.
      */
     private void updateSampleProbabilityDistribution(Pose2d currentPose, List<LLResultTypes.DetectorResult> detections) {
+        double FIELD_RESOLUTION = LimelightConstants.FIELD_RESOLUTION;
+        int RESOLUTION_N = LimelightConstants.RESOLUTION_N;
+        double DECAY_TIME = LimelightConstants.DECAY_TIME;
 
         // Get pose estimations for each sample
         List<Pose2d> poseEstimations = new ArrayList<>();
         for (LLResultTypes.DetectorResult detection : detections) {
-            Pose2d relativePosition = calculateSampleRelativePosition(detection, k1, k2, cz, theta_incline);
+            Pose2d relativePosition = calculateSampleRelativePosition(detection, LimelightConstants.k1, LimelightConstants.k2, LimelightConstants.cz, LimelightConstants.theta_incline);
             if (relativePosition != null) {
                 poseEstimations.add(calculateGlobalPosition(currentPose, relativePosition));
             }
@@ -263,7 +254,7 @@ public class LimelightPlan extends Plan<LimelightState> {
             double y = pose.getY();
 
             // Only update within a neighborhood of SD < 3.
-            double C = 2*Math.PI* dist_covariance;
+            double C = 2*Math.PI* LimelightConstants.dist_covariance;
             double T = 0.05; // probability threshold
             int d = (int)Math.ceil(Math.sqrt(Math.max(0, -C*Math.log(C*T))));
 
@@ -275,7 +266,7 @@ public class LimelightPlan extends Plan<LimelightState> {
                 for (int c = cMin; c < cMax; c++) {
                     double px = FIELD_RESOLUTION * (c - (double)RESOLUTION_N/2);
                     double py = FIELD_RESOLUTION * (r - (double)RESOLUTION_N/2);
-                    robot.cv.sample_probability_distribution[r][c] += bivariateNormalDistribution(px, py, x, y, dist_covariance);
+                    robot.cv.sample_probability_distribution[r][c] += bivariateNormalDistribution(px, py, x, y, LimelightConstants.dist_covariance);
                 }
             }
         }
@@ -302,7 +293,7 @@ public class LimelightPlan extends Plan<LimelightState> {
                         for (int j1 = j-start; j1 < Math.min(RESOLUTION_N+1, j-start+step); j1++) {
                             robot.cv.sample_probability_distribution[i1][j1] *= decay;
                             // Check if current index is valid for sample detection
-                            if (robot.cv.sample_probability_distribution[i1][j1]>=SAMPLE_PROBABILITY_THRESHOLD) {
+                            if (robot.cv.sample_probability_distribution[i1][j1]>=LimelightConstants.SAMPLE_PROBABILITY_THRESHOLD) {
                                 int shortenedIndex = i1*(RESOLUTION_N+1) + j1;
                                 visited.put(shortenedIndex, false);
                                 availableStartingPositions.add(shortenedIndex);
@@ -362,7 +353,7 @@ public class LimelightPlan extends Plan<LimelightState> {
                 }
 
                 // Record center of mass
-                if (clusterSize > SAMPLE_CLUSTER_SIZE_THRESHOLD/(Math.pow(FIELD_RESOLUTION,2))) {
+                if (clusterSize > LimelightConstants.SAMPLE_CLUSTER_SIZE_THRESHOLD/(Math.pow(FIELD_RESOLUTION,2))) {
                     dottedX /= totalWeight;
                     dottedY /= totalWeight;
                     detectedSamples.add(new Pose2d(

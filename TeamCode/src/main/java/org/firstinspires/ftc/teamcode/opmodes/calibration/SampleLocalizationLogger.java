@@ -17,6 +17,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -30,10 +31,11 @@ public class SampleLocalizationLogger extends LinearOpMode {
     private Limelight3A limelight;
 
     // Sample pose estimation coefficients
-    public static double theta_incline = 0; // radians
-    public static double k1 = 480;
+    public static double theta_incline = Math.toRadians(1.5); // radians
+    public static double k0 = 0; // inches offset
+    public static double k1 = -472;
     public static double k2 = 640;
-    public static double cz = 3.625; // inches from above the field
+    public static double cz = 3.75; // inches from above the field
 
     // Sample pose estimation probability function
     public static double FIELD_RESOLUTION = 1; // inches
@@ -86,6 +88,25 @@ public class SampleLocalizationLogger extends LinearOpMode {
 
         while (opModeIsActive()) {
 
+            if (gamepad1.dpad_left) {
+                colors = new HashSet<>(
+                        Collections.singletonList(Color.BLUE)
+                );
+            } else if (gamepad1.dpad_up) {
+                colors = new HashSet<>(
+                        Collections.singletonList(Color.YELLOW)
+                );
+            } else if (gamepad1.dpad_right) {
+                colors = new HashSet<>(
+                        Collections.singletonList(Color.RED)
+                );
+            }
+            else {
+                colors = new HashSet<>(
+                        Arrays.asList(Color.BLUE, Color.RED, Color.YELLOW)
+                );
+            }
+
             List<DetectorResult> selectedDetections = getLimelightDetections(limelight, colors);
             updateSampleProbabilityDistribution(new Pose2d(), selectedDetections);
 
@@ -118,7 +139,7 @@ public class SampleLocalizationLogger extends LinearOpMode {
                     telemetry.addData(String.format("[%s].getTargetCorners", i), detection.getTargetCorners());
 
                     // Pose estimation
-                    Pose2d relativeEstimation = calculateSampleRelativePosition(detection, k1, k2, cz, theta_incline);
+                    Pose2d relativeEstimation = calculateSampleRelativePosition(detection, k0, k1, k2, cz, theta_incline);
                     if (relativeEstimation != null) {
                         Pose2d samplePoseEstimation = calculateGlobalPosition(new Pose2d(), relativeEstimation);
                         telemetry.addData(String.format("[%s]SAMPLE X", i), samplePoseEstimation.getX());
@@ -196,7 +217,7 @@ public class SampleLocalizationLogger extends LinearOpMode {
      * @param detection The Limelight3A detector result for this sample.
      * @return the estimated position.
      */
-    private Pose2d calculateSampleRelativePosition(DetectorResult detection, double k1, double k2, double cz, double theta_incline) {
+    private Pose2d calculateSampleRelativePosition(DetectorResult detection, double k0, double k1, double k2, double cz, double theta_incline) {
 
         // math: https://www.desmos.com/calculator/hvfwopk7tw
 
@@ -213,8 +234,8 @@ public class SampleLocalizationLogger extends LinearOpMode {
         double projectedX_denom = c_py*Math.cos(theta_incline) - Math.sin(theta_incline);
         if (projectedX_denom == 0) return null;
 
-        double projectedX = cz * projectedX_numer / projectedX_denom;
-        double projectedY = -(projectedX*Math.cos(theta_incline) + cz*Math.sin(theta_incline)) * c_px;
+        double projectedX = k0 + (cz-1.5) * projectedX_numer / projectedX_denom;
+        double projectedY = -(projectedX*Math.cos(theta_incline) + (cz-1.5)*Math.sin(theta_incline)) * c_px;
 
         return new Pose2d(
                 projectedX,
@@ -255,7 +276,7 @@ public class SampleLocalizationLogger extends LinearOpMode {
         // Get pose estimations for each sample
         List<Pose2d> poseEstimations = new ArrayList<>();
         for (DetectorResult detection : detections) {
-            Pose2d relativePosition = calculateSampleRelativePosition(detection, k1, k2, cz, theta_incline);
+            Pose2d relativePosition = calculateSampleRelativePosition(detection, k0, k1, k2, cz, theta_incline);
             if (relativePosition != null) {
                 poseEstimations.add(calculateGlobalPosition(currentPose, relativePosition));
             }
