@@ -31,11 +31,11 @@ public class SampleLocalizationLogger extends LinearOpMode {
     private Limelight3A limelight;
 
     // Sample pose estimation coefficients
-    public static double theta_incline = Math.toRadians(1.5); // radians
+    public static double theta_incline = Math.toRadians(27); // radians
     public static double k0 = 0; // inches offset
-    public static double k1 = -472;
+    public static double k1 = -640;
     public static double k2 = 640;
-    public static double cz = 3.75; // inches from above the field
+    public static double cz = 7; // inches from above the field
 
     // Sample pose estimation probability function
     public static double FIELD_RESOLUTION = 1; // inches
