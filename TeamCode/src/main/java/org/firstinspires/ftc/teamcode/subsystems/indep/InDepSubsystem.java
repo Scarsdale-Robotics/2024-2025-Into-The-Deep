@@ -65,40 +65,47 @@ public class InDepSubsystem {
                 case REST:
                     intakeState = IntakeSubsystem.State.APPROACH_O;
                     break;
-                case INTAKE_O:
+                case APPROACH_O:
                     intakeState = IntakeSubsystem.State.INTAKE_O;
                     break;
-                case INTAKE_C:
+                case INTAKE_O:
                     intakeState = IntakeSubsystem.State.INTAKE_C;
+                    break;
+                case INTAKE_C:
+                    intakeState = IntakeSubsystem.State.APPROACH_C;
                     break;
                 case APPROACH_C:
                     intakeState = IntakeSubsystem.State.TRANSFER_C;
                     break;
                 case TRANSFER_C:
                     intakeState = IntakeSubsystem.State.TRANSFER_O;
+                    magState = MagazineSubsystem.State.DEQUEUE;
                     break;
                 case TRANSFER_O:
                     intakeState = IntakeSubsystem.State.REST;
-                    magState = MagazineSubsystem.State.DEQUEUE;
                     break;
             }
         }
-        // auto-magic pass
+        // auto-magic pass       sadly, no magic takes place
         if (intake.jobFulfilled()) {
             switch (intake.getState()) {
                 case INTAKE_O:
                     intakeState = IntakeSubsystem.State.INTAKE_C;
                     break;
+                case INTAKE_C:
+                    intakeState = IntakeSubsystem.State.APPROACH_C;
+                    break;
                 case TRANSFER_C:
                     intakeState = IntakeSubsystem.State.TRANSFER_O;
+                    magState = MagazineSubsystem.State.DEQUEUE;
                     break;
                 case TRANSFER_O:
                     intakeState = IntakeSubsystem.State.REST;
-                    magState = MagazineSubsystem.State.DEQUEUE;
                     break;
             }
         }
 
+        //deposit manual
         if (fwdDeposit) {
             switch (deposit.getState()) {
                 case REST:
@@ -118,6 +125,8 @@ public class InDepSubsystem {
                     break;
             }
         }
+
+        //deposit auto
         if (deposit.jobFulfilled()) {
             switch (deposit.getState()) {
                 case TRANSFER_O:
@@ -129,6 +138,7 @@ public class InDepSubsystem {
             }
         }
 
+        //magazine manual
         if (fwdMag) {
             switch (mag.getState()) {
                 case REST:
@@ -139,6 +149,7 @@ public class InDepSubsystem {
                     break;
             }
         }
+        //magazine auto
         if (mag.jobFulfilled()) {
             switch (mag.getState()) {  // for consistent formatting
                 case DEQUEUE:
@@ -148,6 +159,7 @@ public class InDepSubsystem {
             }
         }
 
+        //sample manual
         if (fwdMaker) {
             switch (maker.getState()) {
                 case REST:
@@ -155,19 +167,20 @@ public class InDepSubsystem {
                     break;
                 case UNITE:
                     makerState = MakerSubsystem.State.REST;
-                    depositState = DepositSubsystem.State.TRANSFER_O;
-                    break;
-            }
-        }
-        if (maker.jobFulfilled()) {
-            switch (maker.getState()) {
-                case UNITE:
-                    makerState = MakerSubsystem.State.REST;
-                    depositState = DepositSubsystem.State.TRANSFER_O;
                     break;
             }
         }
 
+        //sample auto
+        if (maker.jobFulfilled()) {
+            switch (maker.getState()) {
+                case UNITE:
+                    makerState = MakerSubsystem.State.REST;
+                    break;
+            }
+        }
+
+        //clip manual
         if (fwdClip) {
             switch (clip.getState()) {
                 case REST:
