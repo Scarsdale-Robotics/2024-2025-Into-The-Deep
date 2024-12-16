@@ -3,10 +3,10 @@ package org.firstinspires.ftc.teamcode.subsystems.indep;
 import org.firstinspires.ftc.teamcode.HardwareRobot;
 import org.firstinspires.ftc.teamcode.RobotSystem;
 
+import kotlin.UInt;
+
 public class InDepSubsystem {
     // integrates intake, magazine, deposit, and transfer subsystems
-
-    public String[] movements;
 
     public RobotSystem robot;
 
@@ -57,7 +57,7 @@ public class InDepSubsystem {
         if (lastFwdDeposit && !depositButton) fwdDeposit = true;
         if (lastFwdMag && !magButton) fwdMag = true;
         if (lastFwdMaker && !makerButton) fwdMaker = true;
-        if (lastFwdClip && !clipButton) fwdMaker = true;
+        if (lastFwdClip && !clipButton) fwdClip = true;
 
         // manual pass
         if (fwdIntake) {
@@ -73,14 +73,13 @@ public class InDepSubsystem {
                     break;
                 case APPROACH_C:
                     intakeState = IntakeSubsystem.State.TRANSFER_C;
-                    magState = MagazineSubsystem.State.DEQUEUE;
                     break;
                 case TRANSFER_C:
                     intakeState = IntakeSubsystem.State.TRANSFER_O;
                     break;
                 case TRANSFER_O:
                     intakeState = IntakeSubsystem.State.REST;
-                    makerState = MakerSubsystem.State.UNITE;
+                    magState = MagazineSubsystem.State.DEQUEUE;
                     break;
             }
         }
@@ -90,14 +89,12 @@ public class InDepSubsystem {
                 case INTAKE_O:
                     intakeState = IntakeSubsystem.State.INTAKE_C;
                     break;
-                case APPROACH_C:
-                    magState = MagazineSubsystem.State.DEQUEUE;
-                    break;
                 case TRANSFER_C:
-                    intakeState = IntakeSubsystem.State.TRANSFER_C;
+                    intakeState = IntakeSubsystem.State.TRANSFER_O;
                     break;
                 case TRANSFER_O:
-                    makerState = MakerSubsystem.State.UNITE;
+                    intakeState = IntakeSubsystem.State.REST;
+                    magState = MagazineSubsystem.State.DEQUEUE;
                     break;
             }
         }
@@ -146,6 +143,7 @@ public class InDepSubsystem {
             switch (mag.getState()) {  // for consistent formatting
                 case DEQUEUE:
                     magState = MagazineSubsystem.State.REST;
+                    makerState = MakerSubsystem.State.UNITE;
                     break;
             }
         }
@@ -170,11 +168,29 @@ public class InDepSubsystem {
             }
         }
 
+        if (fwdClip) {
+            switch (clip.getState()) {
+                case REST:
+                    clipState = ClipSubsystem.State.OPEN;
+                    break;
+                case OPEN:
+                    clipState = ClipSubsystem.State.REST;
+                    break;
+            }
+        }
+
         intake.setState(intakeState);
         deposit.setState(depositState);
         mag.setState(magState);
         maker.setState(makerState);
         clip.setState(clipState);
+
+        lastFwdIntake = intakeButton;
+        lastFwdClip = clipButton;
+        lastFwdMaker = makerButton;
+        lastFwdMag = magButton;
+        lastFwdDeposit = depositButton;
+
     }
 
 }
