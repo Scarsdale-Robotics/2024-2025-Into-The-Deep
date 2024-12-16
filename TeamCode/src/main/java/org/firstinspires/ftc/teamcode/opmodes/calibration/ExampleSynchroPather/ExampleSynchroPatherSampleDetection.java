@@ -58,7 +58,7 @@ public class ExampleSynchroPatherSampleDetection extends LinearOpMode {
         // Move to samples
         initMoveToSample();
         moveToSamples.start();
-        while (opModeIsActive() && scanForSamples.update()) updateLoop();
+        while (opModeIsActive() && moveToSamples.update()) updateLoop();
         moveToSamples.stop();
 
 
@@ -118,7 +118,7 @@ public class ExampleSynchroPatherSampleDetection extends LinearOpMode {
                 new TranslationState(targetPose.getX(), targetPose.getY())
         );
 
-        LinearTranslation still = new LinearTranslation(new TimeSpan(line.getStartTime(), 10),
+        LinearTranslation still = new LinearTranslation(new TimeSpan(line.getEndTime(), 10),
                 new TranslationState(targetPose.getX(), targetPose.getY()),
                 new TranslationState(targetPose.getX(), targetPose.getY())
         );
