@@ -112,9 +112,6 @@ public class RectDrawer extends OpenCvPipeline {
             }
         }
 
-        // Step 1: Find non-zero points
-//        Mat nonZeroPoints = new Mat();
-//        Core.findNonZero(inRange, nonZeroPoints);
         if (maxIndex == -1) {
             return inRange;
         }
