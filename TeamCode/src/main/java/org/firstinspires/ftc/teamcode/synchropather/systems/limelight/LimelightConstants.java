@@ -25,7 +25,7 @@ public class LimelightConstants {
     // |                |
     // ------------------
     //
-    public static Pose2d limelightPosition = new Pose2d(0,0,new Rotation2d(0));
+    public static Pose2d limelightPosition = new Pose2d(7.11417323,5.66929134,new Rotation2d(0));
 
 
     // Sample pose estimation probability function

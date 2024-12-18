@@ -114,6 +114,20 @@ public class TranslationState extends RobotState {
 		return new TranslationState(x * factor, y * factor);
 	}
 
+	/**
+	 * Rotates this TranslationState about the origin counterclockwise by the given angular displacement
+	 * @param dTheta
+	 * @return the rotated TranslationState.
+	 */
+	public TranslationState rotateBy(double dTheta) {
+		double sin = Math.sin(dTheta);
+		double cos = Math.cos(dTheta);
+		return new TranslationState(
+				x*cos - y*sin,
+				x*sin + y*cos
+		);
+	}
+
 	@Override
 	/**
 	 * @return a String containing the ordered pair (x,y) in inches.
