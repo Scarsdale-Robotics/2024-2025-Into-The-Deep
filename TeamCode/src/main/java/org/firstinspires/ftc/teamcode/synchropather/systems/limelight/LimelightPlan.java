@@ -214,17 +214,63 @@ public class LimelightPlan extends Plan<LimelightState> {
      * @return the object's global Pose2d.
      */
     private Pose2d calculateGlobalPosition(Pose2d robotPose, Pose2d relativePose) {
-        double x = relativePose.getX();
-        double y = relativePose.getY();
-        double dTheta = robotPose.getHeading();
+        Pose2d limelightPosition = LimelightConstants.limelightPosition;
+        Pose2d globalPose = relativePose;
+        double dTheta;
+        Translation2d dTranslation;
+
+        // correct for limelight heading
+        dTheta = limelightPosition.getHeading();
+        globalPose = rotatePose(globalPose, dTheta);
+
+        // correct for limelight translation
+        dTranslation = limelightPosition.getTranslation();
+        globalPose = translatePose(globalPose, dTranslation);
+
+        // correct for robot heading
+        dTheta = robotPose.getHeading();
+        globalPose = rotatePose(globalPose, dTheta);
+
+        // correct for robot translation
+        dTranslation = robotPose.getTranslation();
+        globalPose = translatePose(globalPose, dTranslation);
+
+        return globalPose;
+    }
+
+
+    /**
+     * Rotates the given pose about the origin by the given angular displacement (without affecting heading).
+     * @param pose
+     * @param dTheta
+     * @return the rotated pose.
+     */
+    private Pose2d rotatePose(Pose2d pose, double dTheta) {
+        double x = pose.getX();
+        double y = pose.getY();
         double cos = Math.cos(dTheta);
         double sin = Math.sin(dTheta);
 
-        return new Pose2d( new Translation2d(
+        return new Pose2d(
+                new Translation2d(
                 x*cos - y*sin,
                 x*sin + y*cos
-        ).plus(robotPose.getTranslation()),
-                robotPose.getRotation().plus(relativePose.getRotation())
+                ),
+                pose.getRotation()
+        );
+    }
+
+
+    /**
+     * Translates the given pose by the given displacement.
+     * @param pose
+     * @param translation
+     * @return the translated pose.
+     */
+    private Pose2d translatePose(Pose2d pose, Translation2d translation) {
+        return new Pose2d(
+                pose.getTranslation().plus(translation),
+                pose.getRotation()
         );
     }
 

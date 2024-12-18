@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.synchropather.systems.rotation;
 
+import com.arcrobotics.ftclib.geometry.Pose2d;
+
 import org.firstinspires.ftc.teamcode.synchropather.systems.MovementType;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.superclasses.RobotState;
 
@@ -19,6 +21,15 @@ public class RotationState extends RobotState {
 	public RotationState(double heading) {
 		this.heading = heading;
 	    this.normalizedHeading = normalizeAngle(heading);
+	}
+
+	/**
+	 * Creates a new RotationState object from the given Pose2d.
+	 * @param pose
+	 */
+	public RotationState(Pose2d pose) {
+		this.heading = pose.getHeading();
+		this.normalizedHeading = normalizeAngle(heading);
 	}
 
 	/**

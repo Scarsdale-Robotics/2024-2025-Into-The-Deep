@@ -105,22 +105,21 @@ public class ExampleSynchroPatherSampleDetection extends LinearOpMode {
 
     private void initMoveToSample() {
         Pose2d currentPose = robot.localization.getPose();
-        Pose2d targetPose = robot.cv.getClosestDetectedSample(currentPose);
-        Translation2d displacement = targetPose.getTranslation().minus(currentPose.getTranslation());
-
+        TranslationState currentState = new TranslationState(currentPose);
+        TranslationState targetState = new TranslationState(robot.cv.getClosestDetectedSample(currentPose));
 
         // Translation plan
         TranslationConstants.MAX_VELOCITY = 0.5*40d;
         TranslationConstants.MAX_ACCELERATION = 0.5*54d;
 
         LinearTranslation line = new LinearTranslation(0,
-                new TranslationState(currentPose.getX(), currentPose.getY()),
-                new TranslationState(targetPose.getX(), targetPose.getY())
+                currentState,
+                targetState
         );
 
         LinearTranslation still = new LinearTranslation(new TimeSpan(line.getEndTime(), 10),
-                new TranslationState(targetPose.getX(), targetPose.getY()),
-                new TranslationState(targetPose.getX(), targetPose.getY())
+                targetState,
+                targetState
         );
 
         TranslationPlan translationPlan = new TranslationPlan(robot,
@@ -133,9 +132,9 @@ public class ExampleSynchroPatherSampleDetection extends LinearOpMode {
         RotationConstants.MAX_ANGULAR_VELOCITY = 3.6;
         RotationConstants.MAX_ANGULAR_ACCELERATION = 7.2;
 
-        double targetTheta = Math.atan2(displacement.getY(), displacement.getX());
+        double targetTheta = targetState.minus(currentState).theta();
         LinearRotation rotation = new LinearRotation(0,
-                new RotationState(currentPose.getHeading()),
+                new RotationState(currentPose),
                 new RotationState(targetTheta)
         );
         RotationPlan rotationPlan = new RotationPlan(robot,
