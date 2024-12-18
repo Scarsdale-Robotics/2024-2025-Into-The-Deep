@@ -17,6 +17,7 @@ import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -98,15 +99,30 @@ public class RectDrawer extends OpenCvPipeline {
         Imgproc.dilate(inRange, inRange, kernel);
         Imgproc.erode(inRange, inRange, kernel);
 
-        // Step 1: Find non-zero points
-        Mat nonZeroPoints = new Mat();
-        Core.findNonZero(inRange, nonZeroPoints);
+        List<MatOfPoint> contours = new ArrayList<>();
+        Mat hierarchy = new Mat();
+        Imgproc.findContours(inRange, contours, hierarchy, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
+        double maxArea = -1;
+        int maxIndex = -1;
+        for (int i = 0; i < contours.size(); i++) {
+            double area = Imgproc.contourArea(contours.get(i));
+            if (area > maxArea) {
+                maxArea = area;
+                maxIndex = i;
+            }
+        }
 
+        // Step 1: Find non-zero points
+//        Mat nonZeroPoints = new Mat();
+//        Core.findNonZero(inRange, nonZeroPoints);
+        if (maxIndex == -1) {
+            return inRange;
+        }
         // Step 2: Convert to MatOfPoint2f
         MatOfPoint2f matOfPoint2f = new MatOfPoint2f();
-        if (!nonZeroPoints.empty()) {
+        if (!contours.get(maxIndex).empty()) {
             // Convert non-zero points (CV_32SC2) to CV_32FC2
-            nonZeroPoints.convertTo(matOfPoint2f, CvType.CV_32FC2);
+            contours.get(maxIndex).convertTo(matOfPoint2f, CvType.CV_32FC2);
         }
 
 
