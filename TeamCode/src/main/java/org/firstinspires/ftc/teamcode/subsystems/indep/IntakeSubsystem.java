@@ -32,6 +32,25 @@ public class IntakeSubsystem extends SubInDepSubsystem<IntakeSubsystem.State> {
         }
     }
 
+    public void semidirectControl(
+            double intakeClawPower,
+            double intakeWristPower,
+            double intakePivotPower,
+            double intakeLiftPower
+    ) {
+
+    }
+
+    public void directControl(
+            double intakeClawPower,
+            double intakeWristPower,
+            double intakePivotPower,
+            double intakeLeftLiftPower,
+            double intakeRightLiftPower
+    ) {
+
+    }
+
     public void setState(State state) {
         this.state = state;
         robot.intakeClaw.setPosition(state.intakeClawPos);
