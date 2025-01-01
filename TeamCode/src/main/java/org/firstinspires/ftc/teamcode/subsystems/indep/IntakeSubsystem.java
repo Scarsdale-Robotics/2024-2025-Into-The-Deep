@@ -2,14 +2,19 @@ package org.firstinspires.ftc.teamcode.subsystems.indep;
 
 import org.firstinspires.ftc.teamcode.HardwareRobot;
 
-public class IntakeSubsystem extends SubInDepSubsystem<IntakeSubsystem.State> {
-
+public class IntakeSubsystem extends SubInDepSubsystem<
+        IntakeSubsystem.State,
+        IntakeSubsystem.SemidirectControlData,
+        IntakeSubsystem.DirectControlData
+> {
     private HardwareRobot robot;
     private State state;
+    private PositionTargetData targetData;
 
     public IntakeSubsystem(HardwareRobot robot) {
         this.robot = robot;
         this.state = State.REST;
+        this.targetData = state.data;
     }
 
     public enum State {
@@ -22,42 +27,87 @@ public class IntakeSubsystem extends SubInDepSubsystem<IntakeSubsystem.State> {
         TRANSFER_O(0, 0, 0, 0),
         REST(0, 0, 0, 0);
 
-        private final double intakePivotPos, intakeWristPos, intakeClawPos, intakeSlidePos;
+        private final PositionTargetData data;
 
         State(double intakePivotPos, double intakeWristPos, double intakeClawPos, double intakeSlidePos){
-            this.intakePivotPos = intakePivotPos;
-            this.intakeWristPos = intakeWristPos;
-            this.intakeClawPos = intakeClawPos;
-            this.intakeSlidePos = intakeSlidePos;
+            data = new PositionTargetData();
+            data.intakePivotPos = intakePivotPos;
+            data.intakeWristPos = intakeWristPos;
+            data.intakeClawPos = intakeClawPos;
+            data.intakeLeftSlidePos = intakeSlidePos;
+            data.intakeRightSlidePos = intakeSlidePos;
         }
     }
 
-    public void semidirectControl(
-            double intakeClawPower,
-            double intakeWristPower,
-            double intakePivotPower,
-            double intakeLiftPower
-    ) {
-
+    public static class PositionTargetData {
+        private double
+                intakePivotPos,
+                intakeWristPos,
+                intakeClawPos,
+                intakeLeftSlidePos,
+                intakeRightSlidePos;
     }
 
-    public void directControl(
-            double intakeClawPower,
-            double intakeWristPower,
-            double intakePivotPower,
-            double intakeLeftLiftPower,
-            double intakeRightLiftPower
-    ) {
+    public static class DirectControlData {
+        public double intakeClawPower;
+        public double intakeWristPower;
+        public double intakePivotPower;
+        public double intakeLeftLiftPower;
+        public double intakeRightLiftPower;
+    }
 
+    public static class SemidirectControlData {
+        public double intakeClawPower;
+        public double intakeWristPower;
+        public double intakePivotPower;
+        public double intakeLiftPower;
+
+        public DirectControlData convertToDirect() {
+            DirectControlData data = new DirectControlData();
+            data.intakeClawPower = intakeClawPower;
+            data.intakeWristPower = intakeWristPower;
+            data.intakePivotPower = intakePivotPower;
+            data.intakeLeftLiftPower = intakeLiftPower;
+            data.intakeRightLiftPower = intakeLiftPower;
+            return data;
+        }
+    }
+
+    public void semidirectControl(SemidirectControlData data) {
+        targetData.intakeClawPos = InDepSubsystem.clamp(
+                targetData.intakeClawPos + data.intakeClawPower, 0, 1
+        );  // update clamp bounds later
+        targetData.intakePivotPos = InDepSubsystem.clamp(
+                targetData.intakePivotPos + data.intakePivotPower, 0, 1
+        );
+        targetData.intakeWristPos = InDepSubsystem.clamp(
+                targetData.intakeWristPos + data.intakeWristPower, 0, 1
+        );
+        targetData.intakeLeftSlidePos = InDepSubsystem.clamp(
+                targetData.intakeLeftSlidePos
+                        + 0.5*(InDepSubsystem.sigmoid(20*data.intakeLiftPower-10)+0.5),
+                0, 1
+        );
+        targetData.intakeRightSlidePos = targetData.intakeLeftSlidePos;
+    }
+
+    public void directControl(DirectControlData data) {
+        targetData.intakeClawPos += data.intakeClawPower;
+        targetData.intakePivotPos += data.intakePivotPower;
+        targetData.intakeWristPos += data.intakeWristPower;
+        targetData.intakeLeftSlidePos += data.intakeLeftLiftPower;
+        targetData.intakeRightSlidePos += data.intakeRightLiftPower;
     }
 
     public void setState(State state) {
         this.state = state;
-        robot.intakeClaw.setPosition(state.intakeClawPos);
-        robot.intakeWrist.setPosition(state.intakeWristPos);
-        robot.intakePivot.setPosition(state.intakePivotPos);
-        robot.leftIntakeLift.setPosition(state.intakeSlidePos);
-        robot.rightIntakeLift.setPosition(state.intakeSlidePos);
+        this.targetData = state.data;
+
+        robot.intakeClaw.setPosition(targetData.intakeClawPos);
+        robot.intakeWrist.setPosition(targetData.intakeWristPos);
+        robot.intakePivot.setPosition(targetData.intakePivotPos);
+        robot.leftIntakeLift.setPosition(targetData.intakeLeftSlidePos);
+        robot.rightIntakeLift.setPosition(targetData.intakeRightSlidePos);
     }
 
     public State getState() {
@@ -66,11 +116,11 @@ public class IntakeSubsystem extends SubInDepSubsystem<IntakeSubsystem.State> {
 
     public boolean jobFulfilled() {
         return (
-            approxEq(robot.intakeClaw.getPosition(), state.intakeClawPos) &&
-            approxEq(robot.intakeWrist.getPosition(), state.intakeWristPos) &&
-            approxEq(robot.intakePivot.getPosition(), state.intakePivotPos) &&
-            approxEq(robot.leftIntakeLift.getPosition(), state.intakeSlidePos) &&
-            approxEq(robot.rightIntakeLift.getPosition(), state.intakeSlidePos)
+            approxEq(robot.intakeClaw.getPosition(), targetData.intakeClawPos) &&
+            approxEq(robot.intakeWrist.getPosition(), targetData.intakeWristPos) &&
+            approxEq(robot.intakePivot.getPosition(), targetData.intakePivotPos) &&
+            approxEq(robot.leftIntakeLift.getPosition(), targetData.intakeLeftSlidePos) &&
+            approxEq(robot.rightIntakeLift.getPosition(), targetData.intakeRightSlidePos)
         );
     }
 

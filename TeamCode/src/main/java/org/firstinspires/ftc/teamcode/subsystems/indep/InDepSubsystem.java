@@ -303,4 +303,20 @@ public class InDepSubsystem {
         clip.setState(clipState);
     }
 
+    public static double clamp_0p1(double x) {
+        return clamp(x, 0, 1);
+    }
+
+    public static double clamp_p1m1(double x) {
+        return clamp(x, -1, 1);
+    }
+
+    public static double clamp(double x, double lower, double upper) {
+        return Math.max(Math.min(x, upper), lower);
+    }
+
+    public static double sigmoid(double x) {
+        return 1/(1+Math.exp(-x));
+    }
+
 }

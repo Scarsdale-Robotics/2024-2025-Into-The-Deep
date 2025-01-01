@@ -29,7 +29,7 @@ public class Teleop extends LinearOpMode {
                     gamepad1.circle,
                     gamepad1.square,
                     gamepad1.right_trigger - gamepad1.left_trigger,
-                    gamepad2.right_trigger - gamepad2.left_trigger
+                    gamepad2.right_trigger - gamepad2.left_trigger  // consider multiplying by some delta time thing
             );
         }
     }
