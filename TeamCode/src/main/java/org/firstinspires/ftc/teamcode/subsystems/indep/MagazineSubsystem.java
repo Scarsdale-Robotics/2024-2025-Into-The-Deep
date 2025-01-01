@@ -2,20 +2,41 @@ package org.firstinspires.ftc.teamcode.subsystems.indep;
 
 import org.firstinspires.ftc.teamcode.HardwareRobot;
 
-public class MagazineSubsystem extends SubInDepSubsystem<MagazineSubsystem.State> {
+public class MagazineSubsystem extends SubInDepSubsystem<
+        MagazineSubsystem.State,
+        MagazineSubsystem.SemidirectControlData,
+        MagazineSubsystem.DirectControlData
+> {
 
     private HardwareRobot robot;
     private State state;
+    private PositionTargetData targetData;
 
     public MagazineSubsystem(HardwareRobot robot) {
+        super();
         this.robot = robot;
         this.state = State.REST;
+        this.targetData = state.data;
+    }
+
+    @Override
+    public void semidirectControl(SemidirectControlData data) {
+        targetData.magServoPos = InDepSubsystem.clamp_0p1(
+                targetData.magServoPos + data.magServoPower
+        );
+    }
+
+    @Override
+    public void directControl(DirectControlData data) {
+        targetData.magServoPos += data.magServoPower;
     }
 
     @Override
     public void setState(State state) {
         this.state = state;
-        robot.clipPusher.setPosition(state.magServoPos);
+        this.targetData = state.data;  // TODO: ensure all SubInDepSubsystem instances have this
+
+        robot.clipPusher.setPosition(targetData.magServoPos);
     }
 
     @Override
@@ -26,7 +47,7 @@ public class MagazineSubsystem extends SubInDepSubsystem<MagazineSubsystem.State
     @Override
     public boolean jobFulfilled() {
         return (
-            approxEq(robot.clipPusher.getPosition(), state.magServoPos)
+            approxEq(robot.clipPusher.getPosition(), targetData.magServoPos)
         );
     }
 
@@ -34,11 +55,23 @@ public class MagazineSubsystem extends SubInDepSubsystem<MagazineSubsystem.State
         DEQUEUE(0),
         REST(0);
 
-        private final double magServoPos;
+        private PositionTargetData data;
 
         State(double magServoPos){
-            this.magServoPos = magServoPos;
+            data.magServoPos = magServoPos;
         }
+    }
+
+    public static class PositionTargetData {
+        public double magServoPos;
+    }
+
+    public static class DirectControlData {
+        public double magServoPower;
+    }
+
+    public static class SemidirectControlData {
+        public double magServoPower;
     }
 
 }

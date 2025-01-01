@@ -8,11 +8,11 @@ public class InDepSubsystem {
 
     public RobotSystem robot;
 
-    private IntakeSubsystem intake;
-    private DepositSubsystem deposit;
-    private MagazineSubsystem mag;
-    private MakerSubsystem maker;
-    private ClipSubsystem clip;
+    private final IntakeSubsystem intake;
+    private final DepositSubsystem deposit;
+    private final MagazineSubsystem mag;
+    private final MakerSubsystem maker;
+    private final ClipSubsystem clip;
 
     public enum ControlLaw {  // Not to be confused with Control Theory, which is insignificantly related
         // mechanical backup does not exist
@@ -65,6 +65,8 @@ public class InDepSubsystem {
         this.clip = new ClipSubsystem(hardware);
 
         this.controlLaw = ControlLaw.NORMAL;
+
+        this.lastControls = new InDepControlData();
     }
 
     public static class InDepControlData {
@@ -75,47 +77,22 @@ public class InDepSubsystem {
         public boolean makerButton;
         public boolean clipButton;
 
-        // SEMIDIRECT, DIRECT
-        public double intakeSlidePower;
-        public double leftIntakeSlidePower;
-        public double rightIntakeSlidePower;
-        public double depositSlidePower;
-        public double leftDepositSlidePower;
-        public double rightDepositSlidePower;
-        public double magPower;
-        public double makerPower;
-        public double clipPower;
+        // SEMIDIRECT
+        public IntakeSubsystem.SemidirectControlData intakeSemidirectCD;
+        public DepositSubsystem.SemidirectControlData depositSemidirectCD;
+        public MagazineSubsystem.SemidirectControlData magazineSemidirectCD;
+        public MakerSubsystem.SemidirectControlData makerSemidirectCD;
+        public ClipSubsystem.SemidirectControlData clipSemidirectCD;
 
-        public void set(
-                boolean intakeButton,
-                boolean depositButton,
-                boolean magButton,
-                boolean makerButton,
-                boolean clipButton,
-                double intakeSlidePower,
-                double leftIntakeSlidePower,
-                double rightIntakeSlidePower,
-                double depositSlidePower,
-                double leftDepositSlidePower,
-                double rightDepositSlidePower,
-                double magPower,
-                double makerPower,
-                double clipPower
-        ) {
-            this.intakeButton = intakeButton;
-            this.depositButton = depositButton;
-            this.magButton = magButton;
-            this.makerButton = makerButton;
-            this.clipButton = clipButton;
-            this.intakeSlidePower = intakeSlidePower;
-            this.depositSlidePower = depositSlidePower;
-            this.magPower = magPower;
-            this.makerPower = makerPower;
-            this.clipPower = clipPower;
-        }
+        // DIRECT
+        public IntakeSubsystem.DirectControlData intakeDirectCD;
+        public DepositSubsystem.DirectControlData depositDirectCD;
+        public MagazineSubsystem.DirectControlData magazineDirectCD;
+        public MakerSubsystem.DirectControlData makerDirectCD;
+        public ClipSubsystem.DirectControlData clipDirectCD;
     }
 
-    private InDepControlData lastControls;
+    private final InDepControlData lastControls;
 
     private IntakeSubsystem.State intakeState;
     private DepositSubsystem.State depositState;
@@ -132,23 +109,34 @@ public class InDepSubsystem {
     }
 
     public void tick(InDepControlData controls) {
-        if (controlLaw.isAtMost(ControlLaw.SEMIDIRECT)) tickDirect(controls);
+        if (controlLaw.isEqualTo(ControlLaw.DIRECT)) tickDirect(controls);
+        else if (controlLaw.isEqualTo(ControlLaw.SEMIDIRECT)) tickSemidirect(controls);
         else tickFSM(controls);
 
-        lastControls.set(
-                controls.intakeButton,
-                controls.clipButton,
-                controls.makerButton,
-                controls.magButton,
-                controls.depositButton,
-                controls.intakeSlidePower,
-                controls.depositSlidePower,
-                controls.
-        );
+        lastControls.intakeButton = controls.intakeButton;
+        lastControls.clipButton = controls.clipButton;
+        lastControls.makerButton = controls.makerButton;
+        lastControls.magButton = controls.magButton;
+        lastControls.depositButton = controls.depositButton;
+
+        // NOTE: SOME SUBSYSTEMS MAY REQUIRE LAST ACTION TRACKING.
+        //       LAST ACTION TRACKING SHOULD BE IMPLEMENTED IMMEDIATELY BEFORE THIS COMMENT.
     }
 
     public void tickDirect(InDepControlData controls) {
+        intake.directControl(controls.intakeDirectCD);
+        deposit.directControl(controls.depositDirectCD);
+        maker.directControl(controls.makerDirectCD);
+        mag.directControl(controls.magazineDirectCD);
+        clip.directControl(controls.clipDirectCD);
+    }
 
+    public void tickSemidirect(InDepControlData controls) {
+        intake.semidirectControl(controls.intakeSemidirectCD);
+        deposit.semidirectControl(controls.depositSemidirectCD);
+        maker.semidirectControl(controls.makerSemidirectCD);
+        mag.semidirectControl(controls.magazineSemidirectCD);
+        clip.semidirectControl(controls.clipSemidirectCD);
     }
 
     public void tickFSM(InDepControlData controls) {

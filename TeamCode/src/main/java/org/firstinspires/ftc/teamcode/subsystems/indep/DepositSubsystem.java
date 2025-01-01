@@ -2,15 +2,20 @@ package org.firstinspires.ftc.teamcode.subsystems.indep;
 
 import org.firstinspires.ftc.teamcode.HardwareRobot;
 
-public class DepositSubsystem extends SubInDepSubsystem<DepositSubsystem.State> {
-
+public class DepositSubsystem extends SubInDepSubsystem<
+        DepositSubsystem.State,
+        DepositSubsystem.SemidirectControlData,
+        DepositSubsystem.DirectControlData
+> {
     private HardwareRobot robot;
     private State state;
+    private PositionTargetData targetData;
 
     public DepositSubsystem(HardwareRobot robot) {
         super();
         this.robot = robot;
         this.state = State.REST;
+        this.targetData = state.data;
     }
 
     public enum State {
@@ -20,21 +25,72 @@ public class DepositSubsystem extends SubInDepSubsystem<DepositSubsystem.State> 
         DEPOSIT(0, 0, 0),
         REST(0, 0, 0);
 
-        private final double depositWristPos, depositClawPos, depositSlidePos;
+        private PositionTargetData data;
 
         State(double depositWristPos, double depositClawPos, double depositSlidePos){
-            this.depositWristPos = depositWristPos;
-            this.depositClawPos = depositClawPos;
-            this.depositSlidePos = depositSlidePos;
+            data.depositWristPos = depositWristPos;
+            data.depositClawPos = depositClawPos;
+            data.depositLeftSlidePos = depositSlidePos;
+            data.depositRightSlidePos = depositSlidePos;
         }
+    }
+
+    public static class PositionTargetData {
+        private double
+                depositWristPos,
+                depositClawPos,
+                depositLeftSlidePos,
+                depositRightSlidePos;
+    }
+
+    public static class DirectControlData {
+        private double
+                depositWristPower,
+                depositClawPower,
+                depositLeftSlidePower,
+                depositRightSlidePower;
+    }
+
+    public static class SemidirectControlData {
+        private double
+                depositWristPower,
+                depositClawPower,
+                depositLeftSlidePower,
+                depositRightSlidePower;
+    }
+
+    @Override
+    public void semidirectControl(SemidirectControlData data) {
+        targetData.depositClawPos = InDepSubsystem.clamp(
+                targetData.depositClawPos + data.depositClawPower, 0, 1
+        );
+        targetData.depositWristPos = InDepSubsystem.clamp(
+                targetData.depositWristPos + data.depositWristPower, 0, 1
+        );
+        targetData.depositLeftSlidePos = InDepSubsystem.clamp(
+                targetData.depositLeftSlidePos
+                        + 0.5*(InDepSubsystem.sigmoid(20*data.depositLeftSlidePower-10)+0.5),
+                0, 1
+        );
+        targetData.depositRightSlidePos = targetData.depositLeftSlidePos;
+    }
+
+    @Override
+    public void directControl(DirectControlData data) {
+        targetData.depositClawPos += data.depositClawPower;
+        targetData.depositWristPos += data.depositWristPower;
+        targetData.depositLeftSlidePos += data.depositLeftSlidePower;
+        targetData.depositRightSlidePos += data.depositRightSlidePower;
     }
 
     public void setState(State state) {
         this.state = state;
-        robot.depositClaw.setPosition(state.depositClawPos);
-        robot.depositWrist.setPosition(state.depositWristPos);
-        robot.leftDepositLift.setPosition(state.depositSlidePos);
-        robot.rightDepositLift.setPosition(state.depositSlidePos);
+        this.targetData = state.data;
+
+        robot.depositClaw.setPosition(targetData.depositClawPos);
+        robot.depositWrist.setPosition(targetData.depositWristPos);
+        robot.leftDepositLift.setPosition(targetData.depositLeftSlidePos);
+        robot.rightDepositLift.setPosition(targetData.depositRightSlidePos);
     }
 
     public State getState() {
@@ -44,10 +100,10 @@ public class DepositSubsystem extends SubInDepSubsystem<DepositSubsystem.State> 
     @Override
     public boolean jobFulfilled() {
         return (
-                approxEq(robot.depositClaw.getPosition(), state.depositClawPos) &&
-                approxEq(robot.depositWrist.getPosition(), state.depositWristPos) &&
-                approxEq(robot.leftDepositLift.getPosition(), state.depositSlidePos) &&
-                approxEq(robot.rightDepositLift.getPosition(), state.depositSlidePos)
+                approxEq(robot.depositClaw.getPosition(), targetData.depositClawPos) &&
+                approxEq(robot.depositWrist.getPosition(), targetData.depositWristPos) &&
+                approxEq(robot.leftDepositLift.getPosition(), targetData.depositLeftSlidePos) &&
+                approxEq(robot.rightDepositLift.getPosition(), targetData.depositRightSlidePos)
         );
     }
 

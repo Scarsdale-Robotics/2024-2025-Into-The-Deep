@@ -12,6 +12,7 @@ public class IntakeSubsystem extends SubInDepSubsystem<
     private PositionTargetData targetData;
 
     public IntakeSubsystem(HardwareRobot robot) {
+        super();
         this.robot = robot;
         this.state = State.REST;
         this.targetData = state.data;
@@ -61,16 +62,6 @@ public class IntakeSubsystem extends SubInDepSubsystem<
         public double intakeWristPower;
         public double intakePivotPower;
         public double intakeLiftPower;
-
-        public DirectControlData convertToDirect() {
-            DirectControlData data = new DirectControlData();
-            data.intakeClawPower = intakeClawPower;
-            data.intakeWristPower = intakeWristPower;
-            data.intakePivotPower = intakePivotPower;
-            data.intakeLeftLiftPower = intakeLiftPower;
-            data.intakeRightLiftPower = intakeLiftPower;
-            return data;
-        }
     }
 
     public void semidirectControl(SemidirectControlData data) {
