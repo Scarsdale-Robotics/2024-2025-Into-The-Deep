@@ -54,7 +54,8 @@ public class Teleop extends LinearOpMode {
 
             inDepControls.makerSemidirectCD.makerServoPower = gamepad2.circle ? g2power : 0;
 
-            inDepControls.clipSemidirectCD.clipIntakeServoPower =
+            inDepControls.clipSemidirectCD.clipIntakeServoPower = gamepad1.square ? g1power : 0;
+                inDepControls.clipDirectCD.clipIntakeServoPower = inDepControls.clipSemidirectCD.clipIntakeServoPower;
 
 
             inDepControls.set(
