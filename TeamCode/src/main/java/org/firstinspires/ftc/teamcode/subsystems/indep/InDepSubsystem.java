@@ -145,13 +145,20 @@ public class InDepSubsystem {
                 fwdDeposit = false,
                 fwdMag = false,
                 fwdMaker = false,
-                fwdClip = false;
+                fwdClip = false,
+                bwdIntake = false,
+                bwdDeposit = false,
+                bwdMag= false,
+                bwdMaker = false,
+                bwdClip = false;
+
 
         if (lastControls.intakeButton && !controls.intakeButton) fwdIntake = true;  // trigger on release
         if (lastControls.depositButton && !controls.depositButton) fwdDeposit = true;
         if (lastControls.magButton && !controls.magButton) fwdMag = true;
         if (lastControls.makerButton && !controls.makerButton) fwdMaker = true;
         if (lastControls.clipButton && !controls.clipButton) fwdClip = true;
+
 
         // manual pass
         if (fwdIntake && controlLaw.isAtLeast(MIN_MANUAL_TRANSITIONS_LAW)) {
@@ -177,6 +184,32 @@ public class InDepSubsystem {
                     break;
                 case TRANSFER_O:
                     intakeState = IntakeSubsystem.State.REST;
+                    break;
+            }
+        }
+        if (bwdIntake&&controlLaw.isAtLeast(MIN_MANUAL_TRANSITIONS_LAW)){
+            switch(intake.getState()){
+                case REST:
+                    intakeState = IntakeSubsystem.State.TRANSFER_O;
+                    break;
+                case APPROACH_O:
+                    intakeState = IntakeSubsystem.State.REST;
+                    break;
+                case INTAKE_O:
+                    intakeState = IntakeSubsystem.State.APPROACH_O;
+                    break;
+                case INTAKE_C:
+                    intakeState = IntakeSubsystem.State.INTAKE_O;
+                    break;
+                case APPROACH_C:
+                    intakeState = IntakeSubsystem.State.INTAKE_C;
+                    break;
+                case TRANSFER_C:
+                    intakeState = IntakeSubsystem.State.APPROACH_C;
+                    break;
+                case TRANSFER_O:
+                    intakeState = IntakeSubsystem.State.REST;
+                    magState = MagazineSubsystem.State.REST;
                     break;
             }
         }
@@ -219,6 +252,25 @@ public class InDepSubsystem {
                     break;
             }
         }
+        if (bwdDeposit && controlLaw.isAtLeast(MIN_MANUAL_TRANSITIONS_LAW)) {
+            switch (deposit.getState()) {
+                case REST:
+                    depositState = DepositSubsystem.State.DEPOSIT;
+                    break;
+                case TRANSFER_O:
+                    depositState = DepositSubsystem.State.REST;
+                    break;
+                case TRANSFER_C:
+                    depositState = DepositSubsystem.State.TRANSFER_O;
+                    break;
+                case APPROACH_C:
+                    depositState = DepositSubsystem.State.TRANSFER_C;
+                    break;
+                case DEPOSIT:
+                    depositState = DepositSubsystem.State.APPROACH_C;
+                    break;
+            }
+        }
         //deposit auto
         if (deposit.jobFulfilled() && controlLaw.isAtLeast(MIN_AUTOMATIC_TRANSITIONS_LAW)) {
             switch (deposit.getState()) {
@@ -232,7 +284,18 @@ public class InDepSubsystem {
         }
 
         //magazine manual
+
         if (fwdMag && controlLaw.isAtLeast(MIN_MANUAL_TRANSITIONS_LAW)) {
+            switch (mag.getState()) {
+                case REST:
+                    magState = MagazineSubsystem.State.DEQUEUE;
+                    break;
+                case DEQUEUE:
+                    magState = MagazineSubsystem.State.REST;
+                    break;
+            }
+        }
+        if (bwdMag && controlLaw.isAtLeast(MIN_MANUAL_TRANSITIONS_LAW)) {
             switch (mag.getState()) {
                 case REST:
                     magState = MagazineSubsystem.State.DEQUEUE;
@@ -263,6 +326,16 @@ public class InDepSubsystem {
                     break;
             }
         }
+        if (bwdMaker && controlLaw.isAtLeast(MIN_MANUAL_TRANSITIONS_LAW)) {
+            switch (maker.getState()) {
+                case REST:
+                    makerState = MakerSubsystem.State.UNITE;
+                    break;
+                case UNITE:
+                    makerState = MakerSubsystem.State.REST;
+                    break;
+            }
+        }
         //maker auto
         if (maker.jobFulfilled() && controlLaw.isAtLeast(MIN_AUTOMATIC_TRANSITIONS_LAW)) {
             switch (maker.getState()) {
@@ -274,6 +347,16 @@ public class InDepSubsystem {
 
         //clip manual
         if (fwdClip && controlLaw.isAtLeast(MIN_MANUAL_TRANSITIONS_LAW)) {
+            switch (clip.getState()) {
+                case REST:
+                    clipState = ClipSubsystem.State.OPEN;
+                    break;
+                case OPEN:
+                    clipState = ClipSubsystem.State.REST;
+                    break;
+            }
+        }
+        if (bwdClip && controlLaw.isAtLeast(MIN_MANUAL_TRANSITIONS_LAW)) {
             switch (clip.getState()) {
                 case REST:
                     clipState = ClipSubsystem.State.OPEN;
