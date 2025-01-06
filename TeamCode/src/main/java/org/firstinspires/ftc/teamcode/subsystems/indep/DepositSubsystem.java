@@ -44,7 +44,7 @@ public class DepositSubsystem extends SubInDepSubsystem<
     }
 
     public static class DirectControlData {
-        private double
+        public double
                 depositWristPower,
                 depositClawPower,
                 depositLeftSlidePower,
@@ -52,11 +52,10 @@ public class DepositSubsystem extends SubInDepSubsystem<
     }
 
     public static class SemidirectControlData {
-        private double
+        public double
                 depositWristPower,
                 depositClawPower,
-                depositLeftSlidePower,
-                depositRightSlidePower;
+                depositSlidePower;
     }
 
     @Override
@@ -69,10 +68,14 @@ public class DepositSubsystem extends SubInDepSubsystem<
         );
         targetData.depositLeftSlidePos = InDepSubsystem.clamp(
                 targetData.depositLeftSlidePos
-                        + 0.5*(InDepSubsystem.sigmoid(20*data.depositLeftSlidePower-10)+0.5),
+                        + 0.5*(InDepSubsystem.sigmoid(20*data.depositSlidePower-10)+0.5),
                 0, 1
         );
-        targetData.depositRightSlidePos = targetData.depositLeftSlidePos;
+        targetData.depositRightSlidePos = InDepSubsystem.clamp(
+                targetData.depositRightSlidePos
+                        + 0.5*(InDepSubsystem.sigmoid(20*data.depositSlidePower-10)+0.5),
+                0, 1
+        );
     }
 
     @Override

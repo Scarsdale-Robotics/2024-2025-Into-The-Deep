@@ -34,7 +34,7 @@ public class MagazineSubsystem extends SubInDepSubsystem<
     @Override
     public void setState(State state) {
         this.state = state;
-        this.targetData = state.data;  // TODO: ensure all SubInDepSubsystem instances have this
+        this.targetData = state.data;
 
         robot.clipPusher.setPosition(targetData.magServoPos);
     }

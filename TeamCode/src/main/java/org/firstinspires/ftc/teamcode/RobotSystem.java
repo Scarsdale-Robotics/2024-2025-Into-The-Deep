@@ -38,8 +38,8 @@ public class RobotSystem {
         this.localization = new LocalizationSubsystem(
                 initialPose,
                 hardwareRobot.pinpoint,
-                opMode
-                ,telemetry
+                opMode,
+                telemetry
         );
         this.drive = new DriveSubsystem(
                 hardwareRobot.leftFront,

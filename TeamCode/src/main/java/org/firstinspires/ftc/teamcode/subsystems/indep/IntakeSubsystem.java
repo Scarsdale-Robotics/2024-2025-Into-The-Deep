@@ -79,7 +79,11 @@ public class IntakeSubsystem extends SubInDepSubsystem<
                         + 0.5*(InDepSubsystem.sigmoid(20*data.intakeLiftPower-10)+0.5),
                 0, 1
         );
-        targetData.intakeRightSlidePos = targetData.intakeLeftSlidePos;
+        targetData.intakeRightSlidePos = InDepSubsystem.clamp(
+                targetData.intakeRightSlidePos
+                        + 0.5*(InDepSubsystem.sigmoid(20*data.intakeLiftPower-10)+0.5),
+                0, 1
+        );
     }
 
     public void directControl(DirectControlData data) {
