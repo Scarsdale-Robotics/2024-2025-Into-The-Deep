@@ -51,22 +51,13 @@ public class Teleop extends LinearOpMode {
                 inDepControls.depositDirectCD.depositClawPower = inDepControls.depositSemidirectCD.depositClawPower;
 
             inDepControls.magazineSemidirectCD.magServoPower = gamepad2.square ? g2power : 0;
+                inDepControls.magazineDirectCD.magServoPower = inDepControls.magazineSemidirectCD.magServoPower;
 
             inDepControls.makerSemidirectCD.makerServoPower = gamepad2.circle ? g2power : 0;
+                inDepControls.makerDirectCD.makerServoPower = inDepControls.makerSemidirectCD.makerServoPower;
 
             inDepControls.clipSemidirectCD.clipIntakeServoPower = gamepad1.square ? g1power : 0;
                 inDepControls.clipDirectCD.clipIntakeServoPower = inDepControls.clipSemidirectCD.clipIntakeServoPower;
-
-
-            inDepControls.set(
-                    gamepad1.triangle,
-                    gamepad2.triangle,
-                    gamepad2.square,
-                    gamepad1.circle,
-                    gamepad1.square,
-                    gamepad1.right_trigger - gamepad1.left_trigger,
-                    gamepad2.right_trigger - gamepad2.left_trigger  // consider multiplying by some delta time thing
-            );
         }
     }
 
