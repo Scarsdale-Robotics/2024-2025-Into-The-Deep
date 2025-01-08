@@ -77,6 +77,12 @@ public class InDepSubsystem {
         public boolean makerButton;
         public boolean clipButton;
 
+        public boolean intakeUndo;
+        public boolean depositUndo;
+        public boolean magUndo;
+        public boolean makerUndo;
+        public boolean clipUndo;
+
         // SEMIDIRECT
         public IntakeSubsystem.SemidirectControlData intakeSemidirectCD;
         public DepositSubsystem.SemidirectControlData depositSemidirectCD;
@@ -119,6 +125,12 @@ public class InDepSubsystem {
         lastControls.magButton = controls.magButton;
         lastControls.depositButton = controls.depositButton;
 
+        lastControls.intakeUndo = controls.intakeUndo;
+        lastControls.clipUndo = controls.clipUndo;
+        lastControls.makerUndo = controls.makerUndo;
+        lastControls.magUndo = controls.magUndo;
+        lastControls.depositUndo = controls.depositUndo;
+
         // NOTE: SOME SUBSYSTEMS MAY REQUIRE LAST ACTION TRACKING.
         //       LAST ACTION TRACKING SHOULD BE IMPLEMENTED IMMEDIATELY BEFORE THIS COMMENT.
     }
@@ -139,25 +151,36 @@ public class InDepSubsystem {
         clip.semidirectControl(controls.clipSemidirectCD);
     }
 
+    private boolean intakeWasLastForward,
+                    depositWasLastForward,
+                    magWasLastForward,
+                    makerWasLastForward,
+                    clipWasLastForward;
+
+
     public void tickFSM(InDepControlData controls) {
         boolean
-                fwdIntake = false,
-                fwdDeposit = false,
-                fwdMag = false,
-                fwdMaker = false,
-                fwdClip = false,
-                bwdIntake = false,
-                bwdDeposit = false,
-                bwdMag= false,
-                bwdMaker = false,
-                bwdClip = false;
+                fwdIntake = lastControls.intakeButton && !controls.intakeButton,
+                fwdDeposit = lastControls.depositButton && !controls.depositButton,
+                fwdMag = lastControls.magButton && !controls.magButton,
+                fwdMaker = lastControls.makerButton && !controls.makerButton,
+                fwdClip = lastControls.clipButton && !controls.clipButton,
+                bwdIntake = lastControls.intakeUndo && !controls.intakeUndo,
+                bwdDeposit = lastControls.depositUndo && !controls.depositUndo,
+                bwdMag = lastControls.magUndo && !controls.magUndo,
+                bwdMaker = lastControls.makerUndo && !controls.makerUndo,
+                bwdClip = lastControls.clipUndo && !controls.clipUndo;
 
-
-        if (lastControls.intakeButton && !controls.intakeButton) fwdIntake = true;  // trigger on release
-        if (lastControls.depositButton && !controls.depositButton) fwdDeposit = true;
-        if (lastControls.magButton && !controls.magButton) fwdMag = true;
-        if (lastControls.makerButton && !controls.makerButton) fwdMaker = true;
-        if (lastControls.clipButton && !controls.clipButton) fwdClip = true;
+        if (fwdIntake) intakeWasLastForward = true;
+        if (fwdDeposit) depositWasLastForward = true;
+        if (fwdMag) magWasLastForward = true;
+        if (fwdMaker) makerWasLastForward = true;
+        if (fwdClip) clipWasLastForward = true;
+        if (bwdIntake) intakeWasLastForward = false;
+        if (bwdDeposit) depositWasLastForward = false;
+        if (bwdMag) magWasLastForward = false;
+        if (bwdMaker) makerWasLastForward = false;
+        if (bwdClip) clipWasLastForward = false;
 
 
         // manual pass
@@ -187,8 +210,8 @@ public class InDepSubsystem {
                     break;
             }
         }
-        if (bwdIntake&&controlLaw.isAtLeast(MIN_MANUAL_TRANSITIONS_LAW)){
-            switch(intake.getState()){
+        if (bwdIntake && controlLaw.isAtLeast(MIN_MANUAL_TRANSITIONS_LAW)){
+            switch (intake.getState()) {
                 case REST:
                     intakeState = IntakeSubsystem.State.TRANSFER_O;
                     break;
@@ -209,26 +232,42 @@ public class InDepSubsystem {
                     break;
                 case TRANSFER_O:
                     intakeState = IntakeSubsystem.State.TRANSFER_C;
-                    magState = MagazineSubsystem.State.REST;
                     break;
             }
         }
-        // auto-magic pass       sadly, no magic takes place
         if (intake.jobFulfilled() && controlLaw.isAtLeast(MIN_AUTOMATIC_TRANSITIONS_LAW)) {
-            switch (intake.getState()) {
-                case INTAKE_O:
-                    intakeState = IntakeSubsystem.State.INTAKE_C;
-                    break;
-                case INTAKE_C:
-                    intakeState = IntakeSubsystem.State.APPROACH_C;
-                    break;
-                case TRANSFER_C:
-                    intakeState = IntakeSubsystem.State.TRANSFER_O;
-                    magState = MagazineSubsystem.State.DEQUEUE;
-                    break;
-                case TRANSFER_O:
-                    intakeState = IntakeSubsystem.State.REST;
-                    break;
+            if (intakeWasLastForward) {
+                switch (intake.getState()) {
+                    case INTAKE_O:
+                        intakeState = IntakeSubsystem.State.INTAKE_C;
+                        break;
+                    case INTAKE_C:
+                        intakeState = IntakeSubsystem.State.APPROACH_C;
+                        break;
+                    case TRANSFER_C:
+                        intakeState = IntakeSubsystem.State.TRANSFER_O;
+                        magState = MagazineSubsystem.State.DEQUEUE;
+                        break;
+                    case TRANSFER_O:
+                        intakeState = IntakeSubsystem.State.REST;
+                        break;
+                }
+            } else {
+                switch (intake.getState()) {
+                    case INTAKE_C:
+                        intakeState = IntakeSubsystem.State.INTAKE_O;
+                        break;
+                    case APPROACH_C:
+                        intakeState = IntakeSubsystem.State.INTAKE_C;
+                        break;
+                    case TRANSFER_O:
+                        intakeState = IntakeSubsystem.State.TRANSFER_C;
+                        magState = MagazineSubsystem.State.REST;
+                        break;
+                    case REST:
+                        intakeState = IntakeSubsystem.State.TRANSFER_O;
+                        break;
+                }
             }
         }
 
@@ -273,13 +312,24 @@ public class InDepSubsystem {
         }
         //deposit auto
         if (deposit.jobFulfilled() && controlLaw.isAtLeast(MIN_AUTOMATIC_TRANSITIONS_LAW)) {
-            switch (deposit.getState()) {
-                case TRANSFER_O:
-                    depositState = DepositSubsystem.State.TRANSFER_C;
-                    break;
-                case DEPOSIT:
-                    depositState = DepositSubsystem.State.REST;
-                    break;
+            if (depositWasLastForward) {
+                switch (deposit.getState()) {
+                    case TRANSFER_O:
+                        depositState = DepositSubsystem.State.TRANSFER_C;
+                        break;
+                    case DEPOSIT:
+                        depositState = DepositSubsystem.State.REST;
+                        break;
+                }
+            } else {
+                switch (deposit.getState()) {
+                    case TRANSFER_C:
+                        depositState = DepositSubsystem.State.TRANSFER_O;
+                        break;
+                    case REST:
+                        depositState = DepositSubsystem.State.DEPOSIT;
+                        break;
+                }
             }
         }
 
@@ -307,11 +357,19 @@ public class InDepSubsystem {
         }
         //magazine auto
         if (mag.jobFulfilled() && controlLaw.isAtLeast(MIN_AUTOMATIC_TRANSITIONS_LAW)) {
-            switch (mag.getState()) {  // for consistent formatting
-                case DEQUEUE:
-                    magState = MagazineSubsystem.State.REST;
-                    makerState = MakerSubsystem.State.UNITE;
-                    break;
+            if (magWasLastForward) {
+                switch (mag.getState()) {  // for consistent formatting
+                    case DEQUEUE:
+                        magState = MagazineSubsystem.State.REST;
+                        makerState = MakerSubsystem.State.UNITE;
+                        break;
+                }
+            } else {
+                switch (mag.getState()) {
+                    case REST:
+                        magState = MagazineSubsystem.State.DEQUEUE;
+                        break;
+                }
             }
         }
 
@@ -338,10 +396,18 @@ public class InDepSubsystem {
         }
         //maker auto
         if (maker.jobFulfilled() && controlLaw.isAtLeast(MIN_AUTOMATIC_TRANSITIONS_LAW)) {
-            switch (maker.getState()) {
-                case UNITE:
-                    makerState = MakerSubsystem.State.REST;
-                    break;
+            if (makerWasLastForward) {
+                switch (maker.getState()) {
+                    case UNITE:
+                        makerState = MakerSubsystem.State.REST;
+                        break;
+                }
+            } else {
+                switch (maker.getState()) {
+                    case REST:
+                        makerState = MakerSubsystem.State.UNITE;
+                        break;
+                }
             }
         }
 

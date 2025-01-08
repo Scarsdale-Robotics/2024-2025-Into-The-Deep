@@ -20,14 +20,19 @@ public class Teleop extends LinearOpMode {
         waitForStart();
 
         while (opModeIsActive()) {
-            // TODO: INDEP UNDOs
             InDepSubsystem.InDepControlData inDepControls = new InDepSubsystem.InDepControlData();
 
-            inDepControls.depositButton = gamepad2.triangle;
-            inDepControls.intakeButton = gamepad1.triangle;
-            inDepControls.magButton = gamepad2.square;
-            inDepControls.makerButton = gamepad2.circle;
-            inDepControls.clipButton = gamepad1.square;
+            inDepControls.depositButton = !gamepad2.dpad_left && gamepad2.triangle;
+            inDepControls.intakeButton = !gamepad1.dpad_left && gamepad1.triangle;
+            inDepControls.magButton = !gamepad2.dpad_left && gamepad2.square;
+            inDepControls.makerButton = !gamepad2.dpad_left && gamepad2.circle;
+            inDepControls.clipButton = !gamepad1.dpad_left && gamepad1.square;
+
+            inDepControls.intakeUndo = gamepad2.dpad_left && inDepControls.depositButton;
+            inDepControls.depositUndo = gamepad1.dpad_left && inDepControls.intakeButton;
+            inDepControls.magUndo = gamepad2.dpad_left && inDepControls.magButton;
+            inDepControls.makerUndo = gamepad2.dpad_left && inDepControls.makerButton;
+            inDepControls.clipUndo = gamepad1.dpad_left && inDepControls.clipButton;
 
             double g1power = gamepad1.right_trigger - gamepad1.left_trigger;
             double g2power = gamepad2.right_trigger - gamepad2.left_trigger;
