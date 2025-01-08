@@ -208,7 +208,7 @@ public class InDepSubsystem {
                     intakeState = IntakeSubsystem.State.APPROACH_C;
                     break;
                 case TRANSFER_O:
-                    intakeState = IntakeSubsystem.State.REST;
+                    intakeState = IntakeSubsystem.State.TRANSFER_C;
                     magState = MagazineSubsystem.State.REST;
                     break;
             }
