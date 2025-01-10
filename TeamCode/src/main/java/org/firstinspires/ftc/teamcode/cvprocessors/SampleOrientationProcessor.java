@@ -1,45 +1,30 @@
-package org.firstinspires.ftc.teamcode.cvpipelines;
+package org.firstinspires.ftc.teamcode.cvprocessors;
 
 import android.graphics.Canvas;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
-import org.opencv.core.CvType;
-import org.opencv.core.MatOfPoint;
-import org.opencv.core.MatOfPoint2f;
-import org.opencv.core.RotatedRect;
-import org.openftc.easyopencv.OpenCvPipeline;
-
 import org.firstinspires.ftc.robotcore.internal.camera.calibration.CameraCalibration;
+import org.firstinspires.ftc.vision.VisionProcessor;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
+import org.opencv.core.MatOfPoint;
+import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
+import org.opencv.core.RotatedRect;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class RectDrawer extends OpenCvPipeline {
-    public Mat frame;
-    public int getCameraWidth() {
-        return frame.width();
-    }
+public class SampleOrientationProcessor implements VisionProcessor {
 
-    public static Telemetry telemetry;
+    private Mat frame;
 
-    private int centX = 0;
-    private int centY = 0;
-
-    public Point getPixelsCenter() {
-        return new Point(centX, centY);
-    }
-
-    public static Scalar testVariable = new Scalar(0, 1, 2);
-    public static Scalar testVariable2 = new Scalar(0, 1, 2);
+    private Telemetry telemetry;
 
     public static Scalar lowerYellow = new Scalar(19, 102.0, 130.1); // hsv
     public static Scalar upperYellow = new Scalar(30, 255.0, 255.0); // hsv
@@ -47,25 +32,22 @@ public class RectDrawer extends OpenCvPipeline {
     public static Scalar upperBlue = new Scalar(136, 255, 255.0); // hsv
     public static Scalar lowerRed = new Scalar(161.5, 103.4, 82.2); // hsv
     public static Scalar upperRed = new Scalar(182.8, 255, 255.0); // hsv
-    public static Scalar lowerTarget = new Scalar(114.8, 68, 32.6); // hsv
-    public static Scalar upperTarget = new Scalar(136, 255, 255.0); // hsv
 
     private double sampleAngle = 0;
 
     public String colorType = "e";
 
-//    @Override
-//    public void init(int width, int height, CameraCalibration calibration) {
-//
-//    }
-
-    public RectDrawer(Telemetry telemetry){
+    public SampleOrientationProcessor(Telemetry telemetry) {
         this.telemetry = telemetry;
-//        this.colorType = colorType;
     }
 
     @Override
-    public Mat processFrame(Mat input) {
+    public void init(int width, int height, CameraCalibration calibration) {
+
+    }
+
+    @Override
+    public Object processFrame(Mat input, long captureTimeNanos) {
         frame = input;
         Mat hsv = new Mat(); // convert to hsv
         Imgproc.cvtColor(input, hsv, Imgproc.COLOR_RGB2HSV);
@@ -190,22 +172,16 @@ public class RectDrawer extends OpenCvPipeline {
             else
                 procAngle = 90-procAngle;
             telemetry.addData("procAngle ", procAngle);
-            sampleAngle = procAngle;
+            sampleAngle = Math.toRadians(procAngle);
         }
         telemetry.addData("sampleAngle", sampleAngle);
         telemetry.update();
 
-
         return frame;
     }
 
-    @Override
-    public void onDrawFrame(Canvas canvas, int onscreenWidth, int onscreenHeight, float scaleBmpPxToCanvasPx, float scaleCanvasDensity, Object userContext) {
-//        Paint p = new Paint();
-//        p.setColor(Color.BLUE);
-//        p.setStrokeWidth(4);
-//        canvas.drawCircle((float) getPixelsCenter().x, (float) getPixelsCenter().y, 0, p);
-//        canvas.drawCircle((float) getPixelsCenter().x, (float) getPixelsCenter().y, 6, p);
+    public double getSampleAngle() {
+        return sampleAngle;
     }
 
     private double getIntersectionArea(RotatedRect rect1, RotatedRect rect2) {
@@ -227,27 +203,8 @@ public class RectDrawer extends OpenCvPipeline {
         return Imgproc.intersectConvexConvex(poly1, poly2, intersection, true);
     }
 
+    @Override
+    public void onDrawFrame(Canvas canvas, int onscreenWidth, int onscreenHeight, float scaleBmpPxToCanvasPx, float scaleCanvasDensity, Object userContext) {
 
-    public MatOfPoint2f convertMatToMatOfPoint2f(Mat mat) {
-        // Check if the Mat is in the correct format (CV_32FC2)
-        if (mat.type() != CvType.CV_32FC2) {
-            throw new IllegalArgumentException("Mat must be of type CV_32FC2");
-        }
-
-        // Create a MatOfPoint2f object
-        MatOfPoint2f matOfPoint2f = new MatOfPoint2f();
-
-        // Convert Mat rows to Point objects
-        Point[] points = new Point[(int) mat.total()];
-        for (int i = 0; i < mat.rows(); i++) {
-            float[] data = new float[2];
-            mat.get(i, 0, data);
-            points[i] = new Point(data[0], data[1]);
-        }
-
-        // Set points to MatOfPoint2f
-        matOfPoint2f.fromArray(points);
-
-        return matOfPoint2f;
     }
 }

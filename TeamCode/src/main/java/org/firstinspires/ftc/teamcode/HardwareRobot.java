@@ -9,6 +9,8 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.ServoImplEx;
 
+import org.firstinspires.ftc.robotcore.external.hardware.camera.CameraName;
+import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.teamcode.subsystems.GoBildaPinpointDriver;
 
 public class HardwareRobot {
@@ -23,9 +25,11 @@ public class HardwareRobot {
     public final GoBildaPinpointDriver pinpoint;
 
     public final Limelight3A limelight;
+    public final WebcamName cameraName;
 
     public final Servo elbow;
     public final Servo claw;  // claw open/close servo
+    public final Servo wrist;
 
 
     public HardwareRobot(HardwareMap hardwareMap) {
@@ -101,12 +105,14 @@ public class HardwareRobot {
         ////////////
         elbow = hardwareMap.get(ServoImplEx.class, "elbow");
         claw = hardwareMap.get(ServoImplEx.class, "claw");
+        wrist = hardwareMap.get(ServoImplEx.class, "wrist");
 
 
         ////////////
         // CAMERA //
         ////////////
         limelight = hardwareMap.get(Limelight3A.class, "limelight");
+        cameraName = hardwareMap.get(WebcamName.class, "Webcam 1");
 
     }
 }
