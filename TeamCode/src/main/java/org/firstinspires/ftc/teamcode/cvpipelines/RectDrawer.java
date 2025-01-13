@@ -4,6 +4,7 @@ import android.graphics.Canvas;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.opencv.core.CvType;
+import org.opencv.core.MatOfDouble;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.RotatedRect;
@@ -24,6 +25,13 @@ import java.util.List;
 import java.util.Set;
 
 public class RectDrawer extends OpenCvPipeline {
+
+    public enum SampleColor {
+        YELLOW(),
+        BLUE(),
+        RED();
+    }
+
     public Mat frame;
     public int getCameraWidth() {
         return frame.width();
@@ -41,19 +49,18 @@ public class RectDrawer extends OpenCvPipeline {
     public static Scalar testVariable = new Scalar(0, 1, 2);
     public static Scalar testVariable2 = new Scalar(0, 1, 2);
 
-    public static Scalar lowerYellow = new Scalar(19, 102.0, 130.1); // hsv
-    public static Scalar upperYellow = new Scalar(30, 255.0, 255.0); // hsv
-    public static Scalar lowerBlue = new Scalar(114.8, 68, 32.6); // hsv
-    public static Scalar upperBlue = new Scalar(136, 255, 255.0); // hsv
-    public static Scalar lowerRed = new Scalar(161.5, 103.4, 82.2); // hsv
-    public static Scalar upperRed = new Scalar(182.8, 255, 255.0); // hsv
-    public static Scalar lowerTarget = new Scalar(114.8, 68, 32.6); // hsv
-    public static Scalar upperTarget = new Scalar(136, 255, 255.0); // hsv
+    public static Scalar lowerYellow = new Scalar(19.0, 102.0, 130.1); // hsv
+    public static Scalar upperYellow = new Scalar(30.0, 255.0, 255.0); // hsv
+    public static Scalar lowerBlue = new Scalar(90.0, 90.0, 40); // hsv
+    public static Scalar upperBlue = new Scalar(120.0, 255.0, 255.0); // hsv
+    public static Scalar lowerRedH = new Scalar(10.0, 0.0, 0.0); // hsv
+    public static Scalar upperRedH = new Scalar(170.0, 255.0, 255.0); // hsv
+    public static Scalar lowerRedSV = new Scalar(0.0, 130.0, 100.0); // hsv
+    public static Scalar upperRedSV = new Scalar(255.0, 255.0, 255.0); // hsv
 
     private double sampleAngle = 0;
 
-    public String colorType = "e";
-
+    public static SampleColor colorType = SampleColor.BLUE;
 //    @Override
 //    public void init(int width, int height, CameraCalibration calibration) {
 //
@@ -68,15 +75,22 @@ public class RectDrawer extends OpenCvPipeline {
     public Mat processFrame(Mat input) {
         frame = input;
         Mat hsv = new Mat(); // convert to hsv
+        Mat gray = new Mat(); // convert to hsv
         Imgproc.cvtColor(input, hsv, Imgproc.COLOR_RGB2HSV);
+        Imgproc.cvtColor(input, gray, Imgproc.COLOR_RGB2GRAY);
 
         // Color threshold
         Mat inRange = new Mat();
 //        Core.inRange(hsv, PixelColor.YELLOW.LOWER, PixelColor.YELLOW.UPPER, inRange);
-        if (colorType.equals("blue")) {
+        if (colorType.equals(SampleColor.BLUE)) {
             Core.inRange(hsv, lowerBlue, upperBlue, inRange);
-        } else if (colorType.equals("red")) {
-            Core.inRange(hsv, lowerRed, upperRed, inRange);
+        } else if (colorType.equals(SampleColor.RED)) {
+            Mat inHRange = new Mat();
+            Mat inSVRange = new Mat();
+            Core.inRange(hsv, lowerRedH, upperRedH, inHRange);
+            Core.bitwise_not(inHRange, inHRange);
+            Core.inRange(hsv, lowerRedSV, upperRedSV, inSVRange);
+            Core.bitwise_and(inHRange, inSVRange, inRange);
         } else {
             Core.inRange(hsv, lowerYellow, upperYellow, inRange);
         }
@@ -175,6 +189,7 @@ public class RectDrawer extends OpenCvPipeline {
             for (int i = 0; i < 4; i++) {
                 Imgproc.line(frame, vertices[i], vertices[(i + 1) % 4], new Scalar(0, 255, 0), 2);
             }
+            Imgproc.circle(frame, rotatedRect.center, 1, new Scalar(255, 255, 0), 3);
         }
 
 
@@ -182,6 +197,7 @@ public class RectDrawer extends OpenCvPipeline {
         if (!filteredRects.isEmpty()) {
             telemetry.addData("width ", filteredRects.get(0).size.width);
             telemetry.addData("height ", filteredRects.get(0).size.height);
+            telemetry.addData("area ", filteredRects.get(0).size.area());
             telemetry.addData("angle ", filteredRects.get(0).angle);
             telemetry.addData("center ", filteredRects.get(0).center);
             double procAngle = filteredRects.get(0).angle;
@@ -193,6 +209,33 @@ public class RectDrawer extends OpenCvPipeline {
             sampleAngle = procAngle;
         }
         telemetry.addData("sampleAngle", sampleAngle);
+
+
+
+        // Getting representative brightness of image
+        MatOfDouble muMat = new MatOfDouble();
+        MatOfDouble sigmaMat = new MatOfDouble();
+        Core.meanStdDev(gray, muMat, sigmaMat);
+        telemetry.addData("gray mu", muMat.get(0,0)[0]);
+        telemetry.addData("gray sigma", sigmaMat.get(0,0)[0]);
+
+
+        double mu = muMat.get(0,0)[0];
+        double sigma = sigmaMat.get(0,0)[0];
+        double k = 1;
+        Scalar lowerBound = new Scalar(mu-k*sigma);
+        Scalar upperBound = new Scalar(mu+k*sigma);
+
+        Mat mask = new Mat();
+        Core.inRange(gray, lowerBound, upperBound, mask);
+        Scalar maskedMean = Core.mean(gray, mask);
+        double averageInRange = maskedMean.val[0];
+
+        telemetry.addData("averageInRange", averageInRange);
+
+
+
+
         telemetry.update();
 
 

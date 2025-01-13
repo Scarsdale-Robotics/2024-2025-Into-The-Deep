@@ -9,9 +9,12 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.ServoImplEx;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
+import org.firstinspires.ftc.robotcore.external.hardware.camera.controls.ExposureControl;
 import org.firstinspires.ftc.teamcode.HardwareRobot;
 import org.firstinspires.ftc.teamcode.cvprocessors.SampleOrientationProcessor;
 import org.firstinspires.ftc.vision.VisionPortal;
+
+import java.util.concurrent.TimeUnit;
 
 @Config
 @TeleOp(name="Sample Orientation Logger Calibrator", group="Calibration")
@@ -36,6 +39,8 @@ public class SampleOrientationLogger extends LinearOpMode {
 
         waitForStart();
         while ((opModeInInit() || opModeIsActive()) && visionPortal.getCameraState() != VisionPortal.CameraState.STREAMING);
+        sleep(100);
+        updateExposure(visionPortal, getCorrectedExposure(processor.getAverageBrightness()));
 
         while (opModeIsActive()) {
             double sampleAngleProportion = (processor.getSampleAngle() - -Math.PI/2) / Math.PI;
@@ -57,6 +62,20 @@ public class SampleOrientationLogger extends LinearOpMode {
         visionPortal.setProcessorEnabled(processor, true);  // let processors run asynchronously using camera data
 
         return visionPortal;
+    }
+
+    private void updateExposure(VisionPortal visionPortal, long ms) {
+        ExposureControl exposureControl = visionPortal.getCameraControl(ExposureControl.class);
+        exposureControl.setMode(ExposureControl.Mode.Manual);
+        exposureControl.setExposure(ms, TimeUnit.MILLISECONDS);  // exposure may have to be adjusted during competitions
+    }
+
+    private long getCorrectedExposure(double averageBrightness) {
+        if (averageBrightness < 50) return 50;
+        else if (averageBrightness < 80) return 27;
+        else if (averageBrightness < 100) return 15;
+        else if (averageBrightness < 140) return 14;
+        else return 5;
     }
 
 }
