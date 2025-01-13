@@ -52,11 +52,13 @@ public class RectDrawer extends OpenCvPipeline {
     public static Scalar lowerYellow = new Scalar(19.0, 102.0, 130.1); // hsv
     public static Scalar upperYellow = new Scalar(30.0, 255.0, 255.0); // hsv
     public static Scalar lowerBlue = new Scalar(90.0, 90.0, 40); // hsv
-    public static Scalar upperBlue = new Scalar(120.0, 255.0, 255.0); // hsv
+    public static Scalar upperBlue = new Scalar(120.0, 255.0, 135.0); // hsv
     public static Scalar lowerRedH = new Scalar(10.0, 0.0, 0.0); // hsv
     public static Scalar upperRedH = new Scalar(170.0, 255.0, 255.0); // hsv
     public static Scalar lowerRedSV = new Scalar(0.0, 130.0, 100.0); // hsv
     public static Scalar upperRedSV = new Scalar(255.0, 255.0, 255.0); // hsv
+
+//    public static Scalar offset = new Scalar(0, 0, 0);
 
     private double sampleAngle = 0;
 
@@ -191,15 +193,21 @@ public class RectDrawer extends OpenCvPipeline {
             }
             Imgproc.circle(frame, rotatedRect.center, 1, new Scalar(255, 255, 0), 3);
         }
+        Imgproc.circle(frame, new Point(320, 240), 1, new Scalar(255, 255, 0), 3);
 
 
         // telemetry
         if (!filteredRects.isEmpty()) {
+
+
+
             telemetry.addData("width ", filteredRects.get(0).size.width);
             telemetry.addData("height ", filteredRects.get(0).size.height);
             telemetry.addData("area ", filteredRects.get(0).size.area());
             telemetry.addData("angle ", filteredRects.get(0).angle);
             telemetry.addData("center ", filteredRects.get(0).center);
+//            telemetry.addData("center scaled", new Point((filteredRects.get(0).center.x - 320) / 640 * 3.0/8.0, -(filteredRects.get(0).center.y - 240) / 480));
+//            output.add(new Point((i.center.x - 320) / 640 * canvasHorizontal, -(i.center.y - 240) / 240 * canvasVertical));
             double procAngle = filteredRects.get(0).angle;
             if (filteredRects.get(0).size.width > filteredRects.get(0).size.height)
                 procAngle *= -1;
@@ -292,5 +300,32 @@ public class RectDrawer extends OpenCvPipeline {
         matOfPoint2f.fromArray(points);
 
         return matOfPoint2f;
+    }
+
+    public ArrayList<Point> getOffsets(ArrayList<RotatedRect> input) {
+        ArrayList<Point> output = new ArrayList<Point>();
+        double cameraAngle = 0;
+
+        double height = 3.0; // in inches
+
+
+        double canvasVertical = height*3.0/8.0; // inches
+        double canvasHorizontal = height / 2.0;
+
+        for (RotatedRect i : input) {
+            // real center is (320, 480), positive direction is right and down
+//            output.add(new Point(i.center.x - 320, -(i.center.y - 240)));
+            output.add(new Point((i.center.x - 320) / 320 * canvasHorizontal, -(i.center.y - 240) / 240 * canvasVertical));
+
+
+            // 4 in height = 1.5 width vertical (half width, not full)
+            // 6 : 2.25
+            // 2 : 0.75
+            // 8 : 3
+            // horizontal: 8 / 4
+        }
+
+
+        return output;
     }
 }
