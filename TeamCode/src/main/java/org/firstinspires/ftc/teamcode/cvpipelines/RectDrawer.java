@@ -21,6 +21,7 @@ import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -203,11 +204,13 @@ public class RectDrawer extends OpenCvPipeline {
 //        }
 
         // Draw filtered rects as green
-        for (RotatedRect rotatedRect : filteredRects) {
+        ArrayList<Point> real = getOffsets(filteredRects);
+        for (int i = 0; i < filteredRects.size(); i++) {
+            RotatedRect rotatedRect = filteredRects.get(i);
             Point[] vertices = new Point[4];
             rotatedRect.points(vertices);
-            for (int i = 0; i < 4; i++) {
-                Imgproc.line(frame, vertices[i], vertices[(i + 1) % 4], new Scalar(0, 255, 0), 2);
+            for (int j = 0; j < 4; j++) {
+                Imgproc.line(frame, vertices[j], vertices[(j + 1) % 4], new Scalar(0, 255, 0), 2);
             }
             Point center = rotatedRect.center;
 
@@ -260,13 +263,11 @@ public class RectDrawer extends OpenCvPipeline {
 
 
             double sampleHeight = (1d/rotatedRect.size.area()+2.28e-5)/(7.14e-6);
-            sampleHeight = (1/rotatedRect.size.area()+2.57e-5)/(7.6e-6);
+            sampleHeight = (1/rotatedRect.size.area()+2.57e-5)/(7.6e-6); // calculate height of camer based on area of sample
             telemetry.addData("sampleHeight", sampleHeight);
 
-            double px = rotatedRect.center.x-320;
-            double py = 240-rotatedRect.center.y;
-            double real_x = k_translation*sampleHeight*px;
-            double real_y = k_translation*sampleHeight*py;
+            double real_x = real.get(i).x; // in inches
+            double real_y = real.get(i).y;
             telemetry.addData("real_x", real_x);
             telemetry.addData("real_y", real_y);
             Imgproc.line(frame, center, new Point(320, center.y), new Scalar(255, 255, 0), 1);
@@ -366,10 +367,13 @@ public class RectDrawer extends OpenCvPipeline {
     }
 
     public ArrayList<Point> getOffsets(ArrayList<RotatedRect> input) {
+        // Note: This method only works when the camera is directly above the samples, looking straight down
+
         ArrayList<Point> output = new ArrayList<Point>();
         double cameraAngle = 0;
 
-        double height = 3.0; // in inches
+        double height = 10.0; // in inches
+        // TODO: Make height not hardcoded, instead base it off of robot position
 
 
         double canvasVertical = height*3.0/8.0; // inches
