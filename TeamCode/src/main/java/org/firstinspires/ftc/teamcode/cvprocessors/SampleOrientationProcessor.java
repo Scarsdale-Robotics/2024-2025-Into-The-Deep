@@ -50,6 +50,8 @@ public class SampleOrientationProcessor implements VisionProcessor {
 
     public static RectDrawer.SampleColor colorType = RectDrawer.SampleColor.YELLOW;
 
+    private ArrayList<RotatedRect> rects;
+
     public SampleOrientationProcessor(Telemetry telemetry) {
         this.telemetry = telemetry;
     }
@@ -179,6 +181,7 @@ public class SampleOrientationProcessor implements VisionProcessor {
             }
             Imgproc.circle(frame, rotatedRect.center, 5, new Scalar(255, 255, 0));
         }
+        rects = new ArrayList<RotatedRect>(filteredRects);
 
 
         // telemetry
@@ -255,5 +258,33 @@ public class SampleOrientationProcessor implements VisionProcessor {
     @Override
     public void onDrawFrame(Canvas canvas, int onscreenWidth, int onscreenHeight, float scaleBmpPxToCanvasPx, float scaleCanvasDensity, Object userContext) {
 
+    }
+
+    public ArrayList<Point> getOffsets() { // scaled to inches
+        ArrayList<RotatedRect> input = new ArrayList<RotatedRect>(rects); // already filtered by color
+        ArrayList<Point> output = new ArrayList<Point>();
+        double cameraAngle = 0;
+
+        double height = 3.0; // in inches
+
+
+        double canvasVertical = height*3.0/8.0; // inches
+        double canvasHorizontal = height / 2.0;
+
+        for (RotatedRect i : input) {
+            // real center is (320, 480), positive direction is right and down
+//            output.add(new Point(i.center.x - 320, -(i.center.y - 240)));
+            output.add(new Point((i.center.x - 320) / 320 * canvasHorizontal, -(i.center.y - 240) / 240 * canvasVertical));
+
+
+            // 4 in height = 1.5 width vertical (half width, not full)
+            // 6 : 2.25
+            // 2 : 0.75
+            // 8 : 3
+            // horizontal: 8 / 4
+        }
+
+
+        return output;
     }
 }
