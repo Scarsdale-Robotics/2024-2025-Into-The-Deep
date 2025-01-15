@@ -2,6 +2,9 @@ package org.firstinspires.ftc.teamcode.cvpipelines;
 
 import android.graphics.Canvas;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.opencv.core.CvType;
 import org.opencv.core.MatOfDouble;
@@ -20,8 +23,12 @@ import org.opencv.imgproc.Imgproc;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Set;
 
 public class RectDrawer extends OpenCvPipeline {
@@ -33,32 +40,20 @@ public class RectDrawer extends OpenCvPipeline {
     }
 
     public Mat frame;
-    public int getCameraWidth() {
-        return frame.width();
-    }
 
     public static Telemetry telemetry;
 
-    private int centX = 0;
-    private int centY = 0;
-
-    public Point getPixelsCenter() {
-        return new Point(centX, centY);
-    }
-
-    public static Scalar testVariable = new Scalar(0, 1, 2);
-    public static Scalar testVariable2 = new Scalar(0, 1, 2);
-
-    public static Scalar lowerYellow = new Scalar(19.0, 102.0, 130.1); // hsv
+    public static Scalar lowerYellow = new Scalar(19.0, 150.0, 130.1); // hsv
     public static Scalar upperYellow = new Scalar(30.0, 255.0, 255.0); // hsv
-    public static Scalar lowerBlue = new Scalar(90.0, 90.0, 40); // hsv
+    public static Scalar lowerBlue = new Scalar(90.0, 150.0, 100.0); // hsv
     public static Scalar upperBlue = new Scalar(120.0, 255.0, 255.0); // hsv
     public static Scalar lowerRedH = new Scalar(10.0, 0.0, 0.0); // hsv
-    public static Scalar upperRedH = new Scalar(170.0, 255.0, 255.0); // hsv
-    public static Scalar lowerRedSV = new Scalar(0.0, 130.0, 100.0); // hsv
+    public static Scalar upperRedH = new Scalar(160.0, 255.0, 255.0); // hsv
+    public static Scalar lowerRedSV = new Scalar(0.0, 150.0, 120.0); // hsv
     public static Scalar upperRedSV = new Scalar(255.0, 255.0, 255.0); // hsv
 
     private double sampleAngle = 0;
+    private double k_translation = 1d/640d;
 
     public static SampleColor colorType = SampleColor.BLUE;
 //    @Override
@@ -73,11 +68,36 @@ public class RectDrawer extends OpenCvPipeline {
 
     @Override
     public Mat processFrame(Mat input) {
-        frame = input;
+        frame = input.clone();
         Mat hsv = new Mat(); // convert to hsv
         Mat gray = new Mat(); // convert to hsv
         Imgproc.cvtColor(input, hsv, Imgproc.COLOR_RGB2HSV);
         Imgproc.cvtColor(input, gray, Imgproc.COLOR_RGB2GRAY);
+
+
+        // Getting representative brightness of image and correcting brightness
+        MatOfDouble muMat = new MatOfDouble();
+        MatOfDouble sigmaMat = new MatOfDouble();
+        Core.meanStdDev(gray, muMat, sigmaMat);
+        telemetry.addData("gray mu", muMat.get(0,0)[0]);
+        telemetry.addData("gray sigma", sigmaMat.get(0,0)[0]);
+
+        double mu = muMat.get(0,0)[0];
+        double sigma = sigmaMat.get(0,0)[0];
+        double k = 1;
+        Scalar lowerBound = new Scalar(mu-k*sigma);
+        Scalar upperBound = new Scalar(mu+k*sigma);
+
+        Mat mask = new Mat();
+        Core.inRange(gray, lowerBound, upperBound, mask);
+        Scalar maskedMean = Core.mean(gray, mask);
+        double averageInRange = maskedMean.val[0];
+        double targetAverageInRange = 90;
+        frame.convertTo(frame, -1, targetAverageInRange/averageInRange, 0);
+
+        telemetry.addData("averageInRange", averageInRange);
+
+
 
         // Color threshold
         Mat inRange = new Mat();
@@ -108,7 +128,7 @@ public class RectDrawer extends OpenCvPipeline {
         Imgproc.findContours(inRange, unfilteredContours, hierarchy, Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_SIMPLE);
 
         // Filter contours by size and get rotated rects
-        int minArea = 2500;
+        int minArea = 6000;
         ArrayList<RotatedRect> rotatedRects = new ArrayList<>();
         List<MatOfPoint> filteredContours = new ArrayList<>();
         for (MatOfPoint contour : unfilteredContours) {
@@ -173,14 +193,14 @@ public class RectDrawer extends OpenCvPipeline {
         telemetry.addData("filteredRects.size()", filteredRects.size());
 
 
-        // Draw unfiltered rects as blue
-        for (RotatedRect rotatedRect : rotatedRects) {
-            Point[] vertices = new Point[4];
-            rotatedRect.points(vertices);
-            for (int i = 0; i < 4; i++) {
-                Imgproc.line(frame, vertices[i], vertices[(i + 1) % 4], new Scalar(0, 0, 255), 2);
-            }
-        }
+//        // Draw unfiltered rects as blue
+//        for (RotatedRect rotatedRect : rotatedRects) {
+//            Point[] vertices = new Point[4];
+//            rotatedRect.points(vertices);
+//            for (int i = 0; i < 4; i++) {
+//                Imgproc.line(frame, vertices[i], vertices[(i + 1) % 4], new Scalar(0, 0, 255), 2);
+//            }
+//        }
 
         // Draw filtered rects as green
         for (RotatedRect rotatedRect : filteredRects) {
@@ -189,6 +209,74 @@ public class RectDrawer extends OpenCvPipeline {
             for (int i = 0; i < 4; i++) {
                 Imgproc.line(frame, vertices[i], vertices[(i + 1) % 4], new Scalar(0, 255, 0), 2);
             }
+            Point center = rotatedRect.center;
+
+
+
+            double procAngle = rotatedRect.angle;
+            if (filteredRects.get(0).size.width > filteredRects.get(0).size.height)
+                procAngle *= -1;
+            else
+                procAngle = 90-procAngle;
+
+            double length = 200;
+            double vecX = center.x+length*Math.cos(Math.toRadians(procAngle));
+            double vecY = center.y-length*Math.sin(Math.toRadians(procAngle));
+            telemetry.addData("vecX", vecX);
+            telemetry.addData("vecY", vecY);
+            if (vecX < 0) {
+                vecY = center.y - (1+vecX/(length*Math.cos(Math.toRadians(procAngle))))*length*Math.sin(Math.toRadians(procAngle));
+                vecX = 0;
+            } if (vecY < 0) {
+                vecX = center.x + (1+vecY/(length*Math.sin(Math.toRadians(procAngle))))*length*Math.cos(Math.toRadians(procAngle));
+                vecY = 0;
+            } if (vecX > 640) {
+                vecY = center.y - (1-(vecX-640)/ (length*Math.cos(Math.toRadians(procAngle))))*length*Math.sin(Math.toRadians(procAngle));
+                vecX = 640;
+            } if (vecY > 480) {
+                vecX = center.x + (1+(vecY-480)/(length*Math.sin(Math.toRadians(procAngle))))*length*Math.cos(Math.toRadians(procAngle));
+                vecY = 480;
+            }
+            Imgproc.line(frame, center, new Point(vecX,vecY), new Scalar(0, 255, 255), 1);
+            Imgproc.line(frame, center, new Point(center.x+length/2,center.y), new Scalar(0, 255, 255), 1);
+            // Define arc parameters
+            int radius = 20;
+            double endAngle = -procAngle;
+            Scalar color = new Scalar(0, 255, 255);
+            int thickness = 1;
+
+            // Generate points on the arc
+            MatOfPoint points = new MatOfPoint();
+            Imgproc.ellipse2Poly(center, new Size(radius, radius), 0, 0, (int) endAngle, 1, points);
+
+            // Draw the arc
+            List<MatOfPoint> listThing = new ArrayList<>();
+            listThing.add(points);
+            Imgproc.polylines(frame, listThing, false, color, thickness);
+            Imgproc.putText(frame, (Math.round(10*procAngle)/10d)+" deg", new Point(center.x+30, center.y-10), 0, 0.5, new Scalar(0, 255, 255));
+
+
+
+
+
+            double sampleHeight = (1d/rotatedRect.size.area()+2.28e-5)/(7.14e-6);
+            sampleHeight = (1/rotatedRect.size.area()+2.57e-5)/(7.6e-6);
+            telemetry.addData("sampleHeight", sampleHeight);
+
+            double px = rotatedRect.center.x-320;
+            double py = 240-rotatedRect.center.y;
+            double real_x = k_translation*sampleHeight*px;
+            double real_y = k_translation*sampleHeight*py;
+            telemetry.addData("real_x", real_x);
+            telemetry.addData("real_y", real_y);
+            Imgproc.line(frame, center, new Point(320, center.y), new Scalar(255, 255, 0), 1);
+            Imgproc.putText(frame, (Math.round(10*real_x)/10d)+(Math.abs(real_x)>1?" in":""), new Point(320+(center.x-320)*0.5-20, center.y+15), 0, 0.5, new Scalar(255, 255, 0));
+            Imgproc.line(frame, new Point(320, center.y), new Point(320,240), new Scalar(255, 255, 0), 1);
+            Imgproc.putText(frame, (Math.round(10*real_y)/10d)+(Math.abs(real_y)>1?" in":""), new Point(315-10*Double.toString(Math.round(10*real_y)/10d).length()-(Math.abs(real_y)>1?22:0), 240+(center.y-240)*0.5+10), 0, 0.5, new Scalar(255, 255, 0));
+
+
+
+
             Imgproc.circle(frame, rotatedRect.center, 1, new Scalar(255, 255, 0), 3);
         }
 
@@ -212,26 +300,6 @@ public class RectDrawer extends OpenCvPipeline {
 
 
 
-        // Getting representative brightness of image
-        MatOfDouble muMat = new MatOfDouble();
-        MatOfDouble sigmaMat = new MatOfDouble();
-        Core.meanStdDev(gray, muMat, sigmaMat);
-        telemetry.addData("gray mu", muMat.get(0,0)[0]);
-        telemetry.addData("gray sigma", sigmaMat.get(0,0)[0]);
-
-
-        double mu = muMat.get(0,0)[0];
-        double sigma = sigmaMat.get(0,0)[0];
-        double k = 1;
-        Scalar lowerBound = new Scalar(mu-k*sigma);
-        Scalar upperBound = new Scalar(mu+k*sigma);
-
-        Mat mask = new Mat();
-        Core.inRange(gray, lowerBound, upperBound, mask);
-        Scalar maskedMean = Core.mean(gray, mask);
-        double averageInRange = maskedMean.val[0];
-
-        telemetry.addData("averageInRange", averageInRange);
 
 
 
