@@ -8,6 +8,7 @@ import androidx.annotation.Nullable;
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.opencv.core.CvType;
 import org.opencv.core.MatOfDouble;
+import org.opencv.core.MatOfFloat;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.RotatedRect;
@@ -44,19 +45,19 @@ public class RectDrawer extends OpenCvPipeline {
 
     public static Telemetry telemetry;
 
-    public static Scalar lowerYellow = new Scalar(19.0, 150.0, 130.1); // hsv
+    public static Scalar lowerYellow = new Scalar(15.0, 190.0, 130.1); // hsv
     public static Scalar upperYellow = new Scalar(30.0, 255.0, 255.0); // hsv
-    public static Scalar lowerBlue = new Scalar(90.0, 150.0, 100.0); // hsv
-    public static Scalar upperBlue = new Scalar(120.0, 255.0, 255.0); // hsv
+    public static Scalar lowerBlue = new Scalar(90.0, 150.0, 60.0); // hsv
+    public static Scalar upperBlue = new Scalar(140.0, 255.0, 255.0); // hsv
     public static Scalar lowerRedH = new Scalar(10.0, 0.0, 0.0); // hsv
     public static Scalar upperRedH = new Scalar(160.0, 255.0, 255.0); // hsv
-    public static Scalar lowerRedSV = new Scalar(0.0, 150.0, 120.0); // hsv
+    public static Scalar lowerRedSV = new Scalar(0.0, 190.0, 120.0); // hsv
     public static Scalar upperRedSV = new Scalar(255.0, 255.0, 255.0); // hsv
 
     private double sampleAngle = 0;
     private double k_translation = 1d/640d;
 
-    public static SampleColor colorType = SampleColor.BLUE;
+    public static SampleColor colorType = SampleColor.YELLOW;
 //    @Override
 //    public void init(int width, int height, CameraCalibration calibration) {
 //
@@ -71,8 +72,8 @@ public class RectDrawer extends OpenCvPipeline {
     public Mat processFrame(Mat input) {
         frame = input.clone();
         Mat hsv = new Mat(); // convert to hsv
-        Mat gray = new Mat(); // convert to hsv
         Imgproc.cvtColor(input, hsv, Imgproc.COLOR_RGB2HSV);
+        Mat gray = new Mat(); // convert to grayscale
         Imgproc.cvtColor(input, gray, Imgproc.COLOR_RGB2GRAY);
 
 
@@ -129,7 +130,7 @@ public class RectDrawer extends OpenCvPipeline {
         Imgproc.findContours(inRange, unfilteredContours, hierarchy, Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_SIMPLE);
 
         // Filter contours by size and get rotated rects
-        int minArea = 6000;
+        int minArea = 5000;
         ArrayList<RotatedRect> rotatedRects = new ArrayList<>();
         List<MatOfPoint> filteredContours = new ArrayList<>();
         for (MatOfPoint contour : unfilteredContours) {
@@ -223,24 +224,31 @@ public class RectDrawer extends OpenCvPipeline {
                 procAngle = 90-procAngle;
 
             double length = 200;
-            double vecX = center.x+length*Math.cos(Math.toRadians(procAngle));
-            double vecY = center.y-length*Math.sin(Math.toRadians(procAngle));
+            double dX = length*Math.cos(Math.toRadians(procAngle));
+            double dY = length*Math.sin(Math.toRadians(procAngle));
+            double vecX = center.x+dX;
+            double vecY = center.y-dY;
             telemetry.addData("vecX", vecX);
             telemetry.addData("vecY", vecY);
             if (vecX < 0) {
-                vecY = center.y - (1+vecX/(length*Math.cos(Math.toRadians(procAngle))))*length*Math.sin(Math.toRadians(procAngle));
+                vecY = center.y - (1+vecX/dX)*dY;
                 vecX = 0;
             } if (vecY < 0) {
-                vecX = center.x + (1+vecY/(length*Math.sin(Math.toRadians(procAngle))))*length*Math.cos(Math.toRadians(procAngle));
+                vecX = center.x + (1+vecY/dY)*dX;
                 vecY = 0;
             } if (vecX > 640) {
-                vecY = center.y - (1-(vecX-640)/ (length*Math.cos(Math.toRadians(procAngle))))*length*Math.sin(Math.toRadians(procAngle));
+                vecY = center.y - (1-(vecX-640)/dX)*dY;
                 vecX = 640;
             } if (vecY > 480) {
-                vecX = center.x + (1+(vecY-480)/(length*Math.sin(Math.toRadians(procAngle))))*length*Math.cos(Math.toRadians(procAngle));
+                vecX = center.x + (1+(vecY-480)/dY)*dX;
                 vecY = 480;
             }
+            dX = vecX-center.x;
+            dY = vecY-center.y;
             Imgproc.line(frame, center, new Point(vecX,vecY), new Scalar(0, 255, 255), 1);
+            Imgproc.line(frame, center, new Point(center.x+dY/3, center.y-dX/3), new Scalar(255, 0, 255), 1);
+            Imgproc.line(frame, new Point(center.x+dY/10, center.y-dX/10), new Point(center.x+dY/10+dX/10, center.y-dX/10+dY/10), new Scalar(255, 0, 255), 1);
+            Imgproc.line(frame, new Point(center.x+dY/10+dX/10, center.y-dX/10+dY/10), new Point(center.x+dX/10, center.y+dY/10), new Scalar(255, 0, 255), 1);
             Imgproc.line(frame, center, new Point(center.x+length/2,center.y), new Scalar(0, 255, 255), 1);
             // Define arc parameters
             int radius = 20;
@@ -256,15 +264,20 @@ public class RectDrawer extends OpenCvPipeline {
             List<MatOfPoint> listThing = new ArrayList<>();
             listThing.add(points);
             Imgproc.polylines(frame, listThing, false, color, thickness);
-            Imgproc.putText(frame, (Math.round(10*procAngle)/10d)+" deg", new Point(center.x+30, center.y-10), 0, 0.5, new Scalar(0, 255, 255));
+            Imgproc.putText(frame, (Math.round(10*procAngle)/10d)+" deg", new Point(center.x+30, center.y-10+(procAngle<0 ? 30 : 0)), 0, 0.5, new Scalar(0, 255, 255));
 
 
-
-
-
-            double sampleHeight = (1d/rotatedRect.size.area()+2.28e-5)/(7.14e-6);
-            sampleHeight = (1/rotatedRect.size.area()+2.57e-5)/(7.6e-6); // calculate height of camer based on area of sample
+            // get real sample coords
+            double area = rotatedRect.size.area(); //*2.091295825;
+            double sampleHeight = 1435.0/Math.sqrt(area)-0.308; // calculate height of camer based on area of sample
             telemetry.addData("sampleHeight", sampleHeight);
+
+
+            // TODO: remove
+            real = getOffsets(filteredRects, sampleHeight);
+
+
+
 
             double real_x = real.get(i).x; // in inches
             double real_y = real.get(i).y;
@@ -395,4 +408,45 @@ public class RectDrawer extends OpenCvPipeline {
 
         return output;
     }
+
+    public ArrayList<Point> getOffsets(ArrayList<RotatedRect> input, double height) {
+        // Note: This method only works when the camera is directly above the samples, looking straight down
+
+        ArrayList<Point> output = new ArrayList<Point>();
+
+//        double canvasVertical = Math.sqrt(2) * height*3.0/8.0; // inches
+//        double canvasHorizontal = Math.sqrt(2) * height / 2;
+        double canvasVertical = 1.1 * height*3.0/8.0; // inches
+        double canvasHorizontal = 1.1 * height / 2;
+
+        for (RotatedRect i : input) {
+            // real center is (320, 480), positive direction is right and down
+//            output.add(new Point(i.center.x - 320, -(i.center.y - 240)));
+            output.add(new Point((i.center.x - 320) / 320 * canvasHorizontal, -(i.center.y - 240) / 240 * canvasVertical));
+
+
+            // 4 in height = 1.5 width vertical (half width, not full)
+            // 6 : 2.25
+            // 2 : 0.75
+            // 8 : 3
+            // horizontal: 8 / 4
+        }
+
+
+        return output;
+    }
+
+
+    private Point from3D(double FOV, double x, double y, double z) {
+        return new Point(FOV*x/z, FOV*y/z);
+    }
+
+//    private void drawRectangle(double x0, double y0, double z0, double x1, double y1, double z1) {
+//        double dx = x1-x0;
+//        double dy = y1-y0;
+//        double dz = z1-z0;
+//        Point p1 = new Point(x0, y0, z0);
+//        Point p1 = new Point(x0, y0, z0);
+//    }
+
 }
