@@ -47,6 +47,7 @@ public class SampleOrientationProcessor implements VisionProcessor {
 
     private double sampleAngle = 0;
     private double averageBrightness = 0;
+    private ArrayList<double[]> realPositions = new ArrayList<>();
 
     public static RectDrawer.SampleColor colorType = RectDrawer.SampleColor.YELLOW;
 
@@ -63,15 +64,14 @@ public class SampleOrientationProcessor implements VisionProcessor {
 
     @Override
     public Object processFrame(Mat input, long captureTimeNanos) {
-        frame = input;
+        frame = input.clone();
+        double scalingFactor = (double) 640 /frame.width();
         Mat hsv = new Mat(); // convert to hsv
         Imgproc.cvtColor(input, hsv, Imgproc.COLOR_RGB2HSV);
-        Mat gray = new Mat(); // convert to hsv
-        Imgproc.cvtColor(input, gray, Imgproc.COLOR_RGB2GRAY);
+
 
         // Color threshold
         Mat inRange = new Mat();
-//        Core.inRange(hsv, PixelColor.YELLOW.LOWER, PixelColor.YELLOW.UPPER, inRange);
         if (colorType.equals(RectDrawer.SampleColor.BLUE)) {
             Core.inRange(hsv, lowerBlue, upperBlue, inRange);
         } else if (colorType.equals(RectDrawer.SampleColor.RED)) {
@@ -85,20 +85,20 @@ public class SampleOrientationProcessor implements VisionProcessor {
             Core.inRange(hsv, lowerYellow, upperYellow, inRange);
         }
 
-        // Morphology
-        Mat kernel = Imgproc.getStructuringElement(Imgproc.CV_SHAPE_RECT, new Size(25, 25));
-        Mat kernel2 = Imgproc.getStructuringElement(Imgproc.CV_SHAPE_RECT, new Size(10, 10));
 
-//        Imgproc.erode(inRange, inRange, kernel);
-//        Imgproc.dilate(inRange, inRange, kernel2);
+        // Morphology
+        Mat kernel = Imgproc.getStructuringElement(Imgproc.CV_SHAPE_RECT, new Size(3/Math.sqrt(scalingFactor), 3/scalingFactor));
+        Imgproc.erode(inRange, inRange, kernel);
+
 
         // Find all contours
         List<MatOfPoint> unfilteredContours = new ArrayList<>();
         Mat hierarchy = new Mat();
         Imgproc.findContours(inRange, unfilteredContours, hierarchy, Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_SIMPLE);
 
+
         // Filter contours by size and get rotated rects
-        int minArea = 2500;
+        int minArea = (int)(5000/(scalingFactor*scalingFactor));
         ArrayList<RotatedRect> rotatedRects = new ArrayList<>();
         List<MatOfPoint> filteredContours = new ArrayList<>();
         for (MatOfPoint contour : unfilteredContours) {
@@ -110,6 +110,7 @@ public class SampleOrientationProcessor implements VisionProcessor {
             }
         }
         Imgproc.drawContours(frame, filteredContours, -1, new Scalar(0, 255, 0), 2);
+
 
         // Get overlapping rotated rect groups
         double overlapThreshold = 0.2; // % of smaller box covered
@@ -136,17 +137,8 @@ public class SampleOrientationProcessor implements VisionProcessor {
             overlapGroups.add(overlapGroup);
         }
 
-        // telemetry
-        ArrayList<ArrayList<Double>> overlapGroups2 = new ArrayList<>();
-        for (ArrayList<Double[]> overlapGroup : overlapGroups) {
-            overlapGroups2.add(new ArrayList<>());
-            for (Double[] index : overlapGroup) {
-                overlapGroups2.get(overlapGroups2.size()-1).add(index[0]);
-            }
-        }
-        telemetry.addData("overlapGroups", overlapGroups2);
 
-        // Filter out overlapping rotated rects
+        // Filter out overlapping rects
         ArrayList<RotatedRect> filteredRects = new ArrayList<>();
         for (ArrayList<Double[]> overlapGroup : overlapGroups) {
             int maxIndex = overlapGroup.get(0)[0].intValue();
@@ -159,20 +151,11 @@ public class SampleOrientationProcessor implements VisionProcessor {
             }
             filteredRects.add(rotatedRects.get(maxIndex));
         }
-
         telemetry.addData("filteredRects.size()", filteredRects.size());
 
 
-        // Draw unfiltered rects as blue
-        for (RotatedRect rotatedRect : rotatedRects) {
-            Point[] vertices = new Point[4];
-            rotatedRect.points(vertices);
-            for (int i = 0; i < 4; i++) {
-                Imgproc.line(frame, vertices[i], vertices[(i + 1) % 4], new Scalar(0, 0, 255), 2);
-            }
-        }
-
         // Draw filtered rects as green
+        realPositions = getOffsets(filteredRects, scalingFactor);
         for (RotatedRect rotatedRect : filteredRects) {
             Point[] vertices = new Point[4];
             rotatedRect.points(vertices);
@@ -181,7 +164,7 @@ public class SampleOrientationProcessor implements VisionProcessor {
             }
             Imgproc.circle(frame, rotatedRect.center, 5, new Scalar(255, 255, 0));
         }
-        rects = new ArrayList<RotatedRect>(filteredRects);
+        rects = new ArrayList<>(filteredRects);
 
 
         // telemetry
@@ -202,31 +185,30 @@ public class SampleOrientationProcessor implements VisionProcessor {
 
 
         // Getting representative brightness of image
+        Mat gray = new Mat(); // convert to hsv
+        Imgproc.cvtColor(input, gray, Imgproc.COLOR_RGB2GRAY);
         MatOfDouble muMat = new MatOfDouble();
         MatOfDouble sigmaMat = new MatOfDouble();
         Core.meanStdDev(gray, muMat, sigmaMat);
-
         double mu = muMat.get(0,0)[0];
         double sigma = sigmaMat.get(0,0)[0];
         double k = 1;
+
         Scalar lowerBound = new Scalar(mu-k*sigma);
         Scalar upperBound = new Scalar(mu+k*sigma);
-
         Mat mask = new Mat();
         Core.inRange(gray, lowerBound, upperBound, mask);
         Scalar maskedMean = Core.mean(gray, mask);
-        double averageInRange = maskedMean.val[0];
-
-        averageBrightness = averageInRange;
+        averageBrightness = maskedMean.val[0];
         telemetry.addData("averageBrightness", averageBrightness);
 
 
+
         telemetry.update();
-
-
-
         return frame;
     }
+
+
 
     public double getSampleAngle() {
         return sampleAngle;
@@ -234,6 +216,10 @@ public class SampleOrientationProcessor implements VisionProcessor {
 
     public double getAverageBrightness() {
         return averageBrightness;
+    }
+
+    public ArrayList<double[]> getRealPositions() {
+        return realPositions;
     }
 
     private double getIntersectionArea(RotatedRect rect1, RotatedRect rect2) {
@@ -260,21 +246,22 @@ public class SampleOrientationProcessor implements VisionProcessor {
 
     }
 
-    public ArrayList<Point> getOffsets() { // scaled to inches
-        ArrayList<RotatedRect> input = new ArrayList<RotatedRect>(rects); // already filtered by color
-        ArrayList<Point> output = new ArrayList<Point>();
-        double cameraAngle = 0;
+    public ArrayList<double[]> getOffsets(ArrayList<RotatedRect> input, double scalingFactor) {
+        // Note: This method only works when the camera is directly above the samples, looking straight down
 
-        double height = 3.0; // in inches
+        ArrayList<double[]> output = new ArrayList<>();
 
+        // TODO: Make height not hardcoded, instead base it off of robot position
+        double height = 10.0; // in inches
+        double canvasVertical = 1.1 * height*3.0/8.0; // inches
+        double canvasHorizontal = 1.1 * height / 2;
 
-        double canvasVertical = height*3.0/8.0; // inches
-        double canvasHorizontal = height / 2.0;
-
+        double scaled320 = 320/scalingFactor;
+        double scaled240 = 240/scalingFactor;
         for (RotatedRect i : input) {
             // real center is (320, 480), positive direction is right and down
 //            output.add(new Point(i.center.x - 320, -(i.center.y - 240)));
-            output.add(new Point((i.center.x - 320) / 320 * canvasHorizontal, -(i.center.y - 240) / 240 * canvasVertical));
+            output.add(new double[]{(i.center.x - scaled320) / scaled320 * canvasHorizontal, -(i.center.y - scaled240) / scaled240 * canvasVertical});
 
 
             // 4 in height = 1.5 width vertical (half width, not full)
@@ -283,7 +270,6 @@ public class SampleOrientationProcessor implements VisionProcessor {
             // 8 : 3
             // horizontal: 8 / 4
         }
-
 
         return output;
     }
