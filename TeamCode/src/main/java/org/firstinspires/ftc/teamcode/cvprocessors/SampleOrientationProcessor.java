@@ -45,10 +45,10 @@ public class SampleOrientationProcessor implements VisionProcessor {
     public static Scalar lowerRedSV = new Scalar(0.0, 130.0, 100.0); // hsv
     public static Scalar upperRedSV = new Scalar(255.0, 255.0, 255.0); // hsv
 
-    private boolean sampleDetected = false;
-    private double sampleAngle = 0;
-    private double averageBrightness = 0;
-    private ArrayList<double[]> realPositions = new ArrayList<>();
+    private volatile boolean sampleDetected = false;
+    private volatile double sampleAngle = 0;
+    private volatile double averageBrightness = 0;
+    private volatile ArrayList<double[]> realPositions = new ArrayList<>();
 
     public static RectDrawer.SampleColor colorType = RectDrawer.SampleColor.YELLOW;
 
@@ -181,8 +181,8 @@ public class SampleOrientationProcessor implements VisionProcessor {
         for (RotatedRect rotatedRect : filteredRects) {
             Point[] vertices = new Point[4];
             rotatedRect.points(vertices);
-            for (int i = 0; i < 4; i++) {
-                Imgproc.line(frame, vertices[i], vertices[(i + 1) % 4], new Scalar(0, 255, 0), 2);
+            for (int j = 0; j < 4; j++) {
+                Imgproc.line(frame, vertices[j], vertices[(j + 1) % 4], new Scalar(0, 255, 0), 2);
             }
             Imgproc.circle(frame, rotatedRect.center, 5, new Scalar(255, 255, 0));
         }
@@ -261,7 +261,7 @@ public class SampleOrientationProcessor implements VisionProcessor {
         ArrayList<double[]> output = new ArrayList<>();
 
         // TODO: Make height not hardcoded, instead base it off of robot position
-        double height = 10.0; // in inches
+        double height = 17.0; // in inches
         double canvasVertical = 1.1 * height*3.0/8.0; // inches
         double canvasHorizontal = 1.1 * height / 2;
 
@@ -270,7 +270,7 @@ public class SampleOrientationProcessor implements VisionProcessor {
         for (RotatedRect i : input) {
             // real center is (320, 480), positive direction is right and down
 //            output.add(new Point(i.center.x - 320, -(i.center.y - 240)));
-            output.add(new double[]{(i.center.x - scaled320) / scaled320 * canvasHorizontal, -(i.center.y - scaled240) / scaled240 * canvasVertical});
+            output.add(new double[]{(i.center.x - scaled320) / scaled320 * canvasHorizontal, -(i.center.y - scaled240) / scaled240 * canvasVertical, height});
 
 
             // 4 in height = 1.5 width vertical (half width, not full)
@@ -279,6 +279,40 @@ public class SampleOrientationProcessor implements VisionProcessor {
             // 8 : 3
             // horizontal: 8 / 4
         }
+
+        return output;
+    }
+
+
+    public ArrayList<double[]> getOffsetsWithHeights(ArrayList<RotatedRect> input, double scalingFactor) {
+        // Note: This method only works when the camera is directly above the samples, looking straight down
+
+        ArrayList<double[]> output = new ArrayList<>();
+
+        double scaled320 = 320/scalingFactor;
+        double scaled240 = 240/scalingFactor;
+        for (RotatedRect i : input) {
+            // real center is (320, 480), positive direction is right and down
+//            output.add(new Point(i.center.x - 320, -(i.center.y - 240)));
+
+
+            // get real sample coords
+            double area = i.size.area()*scalingFactor*scalingFactor; //*2.091295825;
+            double sampleHeight = 1435.0/Math.sqrt(area)-0.308; // calculate height of camer based on area of sample
+
+            double canvasVertical = 1.1 * sampleHeight*3.0/8.0; // inches
+            double canvasHorizontal = 1.1 * sampleHeight / 2;
+
+            output.add(new double[]{(i.center.x - scaled320) / scaled320 * canvasHorizontal, -(i.center.y - scaled240) / scaled240 * canvasVertical, sampleHeight});
+
+
+            // 4 in height = 1.5 width vertical (half width, not full)
+            // 6 : 2.25
+            // 2 : 0.75
+            // 8 : 3
+            // horizontal: 8 / 4
+        }
+
 
         return output;
     }

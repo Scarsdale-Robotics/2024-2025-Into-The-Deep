@@ -32,9 +32,11 @@ public class SampleAlignment3RArmTest extends LinearOpMode {
     private double targetZ = 0; // +Z is upward
 
     // VISION //
-    private final Size CAMERA_RESOLUTION = new Size(640, 480);
+    private final Size CAMERA_RESOLUTION = new Size(320, 240);
     private WebcamName cameraName;
     private SampleOrientationProcessor processor;
+
+    public static double deltaHeight = -1;
 
 
     @Override
@@ -62,11 +64,11 @@ public class SampleAlignment3RArmTest extends LinearOpMode {
 
         while (opModeIsActive()) {
             // Get sample position
-            if (processor.getSampleDetected()) {
+            if (processor.getSampleDetected() && !processor.getRealPositions().isEmpty()) {
                 double[] realPosition = processor.getRealPositions().get(0);
-                targetX = realPosition[1];
-                targetY = -realPosition[0];
-                targetZ = 0;
+                targetX = -realPosition[1]+10;
+                targetY = realPosition[0];
+                targetZ = 17-realPosition[2]+deltaHeight;
             } else {
                 targetX = 5;
                 targetY = 0;
