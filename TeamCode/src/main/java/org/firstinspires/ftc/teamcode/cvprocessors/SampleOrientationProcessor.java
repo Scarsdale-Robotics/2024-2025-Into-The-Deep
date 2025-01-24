@@ -45,6 +45,7 @@ public class SampleOrientationProcessor implements VisionProcessor {
     public static Scalar lowerRedSV = new Scalar(0.0, 130.0, 100.0); // hsv
     public static Scalar upperRedSV = new Scalar(255.0, 255.0, 255.0); // hsv
 
+    private boolean sampleDetected = false;
     private double sampleAngle = 0;
     private double averageBrightness = 0;
     private ArrayList<double[]> realPositions = new ArrayList<>();
@@ -201,6 +202,9 @@ public class SampleOrientationProcessor implements VisionProcessor {
                 procAngle = 90-procAngle;
             telemetry.addData("procAngle ", procAngle);
             sampleAngle = Math.toRadians(procAngle);
+            sampleDetected = true;
+        } else {
+            sampleDetected = false;
         }
         telemetry.addData("sampleAngle", sampleAngle);
 
@@ -211,6 +215,9 @@ public class SampleOrientationProcessor implements VisionProcessor {
     }
 
 
+    public boolean getSampleDetected() {
+        return sampleDetected;
+    }
 
     public double getSampleAngle() {
         return sampleAngle;
