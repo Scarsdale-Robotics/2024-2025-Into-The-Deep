@@ -66,11 +66,32 @@ public class SampleOrientationProcessor implements VisionProcessor {
     public Object processFrame(Mat input, long captureTimeNanos) {
         frame = input.clone();
         double scalingFactor = (double) 640 /frame.width();
-        Mat hsv = new Mat(); // convert to hsv
-        Imgproc.cvtColor(input, hsv, Imgproc.COLOR_RGB2HSV);
+
+
+        // Getting representative brightness of image
+        Mat gray = new Mat(); // convert to hsv
+        Imgproc.cvtColor(input, gray, Imgproc.COLOR_RGB2GRAY);
+        MatOfDouble muMat = new MatOfDouble();
+        MatOfDouble sigmaMat = new MatOfDouble();
+        Core.meanStdDev(gray, muMat, sigmaMat);
+        double mu = muMat.get(0,0)[0];
+        double sigma = sigmaMat.get(0,0)[0];
+        double k = 1;
+
+        Scalar lowerBound = new Scalar(mu-k*sigma);
+        Scalar upperBound = new Scalar(mu+k*sigma);
+        Mat mask = new Mat();
+        Core.inRange(gray, lowerBound, upperBound, mask);
+        Scalar maskedMean = Core.mean(gray, mask);
+        double averageBrightness = maskedMean.val[0];
+        telemetry.addData("averageBrightness", averageBrightness);
+        double targetAverageInRange = 120;
+        frame.convertTo(frame, -1, targetAverageInRange/ averageBrightness, 0);
 
 
         // Color threshold
+        Mat hsv = new Mat(); // convert to hsv
+        Imgproc.cvtColor(frame, hsv, Imgproc.COLOR_RGB2HSV);
         Mat inRange = new Mat();
         if (colorType.equals(RectDrawer.SampleColor.BLUE)) {
             Core.inRange(hsv, lowerBlue, upperBlue, inRange);
@@ -182,25 +203,6 @@ public class SampleOrientationProcessor implements VisionProcessor {
             sampleAngle = Math.toRadians(procAngle);
         }
         telemetry.addData("sampleAngle", sampleAngle);
-
-
-        // Getting representative brightness of image
-        Mat gray = new Mat(); // convert to hsv
-        Imgproc.cvtColor(input, gray, Imgproc.COLOR_RGB2GRAY);
-        MatOfDouble muMat = new MatOfDouble();
-        MatOfDouble sigmaMat = new MatOfDouble();
-        Core.meanStdDev(gray, muMat, sigmaMat);
-        double mu = muMat.get(0,0)[0];
-        double sigma = sigmaMat.get(0,0)[0];
-        double k = 1;
-
-        Scalar lowerBound = new Scalar(mu-k*sigma);
-        Scalar upperBound = new Scalar(mu+k*sigma);
-        Mat mask = new Mat();
-        Core.inRange(gray, lowerBound, upperBound, mask);
-        Scalar maskedMean = Core.mean(gray, mask);
-        averageBrightness = maskedMean.val[0];
-        telemetry.addData("averageBrightness", averageBrightness);
 
 
 
