@@ -71,11 +71,32 @@ public class RectDrawer extends OpenCvPipeline {
     public Mat processFrame(Mat input) {
         frame = input.clone();
         double scalingFactor = (double) 640 /frame.width();
-        Mat hsv = new Mat(); // convert to hsv
-        Imgproc.cvtColor(input, hsv, Imgproc.COLOR_RGB2HSV);
+
+
+        // Getting representative brightness of image
+        Mat gray = new Mat(); // convert to hsv
+        Imgproc.cvtColor(input, gray, Imgproc.COLOR_RGB2GRAY);
+        MatOfDouble muMat = new MatOfDouble();
+        MatOfDouble sigmaMat = new MatOfDouble();
+        Core.meanStdDev(gray, muMat, sigmaMat);
+        double mu = muMat.get(0,0)[0];
+        double sigma = sigmaMat.get(0,0)[0];
+        double k = 1;
+
+        Scalar lowerBound = new Scalar(mu-k*sigma);
+        Scalar upperBound = new Scalar(mu+k*sigma);
+        Mat mask = new Mat();
+        Core.inRange(gray, lowerBound, upperBound, mask);
+        Scalar maskedMean = Core.mean(gray, mask);
+        double averageBrightness = maskedMean.val[0];
+        telemetry.addData("averageBrightness", averageBrightness);
+        double targetAverageInRange = 120;
+        frame.convertTo(frame, -1, targetAverageInRange/ averageBrightness, 0);
 
 
         // Color threshold
+        Mat hsv = new Mat(); // convert to hsv
+        Imgproc.cvtColor(frame, hsv, Imgproc.COLOR_RGB2HSV);
         Mat inRange = new Mat();
         if (colorType.equals(SampleColor.BLUE)) {
             Core.inRange(hsv, lowerBlue, upperBlue, inRange);
@@ -91,7 +112,8 @@ public class RectDrawer extends OpenCvPipeline {
         }
 
         // Morphology
-        Mat kernel = Imgproc.getStructuringElement(Imgproc.CV_SHAPE_RECT, new Size(3/Math.sqrt(scalingFactor), 3/scalingFactor));
+        int kernelSize = (int)Math.round(1 / Math.sqrt(scalingFactor));
+        Mat kernel = Imgproc.getStructuringElement(Imgproc.CV_SHAPE_RECT, new Size(kernelSize, kernelSize));
         Imgproc.erode(inRange, inRange, kernel);
 
         // Find all contours
