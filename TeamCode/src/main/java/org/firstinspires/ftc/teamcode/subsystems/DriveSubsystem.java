@@ -86,12 +86,13 @@ public class DriveSubsystem extends SubsystemBase {
      * @param turn      Turn power.
      */
     public void driveRobotCentricPowers(double strafe, double forward, double turn) {
-        double theta;
-        double speed = Math.hypot(strafe, forward) * DriveConstants.MAX_FORWARD_SPEED;
-        if (speed==0) theta = 0;
-        else theta = Math.atan2(forward, strafe);
-
-        driveFieldCentric(theta, speed, -turn * RotationConstants.MAX_ANGULAR_VELOCITY, 0.0);
+//        double theta;
+//        double speed = Math.hypot(strafe, forward) * DriveConstants.MAX_FORWARD_SPEED;
+//        if (speed==0) theta = 0;
+//        else theta = Math.atan2(forward, strafe);
+//
+//        driveFieldCentric(theta, speed, -turn * RotationConstants.MAX_ANGULAR_VELOCITY, 0.0);
+        controller.driveRobotCentric(strafe, forward, turn);
     }
 
     /**

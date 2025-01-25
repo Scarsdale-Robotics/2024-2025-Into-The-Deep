@@ -105,14 +105,16 @@ public class HardwareRobot {
         ////////////
         elbow = hardwareMap.get(ServoImplEx.class, "elbow");
         claw = hardwareMap.get(ServoImplEx.class, "claw");
-        wrist = hardwareMap.get(ServoImplEx.class, "wrist");
+//        wrist = hardwareMap.get(ServoImplEx.class, "wrist");
+        wrist = null;
 
 
         ////////////
         // CAMERA //
         ////////////
         limelight = hardwareMap.get(Limelight3A.class, "limelight");
-        cameraName = hardwareMap.get(WebcamName.class, "Webcam 1");
+//        cameraName = hardwareMap.get(WebcamName.class, "Webcam 1");
+        cameraName = null;
 
     }
 }

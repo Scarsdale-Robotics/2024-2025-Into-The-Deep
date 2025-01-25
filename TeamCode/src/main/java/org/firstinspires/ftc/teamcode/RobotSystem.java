@@ -40,18 +40,20 @@ public class RobotSystem {
         this.opMode = opMode;
         this.telemetry = new MultipleTelemetry(opMode.telemetry, FtcDashboard.getInstance().getTelemetry());
         HardwareRobot hardwareRobot = new HardwareRobot(hardwareMap);
-        this.cv = new CVSubsystem(
-                hardwareRobot.limelight,
-                initialPose.getHeading(),
-                isRedTeam,
-                telemetry);
-        this.localization = new LocalizationSubsystem(
-                initialPose,
-                cv,
-                hardwareRobot.pinpoint,
-                opMode
-                ,telemetry
-        );
+//        this.cv = new CVSubsystem(
+//                hardwareRobot.limelight,
+//                initialPose.getHeading(),
+//                isRedTeam,
+//                telemetry);
+//        this.localization = new LocalizationSubsystem(
+//                initialPose,
+//                cv,
+//                hardwareRobot.pinpoint,
+//                opMode
+//                ,telemetry
+//        );
+        this.cv = null;
+        this.localization = null;
         this.drive = new DriveSubsystem(
                 hardwareRobot.leftFront,
                 hardwareRobot.rightFront,
@@ -61,26 +63,26 @@ public class RobotSystem {
         this.inDep = new InDepSubsystem(
                 hardwareRobot,
                 opMode,
-                drive,
-                cv
+                drive,null
+//                cv
         );
 
         this.inDep.setClawPosition(clawClosed);
         this.inDep.setElbowPosition(elbowUp-0.04);
 
-        Pose2D initialPose2D = new Pose2D(DistanceUnit.INCH, initialPose.getX(), initialPose.getY(), AngleUnit.RADIANS, initialPose.getHeading());
-        while (opMode.opModeInInit()) {
-            this.localization.pinpoint.update();
-            this.localization.pinpoint.setPosition(initialPose2D);
-
-            this.telemetry.addData("PP X after robotsys", this.localization.pinpoint.getPosX());
-            this.telemetry.addData("PP Y after robotsys", this.localization.pinpoint.getPosY());
-            this.telemetry.addData("PP heading after robotsys", this.localization.pinpoint.getHeading());
-            this.telemetry.addData("odom X after robotsys", this.localization.getX());
-            this.telemetry.addData("odom Y after robotsys", this.localization.getY());
-            this.telemetry.addData("odom heading after robotsys", this.localization.getH());
-            this.telemetry.update();
-        }
+//        Pose2D initialPose2D = new Pose2D(DistanceUnit.INCH, initialPose.getX(), initialPose.getY(), AngleUnit.RADIANS, initialPose.getHeading());
+//        while (opMode.opModeInInit()) {
+//            this.localization.pinpoint.update();
+//            this.localization.pinpoint.setPosition(initialPose2D);
+//
+//            this.telemetry.addData("PP X after robotsys", this.localization.pinpoint.getPosX());
+//            this.telemetry.addData("PP Y after robotsys", this.localization.pinpoint.getPosY());
+//            this.telemetry.addData("PP heading after robotsys", this.localization.pinpoint.getHeading());
+//            this.telemetry.addData("odom X after robotsys", this.localization.getX());
+//            this.telemetry.addData("odom Y after robotsys", this.localization.getY());
+//            this.telemetry.addData("odom heading after robotsys", this.localization.getH());
+//            this.telemetry.update();
+//        }
     }
 
     public void logOdometry() {

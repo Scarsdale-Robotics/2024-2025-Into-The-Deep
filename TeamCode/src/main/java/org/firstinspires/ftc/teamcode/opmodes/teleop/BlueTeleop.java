@@ -37,7 +37,7 @@ public class BlueTeleop extends LinearOpMode {
     public void runOpMode() throws InterruptedException {
         this.telemetry = new MultipleTelemetry(this.telemetry, FtcDashboard.getInstance().getTelemetry());
         this.robot = new RobotSystem(hardwareMap, new Pose2d(0, 0, new Rotation2d(Math.toRadians(-90))), false, this);
-        createRealignMacro();
+//        createRealignMacro();
 
         robot.inDep.setClawPosition(clawClosed);
         robot.inDep.setElbowPosition(elbowPosition);
@@ -57,15 +57,15 @@ public class BlueTeleop extends LinearOpMode {
         boolean autoClawReleaseAvailable = false;
 
         while (opModeIsActive()) {
-            robot.localization.update();
-            robot.logOdometry();
+//            robot.localization.update();
+//            robot.logOdometry();
 
             // options+circle (gamepad2) = Reset IMU
-            if (gamepad2.square && gamepad2.circle) {
-                robot.localization.resetH(Math.toRadians(-90));
-                gamepad1.rumble(1500);
-                gamepad2.rumble(1500);
-            }
+//            if (gamepad2.square && gamepad2.circle) {
+//                robot.localization.resetH(Math.toRadians(-90));
+//                gamepad1.rumble(1500);
+//                gamepad2.rumble(1500);
+//            }
 
             ////////////////////
             // DRIVE CONTROLS //
@@ -80,10 +80,11 @@ public class BlueTeleop extends LinearOpMode {
             else speedArmMultiplier = 1;
 
             double forward = speedArmMultiplier * -speed * gamepad1.left_stick_y;
-            double strafe = speedArmMultiplier * -speed * gamepad1.left_stick_x;
+            double strafe = speedArmMultiplier * speed * gamepad1.left_stick_x;
             double turn = speedArmMultiplier * speed * gamepad1.right_stick_x;
 
-            robot.drive.driveFieldCentricPowers(forward, strafe, turn, Math.toDegrees(robot.localization.getH()));
+            double secondSpeed = 0.5;
+            robot.drive.driveRobotCentricPowers(secondSpeed*strafe, secondSpeed*forward, secondSpeed*turn);
             telemetry.addData("forward", forward);
             telemetry.addData("strafe", strafe);
             telemetry.addData("turn", turn);
@@ -160,120 +161,120 @@ public class BlueTeleop extends LinearOpMode {
 
 
 
-            // LIFT UP MACRO
-            if (gamepad1.square && !toggleLiftUpMacro) {
-                liftTargetPosition = 1350;
-                liftUpMacroRunning = true; // enable lift up macro
-                liftDownMacroRunning = false; // disable lift down macro
-                realignMacro.setRunningFalse();
-                toggleLiftUpMacro = true;
-                elbowPosition = elbowUp;
-            }
-            if (!gamepad1.square)
-                toggleLiftUpMacro = false;
-
-
-            // LIFT DOWN MACRO
-            if (gamepad1.circle && !toggleLiftDownMacro) {
-                liftTargetPosition = -10;
-                liftUpMacroRunning = false; // disable lift up macro
-                liftDownMacroRunning = true; // enable lift down macro
-                realignMacro.setRunningFalse();
-                toggleLiftDownMacro = true;
-                elbowPosition = elbowDown - 0.04;
-            }
-            if (!gamepad1.circle)
-                toggleLiftDownMacro = false;
+//            // LIFT UP MACRO
+//            if (gamepad1.square && !toggleLiftUpMacro) {
+//                liftTargetPosition = 1350;
+//                liftUpMacroRunning = true; // enable lift up macro
+//                liftDownMacroRunning = false; // disable lift down macro
+//                realignMacro.setRunningFalse();
+//                toggleLiftUpMacro = true;
+//                elbowPosition = elbowUp;
+//            }
+//            if (!gamepad1.square)
+//                toggleLiftUpMacro = false;
+//
+//
+//            // LIFT DOWN MACRO
+//            if (gamepad1.circle && !toggleLiftDownMacro) {
+//                liftTargetPosition = -10;
+//                liftUpMacroRunning = false; // disable lift up macro
+//                liftDownMacroRunning = true; // enable lift down macro
+//                realignMacro.setRunningFalse();
+//                toggleLiftDownMacro = true;
+//                elbowPosition = elbowDown - 0.04;
+//            }
+//            if (!gamepad1.circle)
+//                toggleLiftDownMacro = false;
 
 
             // CONTROL LIFT
             boolean triggerPressed = gamepad1.left_trigger != 0 || gamepad1.right_trigger != 0;
-            if (triggerPressed) {
-                liftUpMacroRunning = false;
-                liftDownMacroRunning = false;
-                realignMacro.setRunningFalse();
-            }
-            if (liftUpMacroRunning || liftDownMacroRunning) {
-                // A MACRO IS RUNNING
-                //p controller
-                double liftPosition = robot.inDep.getLeftLiftPosition(); //get current position
-                double error = liftTargetPosition - liftPosition;
-
-                //control law
-                double u_t = kP * error;
-                robot.inDep.setLeftLiftPower(u_t);
-                robot.inDep.setRightLiftPower(u_t);
-
-                if (Math.abs(error) < 50) {
-                    if (liftUpMacroRunning) autoClawReleaseAvailable = true;
-                    liftUpMacroRunning = false;
-                    liftDownMacroRunning = false;
-                }
-            }
-            else {
+//            if (triggerPressed) {
+////                liftUpMacroRunning = false;
+////                liftDownMacroRunning = false;
+////                realignMacro.setRunningFalse();
+//            }
+//            if (liftUpMacroRunning || liftDownMacroRunning) {
+//                // A MACRO IS RUNNING
+//                //p controller
+//                double liftPosition = robot.inDep.getLeftLiftPosition(); //get current position
+//                double error = liftTargetPosition - liftPosition;
+//
+//                //control law
+//                double u_t = kP * error;
+//                robot.inDep.setLeftLiftPower(u_t);
+//                robot.inDep.setRightLiftPower(u_t);
+//
+//                if (Math.abs(error) < 50) {
+//                    if (liftUpMacroRunning) autoClawReleaseAvailable = true;
+//                    liftUpMacroRunning = false;
+//                    liftDownMacroRunning = false;
+//                }
+//            }
+//            else {
                 // TRIGGER CONTROLS
                 // Set powers
-                robot.inDep.setLeftLiftPower(leftPower);
-                robot.inDep.setRightLiftPower(rightPower);
-                if (autoClawReleaseAvailable && robot.inDep.getLeftLiftPosition() < 650) {
-                    claw = false;
-                    robot.inDep.setClawPosition(clawOpen);
-                    autoClawReleaseAvailable = false;
-                }
-            }
+            robot.inDep.setLeftLiftPower(leftPower);
+            robot.inDep.setRightLiftPower(rightPower);
+//                if (autoClawReleaseAvailable && robot.inDep.getLeftLiftPosition() < 650) {
+//                    claw = false;
+//                    robot.inDep.setClawPosition(clawOpen);
+//                    autoClawReleaseAvailable = false;
+//                }
+//            }
 
 
 
-            // Gamepad2 both bumpers = Realign robot
-            if (gamepad2.left_bumper && gamepad2.right_bumper && !realignMacro.getIsRunning()) {
-                createRealignMacro();
-                realignMacro.start();
-                liftUpMacroRunning = false;
-                liftDownMacroRunning = false;
-            }
-            if (realignMacro.getIsRunning()) {
-                if (!realignMacro.update()) {
-                    realignMacro.setRunningFalse();
-                    robot.inDep.resetLiftEncoders();
-                }
-            }
+//            // Gamepad2 both bumpers = Realign robot
+//            if (gamepad2.left_bumper && gamepad2.right_bumper && !realignMacro.getIsRunning()) {
+//                createRealignMacro();
+//                realignMacro.start();
+//                liftUpMacroRunning = false;
+//                liftDownMacroRunning = false;
+//            }
+//            if (realignMacro.getIsRunning()) {
+//                if (!realignMacro.update()) {
+//                    realignMacro.setRunningFalse();
+//                    robot.inDep.resetLiftEncoders();
+//                }
+//            }
 
-            // Gamepad drive input cancels the realign macro
-            if (gamepad1.left_stick_x != 0 || gamepad1.left_stick_y != 0 || gamepad1.right_stick_x != 0 || gamepad1.right_stick_y != 0) {
-                realignMacro.setRunningFalse();
-            }
+//            // Gamepad drive input cancels the realign macro
+//            if (gamepad1.left_stick_x != 0 || gamepad1.left_stick_y != 0 || gamepad1.right_stick_x != 0 || gamepad1.right_stick_y != 0) {
+//                realignMacro.setRunningFalse();
+//            }
 
 
         }
 
     }
 
-    private void createRealignMacro() {
-        robot.localization.resetH(Math.toRadians(-180));
-        Pose2d currentPose = robot.localization.getPose();
-
-        LinearTranslation backup = new LinearTranslation(0,
-                new TranslationState(currentPose.getX(), currentPose.getY()),
-                new TranslationState(currentPose.getX(), currentPose.getY())
-                        .minus(new TranslationState(18, currentPose.getHeading(), true))
-        );
-        TranslationPlan translationPlan = new TranslationPlan(robot,
-                backup
-        );
-
-        LinearLift liftDown = new LinearLift(0,
-                new LiftState(0),
-                new LiftState(-1050)
-        );
-        LiftPlan liftPlan = new LiftPlan(robot,
-                liftDown
-        );
-
-        this.realignMacro = new Synchronizer(
-                translationPlan,
-                liftPlan
-        );
-    }
+//    private void createRealignMacro() {
+//        robot.localization.resetH(Math.toRadians(-180));
+//        Pose2d currentPose = robot.localization.getPose();
+//
+//        LinearTranslation backup = new LinearTranslation(0,
+//                new TranslationState(currentPose.getX(), currentPose.getY()),
+//                new TranslationState(currentPose.getX(), currentPose.getY())
+//                        .minus(new TranslationState(18, currentPose.getHeading(), true))
+//        );
+//        TranslationPlan translationPlan = new TranslationPlan(robot,
+//                backup
+//        );
+//
+//        LinearLift liftDown = new LinearLift(0,
+//                new LiftState(0),
+//                new LiftState(-1050)
+//        );
+//        LiftPlan liftPlan = new LiftPlan(robot,
+//                liftDown
+//        );
+//
+//        this.realignMacro = new Synchronizer(
+//                translationPlan,
+//                liftPlan
+//        );
+//    }
 
 }
 /**
