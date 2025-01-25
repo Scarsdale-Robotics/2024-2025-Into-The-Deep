@@ -9,8 +9,7 @@ public class LimelightConstants {
 
     // Sample pose estimation constants
     public static double theta_incline = Math.toRadians(27); // radians
-    public static double k1 = -640;
-    public static double k2 = 640;
+    public static double FOV = 640;
     public static double cz = 7; // inches from above the field
     public static double dist_covariance = 0.25;
 

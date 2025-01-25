@@ -179,7 +179,7 @@ public class LimelightPlan extends Plan<LimelightState> {
      * @param detection The Limelight3A detector result for this sample.
      * @return the estimated position.
      */
-    private Pose2d calculateSampleRelativePosition(LLResultTypes.DetectorResult detection, double k1, double k2, double cz, double theta_incline) {
+    private Pose2d calculateSampleRelativePosition(LLResultTypes.DetectorResult detection, double FOV, double cz, double theta_incline) {
 
         // math: https://www.desmos.com/calculator/hvfwopk7tw
 
@@ -189,8 +189,8 @@ public class LimelightPlan extends Plan<LimelightState> {
         double py = corners.get(0).get(1);
 
         // Back-solve for projected coordinates
-        double c_px = (px - 320) / k2;
-        double c_py = (py - 240) / k1;
+        double c_px = (px - 320) / FOV;
+        double c_py = (240 - py) / FOV;
 
         double projectedX_numer = -c_py*Math.sin(theta_incline) - Math.cos(theta_incline);
         double projectedX_denom = c_py*Math.cos(theta_incline) - Math.sin(theta_incline);
@@ -287,7 +287,7 @@ public class LimelightPlan extends Plan<LimelightState> {
         // Get pose estimations for each sample
         List<Pose2d> poseEstimations = new ArrayList<>();
         for (LLResultTypes.DetectorResult detection : detections) {
-            Pose2d relativePosition = calculateSampleRelativePosition(detection, LimelightConstants.k1, LimelightConstants.k2, LimelightConstants.cz, LimelightConstants.theta_incline);
+            Pose2d relativePosition = calculateSampleRelativePosition(detection, LimelightConstants.FOV, LimelightConstants.cz, LimelightConstants.theta_incline);
             if (relativePosition != null) {
                 poseEstimations.add(calculateGlobalPosition(currentPose, relativePosition));
             }
