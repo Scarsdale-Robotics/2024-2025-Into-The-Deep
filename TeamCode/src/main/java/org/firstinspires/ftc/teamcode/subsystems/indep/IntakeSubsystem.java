@@ -18,12 +18,14 @@ public class IntakeSubsystem extends SubInDepSubsystem<
         this.targetData = state.data;
     }
 
+    private final int SKIP = -1000;
+
     public enum State {
         //tune these
         APPROACH_O(0, 0, 0, 0),
-        INTAKE_O(0, 0, 0, 0),
-        INTAKE_C(0, 0, 0, 0),
-        APPROACH_C(0, 0, 0, 0),
+        INTAKE_O(0, 0, 0, SKIP),
+        INTAKE_C(0, 0, 0, SKIP),
+        APPROACH_C(0, 0, 0, SKIP),
         TRANSFER_C(0, 0, 0, 0),
         TRANSFER_O(0, 0, 0, 0),
         REST(0, 0, 0, 0);
@@ -94,15 +96,30 @@ public class IntakeSubsystem extends SubInDepSubsystem<
         targetData.intakeRightSlidePos += data.intakeRightLiftPower;
     }
 
+    public void powerLift(double power) {
+        this.targetData.intakeRightSlidePos += power;
+        this.targetData.intakeLeftSlidePos += power;
+    }
+
     public void setState(State state) {
         this.state = state;
+        PositionTargetData pastTargetData = this.targetData;
         this.targetData = state.data;
+
+        if (state.data.intakeLeftSlidePos == SKIP)
+            this.targetData.intakeLeftSlidePos = pastTargetData.intakeLeftSlidePos;
+        if (state.data.intakeRightSlidePos == SKIP)
+            this.targetData.intakeRightSlidePos = pastTargetData.intakeRightSlidePos;
 
         robot.intakeClaw.setPosition(targetData.intakeClawPos);
         robot.intakeWrist.setPosition(targetData.intakeWristPos);
         robot.intakePivot.setPosition(targetData.intakePivotPos);
-        robot.leftIntakeLift.setPosition(targetData.intakeLeftSlidePos);
-        robot.rightIntakeLift.setPosition(targetData.intakeRightSlidePos);
+
+        if (targetData.intakeLeftSlidePos >= 0)
+            robot.leftIntakeLift.setPosition(targetData.intakeLeftSlidePos);
+
+        if (targetData.intakeRightSlidePos >= 0)
+            robot.rightIntakeLift.setPosition(targetData.intakeRightSlidePos);
     }
 
     public State getState() {

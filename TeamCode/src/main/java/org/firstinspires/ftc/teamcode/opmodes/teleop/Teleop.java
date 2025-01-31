@@ -37,6 +37,9 @@ public class Teleop extends LinearOpMode {
             double g1power = gamepad1.right_trigger - gamepad1.left_trigger;
             double g2power = gamepad2.right_trigger - gamepad2.left_trigger;
 
+            inDepControls.intakePower = g1power;
+            inDepControls.depositPower = g2power;
+
             inDepControls.intakeSemidirectCD.intakeLiftPower = gamepad1.dpad_up ? g1power : 0;
                 inDepControls.intakeDirectCD.intakeLeftLiftPower = (gamepad1.dpad_up && gamepad1.left_bumper) ? g1power : 0;
                 inDepControls.intakeDirectCD.intakeRightLiftPower = (gamepad1.dpad_up && gamepad1.right_bumper) ? g1power : 0;

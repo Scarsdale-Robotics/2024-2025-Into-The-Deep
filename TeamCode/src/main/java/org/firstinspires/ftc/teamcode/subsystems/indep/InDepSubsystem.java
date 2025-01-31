@@ -70,7 +70,7 @@ public class InDepSubsystem {
     }
 
     public static class InDepControlData {
-        // MANUAL, ALTERNATE
+        // NORMAL, ALTERNATE
         public boolean intakeButton;
         public boolean depositButton;
         public boolean magButton;
@@ -82,6 +82,9 @@ public class InDepSubsystem {
         public boolean magUndo;
         public boolean makerUndo;
         public boolean clipUndo;
+
+        public double intakePower;
+        public double depositPower;
 
         // SEMIDIRECT
         public IntakeSubsystem.SemidirectControlData intakeSemidirectCD;
@@ -130,6 +133,9 @@ public class InDepSubsystem {
         lastControls.makerUndo = controls.makerUndo;
         lastControls.magUndo = controls.magUndo;
         lastControls.depositUndo = controls.depositUndo;
+
+        lastControls.intakePower = controls.intakePower;
+        lastControls.depositPower = controls.depositPower;
 
         // NOTE: SOME SUBSYSTEMS MAY REQUIRE LAST ACTION TRACKING.
         //       LAST ACTION TRACKING SHOULD BE IMPLEMENTED IMMEDIATELY BEFORE THIS COMMENT.
@@ -431,6 +437,10 @@ public class InDepSubsystem {
                     clipState = ClipSubsystem.State.REST;
                     break;
             }
+        }
+
+        if (intakeState == IntakeSubsystem.State.APPROACH_O) {
+            intake.powerLift(controls.intakePower);
         }
 
         intake.setState(intakeState);
