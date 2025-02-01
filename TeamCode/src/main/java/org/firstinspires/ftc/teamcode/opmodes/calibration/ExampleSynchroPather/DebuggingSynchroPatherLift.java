@@ -1,16 +1,23 @@
 package org.firstinspires.ftc.teamcode.opmodes.calibration.ExampleSynchroPather;
 
 import com.acmerobotics.dashboard.FtcDashboard;
+import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.arcrobotics.ftclib.geometry.Pose2d;
 import com.arcrobotics.ftclib.geometry.Rotation2d;
+import com.arcrobotics.ftclib.hardware.motors.Motor;
+import com.arcrobotics.ftclib.hardware.motors.MotorEx;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.RobotSystem;
 import org.firstinspires.ftc.teamcode.opmodes.calibration.Drawing;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.Synchronizer;
+import org.firstinspires.ftc.teamcode.synchropather.systems.lift.LiftPlan;
+import org.firstinspires.ftc.teamcode.synchropather.systems.lift.LiftState;
+import org.firstinspires.ftc.teamcode.synchropather.systems.lift.movements.LinearLift;
 import org.firstinspires.ftc.teamcode.synchropather.systems.rotation.RotationPlan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.rotation.RotationState;
 import org.firstinspires.ftc.teamcode.synchropather.systems.rotation.movements.LinearRotation;
@@ -23,15 +30,34 @@ import java.util.ArrayDeque;
 @Autonomous(name="Debugging SynchroPather Lift OpMode", group = "Calibration")
 public class DebuggingSynchroPatherLift extends LinearOpMode {
 
-    RobotSystem robot;
     Synchronizer synchronizer;
 
     volatile ArrayDeque<Double> loopTicks;
     volatile ElapsedTime runtime;
 
+    private MotorEx leftLift;
+    private MotorEx rightLift;
+
     @Override
     public void runOpMode() throws InterruptedException {
-        this.robot = new RobotSystem(hardwareMap, new Pose2d(0, 0, new Rotation2d(0)), false, this);
+        telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
+        leftLift = new MotorEx(hardwareMap, "leftLift", Motor.GoBILDA.RPM_312);
+        rightLift = new MotorEx(hardwareMap, "rightLift", Motor.GoBILDA.RPM_312);
+
+        leftLift.motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        leftLift.motor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        leftLift.setRunMode(Motor.RunMode.RawPower);
+        leftLift.motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        leftLift.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
+        leftLift.setInverted(false);
+
+        rightLift.motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightLift.motor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        rightLift.setRunMode(Motor.RunMode.RawPower);
+        rightLift.motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        rightLift.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
+        rightLift.setInverted(true);
+
         initSynchronizer();
 
 
@@ -39,30 +65,22 @@ public class DebuggingSynchroPatherLift extends LinearOpMode {
         runtime = new ElapsedTime(0);
         runtime.reset();
 
-        robot.telemetry.addData("[MAIN] TPS", 0);
-        robot.telemetry.update();
+        telemetry.addData("[MAIN] TPS", 0);
+        telemetry.update();
 
         waitForStart();
 
         while (opModeIsActive()) {
-            while (opModeIsActive() && !gamepad1.square) {
-                updateTPS();
-                robot.logOdometry();
-            }
             synchronizer.start();
             while (opModeIsActive() && synchronizer.update()) {
                 updateTPS();
-                robot.logOdometry();
-                TelemetryPacket packet = new TelemetryPacket();
-                packet.fieldOverlay().setStroke("#3F51B5");
-                Drawing.drawRobot(packet.fieldOverlay(), robot.localization.getPose());
-                if (robot.opMode.gamepad1.triangle)
-                    Drawing.drawTargetPose(packet.fieldOverlay(), new Pose2d(robot.drive.targetX, robot.drive.targetY, new Rotation2d(robot.drive.targetH)));
-                FtcDashboard.getInstance().sendTelemetryPacket(packet);
+            }
+            while (opModeIsActive() && !gamepad1.square) {
+                updateTPS();
+                synchronizer.update();
             }
             synchronizer.stop();
             updateTPS();
-            robot.logOdometry();
         }
     }
 
@@ -74,39 +92,29 @@ public class DebuggingSynchroPatherLift extends LinearOpMode {
         double currentTime = runtime.seconds();
         loopTicks.add(currentTime);
         while (!loopTicks.isEmpty() && currentTime - loopTicks.getFirst() > 1d) loopTicks.removeFirst();
-        robot.telemetry.addData("[MAIN] TPS", loopTicks.size());
-        robot.telemetry.update();
+        telemetry.addData("[MAIN] TPS", loopTicks.size());
+        telemetry.update();
     }
 
 
     private void initSynchronizer() {
         // Translation plan
-        LinearTranslation line1 = new LinearTranslation(0,
-                new TranslationState(0, 0),
-                new TranslationState(24, 0)
+        LinearLift lift1 = new LinearLift(0,
+                new LiftState(0),
+                new LiftState(1100)
         );
-        LinearTranslation line2 = new LinearTranslation(line1.getEndTime(),
-                new TranslationState(24, 0),
-                new TranslationState(0, 0)
+        LinearLift lift2 = new LinearLift(lift1.getEndTime(),
+                new LiftState(1100),
+                new LiftState(0)
         );
-        TranslationPlan translationPlan = new TranslationPlan(robot,
-                line1,
-                line2
-        );
-
-        // Rotation plan
-        LinearRotation rotation = new LinearRotation(0,
-                new RotationState(Math.toRadians(0)),
-                new RotationState(Math.toRadians(180))
-        );
-        RotationPlan rotationPlan = new RotationPlan(robot,
-                rotation
+        LiftPlan liftPlan = new LiftPlan(leftLift, rightLift, telemetry,
+                lift1,
+                lift2
         );
 
         // Synchronizer
         this.synchronizer = new Synchronizer(
-                translationPlan
-//                ,rotationPlan
+                liftPlan
         );
     }
 

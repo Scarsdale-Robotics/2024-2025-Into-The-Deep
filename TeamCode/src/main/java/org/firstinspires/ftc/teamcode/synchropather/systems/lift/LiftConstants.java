@@ -11,10 +11,10 @@ public class LiftConstants {
     /**
      *  Max lift velocity in ticks/s.
      */
-    public static double MAX_VELOCITY = 2200;
+    public static double MAX_VELOCITY = 2500;
     /**
      *  Max lift acceleration in ticks/s^2.
      */
-    public static double MAX_ACCELERATION = 2200;
+    public static double MAX_ACCELERATION = 8000;
 
 }

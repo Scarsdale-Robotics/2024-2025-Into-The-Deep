@@ -1,31 +1,35 @@
-package org.firstinspires.ftc.teamcode.synchropather.systems.elbow.movements;
+package org.firstinspires.ftc.teamcode.synchropather.systems.hArm.movements;
 
 import org.firstinspires.ftc.teamcode.synchropather.systems.MovementType;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.TimeSpan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.calculators.StretchedDisplacementCalculator;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.superclasses.Movement;
-import org.firstinspires.ftc.teamcode.synchropather.systems.elbow.ElbowConstants;
-import org.firstinspires.ftc.teamcode.synchropather.systems.elbow.ElbowState;
+import org.firstinspires.ftc.teamcode.synchropather.systems.hArm.HArmConstants;
+import org.firstinspires.ftc.teamcode.synchropather.systems.hArm.HArmState;
 
-public class LinearElbow extends Movement {
+/**
+ * Linear horizontal arm Movement.
+ */
+public class LinearHArm extends Movement {
     private double distance, minDuration;
-    private ElbowState start, end;
+    private HArmState start, end;
     private StretchedDisplacementCalculator calculator;
 
-    public LinearElbow(TimeSpan timeSpan, ElbowState start, ElbowState end) {
-        super(timeSpan, MovementType.ELBOW);
+    public LinearHArm(TimeSpan timeSpan, HArmState start, HArmState end) {
+        super(timeSpan, MovementType.HORIZONTAL_ARM);
         this.start = start;
         this.end = end;
         init(false, 0);
     }
+
     /**
-     * Creates a new LinearRotation object with a given start and end RotationState at the given startTime.
+     * Creates a new LinearHArm object with a given start and end states at the given startTime.
      * @param startTime
      * @param start
      * @param end
      */
-    public LinearElbow(double startTime, ElbowState start, ElbowState end) {
-        super(MovementType.ELBOW);
+    public LinearHArm(double startTime, HArmState start, HArmState end) {
+        super(MovementType.HORIZONTAL_ARM);
         this.start = start;
         this.end = end;
         init(true, startTime);
@@ -35,11 +39,12 @@ public class LinearElbow extends Movement {
     public double getMinDuration() {
         return minDuration;
     }
+
     /**
-     * @return the indicated ElbowState.
+     * @return the indicated HArmState.
      */
     @Override
-    public ElbowState getState(double elapsedTime) {
+    public HArmState getState(double elapsedTime) {
         double t = distance!=0 ? calculator.getDisplacement(elapsedTime) / distance : 0;
 
         double q0 = 1 - t;
@@ -48,49 +53,53 @@ public class LinearElbow extends Movement {
         // linear interpolation
         return start.times(q0).plus(end.times(q1));
     }
+
     /**
-     * @return the indicated velocity ElbowState.
+     * @return the indicated velocity HArmState.
      */
     @Override
-    public ElbowState getVelocity(double elapsedTime) {
+    public HArmState getVelocity(double elapsedTime) {
         double sign = end.minus(start).sign();
         double speed = calculator.getVelocity(elapsedTime);
 
         // scaled velocity vector
-        return new ElbowState(sign * speed);
+        return new HArmState(sign * speed);
     }
+
     /**
-     * @return the indicated acceleration ElbowState.
+     * @return the indicated acceleration HArmState.
      */
     @Override
-    public ElbowState getAcceleration(double elapsedTime) {
+    public HArmState getAcceleration(double elapsedTime) {
         double sign = end.minus(start).sign();
         double speed = calculator.getAcceleration(elapsedTime);
 
         // scaled acceleration vector
-        return new ElbowState(sign * speed);
+        return new HArmState(sign * speed);
     }
+
     /**
-     * @return the ElbowState of this Movement at the start time.
+     * @return the HArmState of this Movement at the start time.
      */
     @Override
-    public ElbowState getStartState() {
+    public HArmState getStartState() {
         return start;
     }
+
     /**
-     * @return the ElbowState of this Movement at the end time.
+     * @return the HArmState of this Movement at the end time.
      */
     @Override
-    public ElbowState getEndState() {
+    public HArmState getEndState() {
         return end;
     }
 
     /**
-     * @return "LinearElbow"
+     * @return "LinearHArm"
      */
     @Override
     public String getDisplayName() {
-        return "LinearElbow";
+        return "LinearHArm";
     }
 
     /**
@@ -99,8 +108,8 @@ public class LinearElbow extends Movement {
     private void init(boolean startTimeConstructor, double startTime) {
         distance = end.minus(start).abs();
 
-        double MAV = ElbowConstants.MAX_VELOCITY;
-        double MAA = ElbowConstants.MAX_ACCELERATION;
+        double MAV = HArmConstants.MAX_VELOCITY;
+        double MAA = HArmConstants.MAX_ACCELERATION;
 
         if (startTimeConstructor) {
             minDuration = StretchedDisplacementCalculator.findMinDuration(distance, MAV, MAA);
