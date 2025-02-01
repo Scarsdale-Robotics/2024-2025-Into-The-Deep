@@ -6,7 +6,6 @@ import com.acmerobotics.dashboard.config.Config;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.internal.camera.calibration.CameraCalibration;
-import org.firstinspires.ftc.teamcode.cvpipelines.RectDrawer;
 import org.firstinspires.ftc.vision.VisionProcessor;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
@@ -36,6 +35,8 @@ public class SampleOrientationProcessor implements VisionProcessor {
 
     private Telemetry telemetry;
 
+    public static double cameraHeight = 11.291339; // inches
+
     public static Scalar lowerYellow = new Scalar(19.0, 102.0, 130.1); // hsv
     public static Scalar upperYellow = new Scalar(30.0, 255.0, 255.0); // hsv
     public static Scalar lowerBlue = new Scalar(90.0, 90.0, 90.0); // hsv
@@ -49,10 +50,9 @@ public class SampleOrientationProcessor implements VisionProcessor {
     private volatile double sampleAngle = 0;
     private volatile double averageBrightness = 0;
     private volatile ArrayList<double[]> realPositions = new ArrayList<>();
+    private volatile ArrayList<Double> sampleAngles = new ArrayList<>();
 
-    public static RectDrawer.SampleColor colorType = RectDrawer.SampleColor.YELLOW;
-
-    private ArrayList<RotatedRect> rects;
+    public static volatile SampleColor colorType = SampleColor.YELLOW;
 
     public SampleOrientationProcessor(Telemetry telemetry) {
         this.telemetry = telemetry;
@@ -84,7 +84,7 @@ public class SampleOrientationProcessor implements VisionProcessor {
         Mat mask = new Mat();
         Core.inRange(gray, lowerBound, upperBound, mask);
         Scalar maskedMean = Core.mean(gray, mask);
-        double averageBrightness = maskedMean.val[0];
+        averageBrightness = maskedMean.val[0];
         telemetry.addData("averageBrightness", averageBrightness);
         double targetAverageInRange = 120;
         frame.convertTo(frame, -1, targetAverageInRange/ averageBrightness, 0);
@@ -94,9 +94,9 @@ public class SampleOrientationProcessor implements VisionProcessor {
         Mat hsv = new Mat(); // convert to hsv
         Imgproc.cvtColor(frame, hsv, Imgproc.COLOR_RGB2HSV);
         Mat inRange = new Mat();
-        if (colorType.equals(RectDrawer.SampleColor.BLUE)) {
+        if (colorType.equals(SampleColor.BLUE)) {
             Core.inRange(hsv, lowerBlue, upperBlue, inRange);
-        } else if (colorType.equals(RectDrawer.SampleColor.RED)) {
+        } else if (colorType.equals(SampleColor.RED)) {
             Mat inHRange = new Mat();
             Mat inSVRange = new Mat();
             Core.inRange(hsv, lowerRedH, upperRedH, inHRange);
@@ -177,7 +177,8 @@ public class SampleOrientationProcessor implements VisionProcessor {
 
 
         // Draw filtered rects as green
-        realPositions = getOffsets(filteredRects, scalingFactor);
+        ArrayList<double[]> tempRealPositions = getOffsets(filteredRects, scalingFactor);
+        realPositions = tempRealPositions;
         for (RotatedRect rotatedRect : filteredRects) {
             Point[] vertices = new Point[4];
             rotatedRect.points(vertices);
@@ -186,7 +187,21 @@ public class SampleOrientationProcessor implements VisionProcessor {
             }
             Imgproc.circle(frame, rotatedRect.center, 5, new Scalar(255, 255, 0));
         }
-        rects = new ArrayList<>(filteredRects);
+
+
+        // Update sample angles list
+        ArrayList<Double> tempSampleAngles = new ArrayList<>();
+        for (RotatedRect rect : filteredRects) {
+            double procAngle = rect.angle;
+            if (rect.size.width > rect.size.height)
+                procAngle *= -1;
+            else
+                procAngle = 90-procAngle;
+            procAngle -= 90;
+            if (procAngle < -90) procAngle += 180;
+            tempSampleAngles.add(Math.toRadians(procAngle));
+        }
+        sampleAngles = tempSampleAngles;
 
 
         // telemetry
@@ -214,21 +229,28 @@ public class SampleOrientationProcessor implements VisionProcessor {
         return frame;
     }
 
-
-    public boolean getSampleDetected() {
+    public synchronized boolean getSampleDetected() {
         return sampleDetected;
     }
 
-    public double getSampleAngle() {
+    public synchronized double getFirstSampleAngle() {
         return sampleAngle;
     }
 
-    public double getAverageBrightness() {
+    public synchronized double getAverageBrightness() {
         return averageBrightness;
     }
 
-    public ArrayList<double[]> getRealPositions() {
+    public synchronized ArrayList<double[]> getRealPositions() {
         return realPositions;
+    }
+
+    public synchronized ArrayList<Double> getSampleAngles() {
+        return sampleAngles;
+    }
+
+    public synchronized void setFilterColor(SampleColor color) {
+        colorType = color;
     }
 
     private double getIntersectionArea(RotatedRect rect1, RotatedRect rect2) {
@@ -261,7 +283,7 @@ public class SampleOrientationProcessor implements VisionProcessor {
         ArrayList<double[]> output = new ArrayList<>();
 
         // TODO: Make height not hardcoded, instead base it off of robot position
-        double height = 17.0; // in inches
+        double height = cameraHeight; // in inches
         double canvasVertical = 1.1 * height*3.0/8.0; // inches
         double canvasHorizontal = 1.1 * height / 2;
 
@@ -270,7 +292,9 @@ public class SampleOrientationProcessor implements VisionProcessor {
         for (RotatedRect i : input) {
             // real center is (320, 480), positive direction is right and down
 //            output.add(new Point(i.center.x - 320, -(i.center.y - 240)));
-            output.add(new double[]{(i.center.x - scaled320) / scaled320 * canvasHorizontal, -(i.center.y - scaled240) / scaled240 * canvasVertical, height});
+            double horizontalCoordinate = (i.center.x - scaled320) / scaled320 * canvasHorizontal;
+            double verticalCoordinate = -(i.center.y - scaled240) / scaled240 * canvasVertical;
+            output.add(new double[]{verticalCoordinate, -horizontalCoordinate});
 
 
             // 4 in height = 1.5 width vertical (half width, not full)

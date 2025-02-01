@@ -8,7 +8,9 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.ServoImplEx;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.teamcode.synchropather.subsystemclasses.HorizontalIntakeSubsystem;
+import org.firstinspires.ftc.teamcode.synchropather.subsystemclasses.OverheadCameraSubsystem;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.Synchronizer;
 import org.firstinspires.ftc.teamcode.synchropather.systems.hArm.HArmPlan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.hArm.HArmState;
@@ -19,14 +21,11 @@ import org.firstinspires.ftc.teamcode.synchropather.systems.hClaw.movements.Grab
 import org.firstinspires.ftc.teamcode.synchropather.systems.hClaw.movements.ReleaseHClaw;
 import org.firstinspires.ftc.teamcode.synchropather.systems.hWrist.HWristPlan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.hWrist.movements.MoveHWrist;
-import org.firstinspires.ftc.teamcode.synchropather.systems.lift.LiftPlan;
-import org.firstinspires.ftc.teamcode.synchropather.systems.lift.LiftState;
-import org.firstinspires.ftc.teamcode.synchropather.systems.lift.movements.LinearLift;
 
 import java.util.ArrayDeque;
 
-@Autonomous(name="Horizontal Intake Pick Up Sample Motion", group = "Calibration")
-public class HIntakePickUpSampleMotion extends LinearOpMode {
+@Autonomous(name="Horizontal Intake Pick Up Sample With CV", group = "Calibration")
+public class HIntakePickUpSampleCV extends LinearOpMode {
 
     private Synchronizer synchronizer;
 
@@ -34,12 +33,11 @@ public class HIntakePickUpSampleMotion extends LinearOpMode {
     private ElapsedTime runtime;
 
     private HorizontalIntakeSubsystem horizontalIntake;
+    private OverheadCameraSubsystem overheadCamera;
 
     @Override
     public void runOpMode() throws InterruptedException {
         initOpMode();
-        initSynchronizer();
-
 
         loopTicks = new ArrayDeque<>();
         runtime = new ElapsedTime(0);
@@ -51,21 +49,30 @@ public class HIntakePickUpSampleMotion extends LinearOpMode {
         waitForStart();
 
         while (opModeIsActive()) {
+            // Create synchronizer on button press
+            while (opModeIsActive() && gamepad1.square) updateTPS();
+            while (opModeIsActive() && !gamepad1.square) updateTPS();
+            double[] closestSample = overheadCamera.getClosestSample();
+            if (closestSample == null) continue;
+            initSynchronizer(closestSample[2]);
+
+            // Run synchronizer
             synchronizer.start();
             while (opModeIsActive() && synchronizer.update()) {
                 updateTPS();
             }
             while (opModeIsActive() && !gamepad1.square) {
-                updateTPS();
                 synchronizer.update();
+                updateTPS();
             }
             synchronizer.stop();
-            updateTPS();
         }
     }
 
     private void initOpMode() {
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
+
+        // init horizontal intake
         Servo leftHorizontalArm = hardwareMap.get(ServoImplEx.class, "leftHorizontalArm");
         Servo rightHorizontalArm = hardwareMap.get(ServoImplEx.class, "rightHorizontalArm");
         Servo horizontalWrist = hardwareMap.get(ServoImplEx.class, "horizontalWrist");
@@ -79,6 +86,10 @@ public class HIntakePickUpSampleMotion extends LinearOpMode {
         horizontalIntake.setClawPosition(HClawConstants.RELEASE_POSITION);
         horizontalIntake.setWristAngle(0);
         horizontalIntake.setArmPosition(0.5);
+
+        // init overhead camera
+        WebcamName cameraName = hardwareMap.get(WebcamName.class, "Webcam 1");
+        this.overheadCamera = new OverheadCameraSubsystem(cameraName, telemetry);
     }
 
     private void updateTPS() {
@@ -90,13 +101,13 @@ public class HIntakePickUpSampleMotion extends LinearOpMode {
         telemetry.update();
     }
 
-    private void initSynchronizer() {
+    private void initSynchronizer(double angle) {
         // Move arm down
         LinearHArm h_arm_down = new LinearHArm(0,
                 new HArmState(0.5),
                 new HArmState(1)
         );
-        MoveHWrist h_wrist_align = new MoveHWrist(0, Math.toRadians(0));
+        MoveHWrist h_wrist_align = new MoveHWrist(0, angle);
         ReleaseHClaw h_claw_release = new ReleaseHClaw(0);
 
         // Pick up and move arm up

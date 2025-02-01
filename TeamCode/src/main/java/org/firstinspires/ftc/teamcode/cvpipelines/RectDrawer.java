@@ -308,6 +308,8 @@ public class RectDrawer extends OpenCvPipeline {
                 procAngle *= -1;
             else
                 procAngle = 90-procAngle;
+            procAngle -= 90;
+            if (procAngle < -90) procAngle += 180;
             telemetry.addData("procAngle ", procAngle);
             sampleAngle = procAngle;
         }

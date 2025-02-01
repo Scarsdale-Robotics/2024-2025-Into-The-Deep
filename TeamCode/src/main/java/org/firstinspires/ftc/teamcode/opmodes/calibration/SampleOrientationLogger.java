@@ -10,7 +10,6 @@ import com.qualcomm.robotcore.hardware.ServoImplEx;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.controls.ExposureControl;
-import org.firstinspires.ftc.teamcode.HardwareRobot;
 import org.firstinspires.ftc.teamcode.cvprocessors.SampleOrientationProcessor;
 import org.firstinspires.ftc.vision.VisionPortal;
 
@@ -43,7 +42,7 @@ public class SampleOrientationLogger extends LinearOpMode {
         updateExposure(visionPortal, getCorrectedExposure(processor.getAverageBrightness()));
 
         while (opModeIsActive()) {
-            double sampleAngleProportion = (processor.getSampleAngle() - -Math.PI/2) / Math.PI;
+            double sampleAngleProportion = (processor.getFirstSampleAngle() - -Math.PI/2) / Math.PI;
             double servoAngle = minusNinetyPosition + sampleAngleProportion*(plusNinetyPosition - minusNinetyPosition);
             wrist.setPosition(servoAngle);
         }
