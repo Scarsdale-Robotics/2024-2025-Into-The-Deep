@@ -64,8 +64,9 @@ public class SampleAlignment3RArmTest extends LinearOpMode {
 
         while (opModeIsActive()) {
             // Get sample position
-            if (processor.getSampleDetected() && !processor.getRealPositions().isEmpty()) {
-                double[] realPosition = processor.getRealPositions().get(0);
+            ArrayList<double[]> realPositions = processor.getRealPositions();
+            if (processor.getSampleDetected() && !realPositions.isEmpty()) {
+                double[] realPosition = realPositions.get(0);
                 targetX = -realPosition[1]+10;
                 targetY = realPosition[0];
                 targetZ = 17-realPosition[2]+deltaHeight;
