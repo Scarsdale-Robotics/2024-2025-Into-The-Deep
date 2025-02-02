@@ -2,16 +2,23 @@ package org.firstinspires.ftc.teamcode.opmodes.calibration.NewRobotTesting;
 
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
+import com.arcrobotics.ftclib.hardware.motors.Motor;
+import com.arcrobotics.ftclib.hardware.motors.MotorEx;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.ServoImplEx;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.teamcode.synchropather.subsystemclasses.HorizontalIntakeSubsystem;
+import org.firstinspires.ftc.teamcode.synchropather.subsystemclasses.LinearSlidesSubsystem;
 import org.firstinspires.ftc.teamcode.synchropather.subsystemclasses.OverheadCameraSubsystem;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.Synchronizer;
+import org.firstinspires.ftc.teamcode.synchropather.systems.extendo.ExtendoPlan;
+import org.firstinspires.ftc.teamcode.synchropather.systems.extendo.ExtendoState;
+import org.firstinspires.ftc.teamcode.synchropather.systems.extendo.movements.LinearExtendo;
 import org.firstinspires.ftc.teamcode.synchropather.systems.hArm.HArmPlan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.hArm.HArmState;
 import org.firstinspires.ftc.teamcode.synchropather.systems.hArm.movements.LinearHArm;
@@ -24,8 +31,8 @@ import org.firstinspires.ftc.teamcode.synchropather.systems.hWrist.movements.Mov
 
 import java.util.ArrayDeque;
 
-@Autonomous(name="Horizontal Intake Pick Up Sample With CV", group = "Calibration")
-public class HIntakePickUpSampleCV extends LinearOpMode {
+@Autonomous(name="Pick Up Sample Using Horizontal Intake, Extendo, and CV (no drivetrain)", group = "Calibration")
+public class HIntakeExtendoCVSample extends LinearOpMode {
 
     private Synchronizer synchronizer;
 
@@ -34,6 +41,7 @@ public class HIntakePickUpSampleCV extends LinearOpMode {
 
     private HorizontalIntakeSubsystem horizontalIntake;
     private OverheadCameraSubsystem overheadCamera;
+    private LinearSlidesSubsystem linearSlides;
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -54,7 +62,7 @@ public class HIntakePickUpSampleCV extends LinearOpMode {
             while (opModeIsActive() && !gamepad1.square) updateTPS();
             double[] closestSample = overheadCamera.getClosestSample();
             if (closestSample == null) continue;
-            initSynchronizer(closestSample[2]);
+            initSynchronizer(closestSample);
 
             // Run synchronizer
             synchronizer.start();
@@ -90,6 +98,35 @@ public class HIntakePickUpSampleCV extends LinearOpMode {
         // init overhead camera
         WebcamName cameraName = hardwareMap.get(WebcamName.class, "Webcam 1");
         this.overheadCamera = new OverheadCameraSubsystem(cameraName, telemetry);
+
+        // init linear slides
+        // TODO: FIGURE OUT WHAT RPM EXTENDO MOTOR IS
+        Motor extendo = new MotorEx(hardwareMap, "extendo", Motor.GoBILDA.RPM_312);
+        Motor leftLift = new MotorEx(hardwareMap, "leftLift", Motor.GoBILDA.RPM_312);
+        Motor rightLift = new MotorEx(hardwareMap, "rightLift", Motor.GoBILDA.RPM_312);
+
+        extendo.motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        extendo.motor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        extendo.setRunMode(Motor.RunMode.RawPower);
+        extendo.motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        extendo.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
+        extendo.setInverted(false);
+
+        leftLift.motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        leftLift.motor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        leftLift.setRunMode(Motor.RunMode.RawPower);
+        leftLift.motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        leftLift.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
+        leftLift.setInverted(false);
+
+        rightLift.motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightLift.motor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        rightLift.setRunMode(Motor.RunMode.RawPower);
+        rightLift.motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        rightLift.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
+        rightLift.setInverted(true);
+
+        this.linearSlides = new LinearSlidesSubsystem(extendo, leftLift, rightLift, telemetry);
     }
 
     private void updateTPS() {
@@ -101,14 +138,28 @@ public class HIntakePickUpSampleCV extends LinearOpMode {
         telemetry.update();
     }
 
-    private void initSynchronizer(double angle) {
+    private void initSynchronizer(double[] samplePosition) {
+        double x = samplePosition[0];
+        double y = samplePosition[1];
+        double angle = samplePosition[2];
+
+        double currentExtendoPosition = linearSlides.getExtendoPosition();
+        double extendoTarget = currentExtendoPosition + x - OverheadCameraSubsystem.CLAW_POSITION[0];
+        extendoTarget = Math.max(0, extendoTarget);
+
+        // Extendo
+        LinearExtendo extendoOut = new LinearExtendo(0,
+                new ExtendoState(currentExtendoPosition),
+                new ExtendoState(extendoTarget)
+        );
+
         // Move arm down
-        LinearHArm h_arm_down = new LinearHArm(0,
+        LinearHArm h_arm_down = new LinearHArm(extendoOut.getEndTime(),
                 new HArmState(0.5),
                 new HArmState(1)
         );
-        MoveHWrist h_wrist_align = new MoveHWrist(0, angle);
-        ReleaseHClaw h_claw_release = new ReleaseHClaw(0);
+        MoveHWrist h_wrist_align = new MoveHWrist(h_arm_down.getStartTime(), angle);
+        ReleaseHClaw h_claw_release = new ReleaseHClaw(h_arm_down.getStartTime());
 
         // Pick up and move arm up
         GrabHClaw h_claw_grab = new GrabHClaw(h_arm_down.getEndTime());
@@ -118,7 +169,17 @@ public class HIntakePickUpSampleCV extends LinearOpMode {
                 new HArmState(0.5)
         );
 
+        // Retract extendo
+        LinearExtendo extendoIn = new LinearExtendo(h_arm_up.getStartTime(),
+                new ExtendoState(extendoTarget),
+                new ExtendoState(0)
+        );
+
         // Create Plans
+        ExtendoPlan extendo_plan = new ExtendoPlan(linearSlides,
+                extendoOut,
+                extendoIn
+        );
         HWristPlan h_wrist_plan = new HWristPlan(horizontalIntake,
                 h_wrist_align,
                 h_wrist_reset
@@ -134,6 +195,7 @@ public class HIntakePickUpSampleCV extends LinearOpMode {
 
         // Synchronizer
         this.synchronizer = new Synchronizer(
+                extendo_plan,
                 h_arm_plan,
                 h_wrist_plan,
                 h_claw_plan

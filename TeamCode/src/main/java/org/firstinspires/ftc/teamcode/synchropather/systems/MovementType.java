@@ -19,6 +19,10 @@ public enum MovementType {
 	 */
 	LIFT(),
 	/**
+	 * A Movement involving the horizontal extension slide.
+	 */
+	EXTENDO(),
+	/**
 	 * A Movement involving the horizontal arm.
 	 */
 	HORIZONTAL_ARM(),

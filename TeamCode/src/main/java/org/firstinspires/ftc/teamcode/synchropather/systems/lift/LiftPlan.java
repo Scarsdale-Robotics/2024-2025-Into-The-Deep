@@ -6,6 +6,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.RobotSystem;
+import org.firstinspires.ftc.teamcode.synchropather.subsystemclasses.LinearSlidesSubsystem;
 import org.firstinspires.ftc.teamcode.synchropather.systems.MovementType;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.superclasses.Movement;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.superclasses.Plan;
@@ -32,20 +33,18 @@ public class LiftPlan extends Plan<LiftState> {
     private final ArrayList<Double> leHistory;
     private final ArrayList<Double> reHistory;
     private final ArrayList<Double> dtHistory;
-    private final Motor leftLift;
-    private final Motor rightLift;
+    private final LinearSlidesSubsystem linearSlides;
 
     private ElapsedTime runtime;
     private final Telemetry telemetry;
 
-    public LiftPlan(Motor leftLift, Motor rightLift, Telemetry telemetry, Movement... movements) {
+    public LiftPlan(LinearSlidesSubsystem linearSlides, Movement... movements) {
         super(MovementType.LIFT, movements);
-        this.leftLift = leftLift;
-        this.rightLift = rightLift;
+        this.linearSlides = linearSlides;
         this.leHistory = new ArrayList<>();
         this.reHistory = new ArrayList<>();
         this.dtHistory = new ArrayList<>();
-        this.telemetry = telemetry;
+        this.telemetry = linearSlides.telemetry;
 //        robot.telemetry.addData("[SYNCHROPATHER] LiftPlan leftHeight", 0);
 //        robot.telemetry.addData("[SYNCHROPATHER] LiftPlan rightHeight", 0);
 //        robot.telemetry.addData("[SYNCHROPATHER] LiftPlan desiredState.getHeight()", 0);
@@ -61,8 +60,8 @@ public class LiftPlan extends Plan<LiftState> {
         double da = desiredAcceleration.getHeight();
 
         // Current state
-        double leftHeight = leftLift.getCurrentPosition();
-        double rightHeight = rightLift.getCurrentPosition();
+        double leftHeight = linearSlides.getLeftLiftPosition();
+        double rightHeight = linearSlides.getRightLiftPosition();
         // lift subsystem get height here instead
         LiftState currentLeftState = new LiftState(leftHeight); // motor position --> height idk
         LiftState currentRightState = new LiftState(rightHeight); // motor position --> height idk
@@ -129,8 +128,8 @@ public class LiftPlan extends Plan<LiftState> {
         ru += fu;
 
         // Set drive powers
-        leftLift.motor.setPower(lu);
-        rightLift.motor.setPower(ru);
+        linearSlides.setLeftLiftPower(lu);
+        linearSlides.setRightLiftPower(ru);
 
         telemetry.addData("[SYNCHROPATHER] LiftPlan leftHeight", leftHeight);
         telemetry.addData("[SYNCHROPATHER] LiftPlan rightHeight", rightHeight);
@@ -143,12 +142,7 @@ public class LiftPlan extends Plan<LiftState> {
 
     @Override
     public void stop() {
-        leftLift.set(0);
-        rightLift.set(0);
-    }
-
-    public void setRobot(RobotSystem robot) {
-//        this.robot = robot;
+        linearSlides.stopLifts();
     }
 
     /**

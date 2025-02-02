@@ -19,9 +19,6 @@ import org.firstinspires.ftc.teamcode.synchropather.systems.hClaw.movements.Grab
 import org.firstinspires.ftc.teamcode.synchropather.systems.hClaw.movements.ReleaseHClaw;
 import org.firstinspires.ftc.teamcode.synchropather.systems.hWrist.HWristPlan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.hWrist.movements.MoveHWrist;
-import org.firstinspires.ftc.teamcode.synchropather.systems.lift.LiftPlan;
-import org.firstinspires.ftc.teamcode.synchropather.systems.lift.LiftState;
-import org.firstinspires.ftc.teamcode.synchropather.systems.lift.movements.LinearLift;
 
 import java.util.ArrayDeque;
 
@@ -37,7 +34,7 @@ public class HIntakePickUpSampleMotion extends LinearOpMode {
 
     @Override
     public void runOpMode() throws InterruptedException {
-        initOpMode();
+        initSubsystems();
         initSynchronizer();
 
 
@@ -64,7 +61,7 @@ public class HIntakePickUpSampleMotion extends LinearOpMode {
         }
     }
 
-    private void initOpMode() {
+    private void initSubsystems() {
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
         Servo leftHorizontalArm = hardwareMap.get(ServoImplEx.class, "leftHorizontalArm");
         Servo rightHorizontalArm = hardwareMap.get(ServoImplEx.class, "rightHorizontalArm");

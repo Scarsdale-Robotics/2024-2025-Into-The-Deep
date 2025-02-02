@@ -12,8 +12,6 @@ import org.firstinspires.ftc.teamcode.RobotSystem;
 import org.firstinspires.ftc.teamcode.opmodes.calibration.Drawing;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.Synchronizer;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.TimeSpan;
-import org.firstinspires.ftc.teamcode.synchropather.systems.claw.ClawConstants;
-import org.firstinspires.ftc.teamcode.synchropather.systems.elbow.ElbowConstants;
 import org.firstinspires.ftc.teamcode.synchropather.systems.lift.LiftConstants;
 import org.firstinspires.ftc.teamcode.synchropather.systems.rotation.RotationConstants;
 import org.firstinspires.ftc.teamcode.synchropather.systems.rotation.RotationPlan;
@@ -106,11 +104,6 @@ public class DebuggingSynchroPatherForwardHeadingCorrection extends LinearOpMode
         LiftConstants.MAX_VELOCITY = 2200;
         LiftConstants.MAX_ACCELERATION = 2200;
 
-        ClawConstants.MAX_VELOCITY = 15.111111111;
-        ClawConstants.MAX_ACCELERATION = 30.22222;
-
-        ElbowConstants.MAX_VELOCITY = 1.021739;
-        ElbowConstants.MAX_ACCELERATION = 1.021739;
         // Translation plan
         LinearTranslation line1 = new LinearTranslation(0,
                 new TranslationState(0, 0),

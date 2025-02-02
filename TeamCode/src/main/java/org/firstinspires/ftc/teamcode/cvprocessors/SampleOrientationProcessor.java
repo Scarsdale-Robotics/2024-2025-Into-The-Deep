@@ -35,7 +35,7 @@ public class SampleOrientationProcessor implements VisionProcessor {
 
     private Telemetry telemetry;
 
-    public static double cameraHeight = 11.291339; // inches
+    public static double cameraHeight = 11.291339 - 1.5; // inches (-1.5 because of sample height)
 
     public static Scalar lowerYellow = new Scalar(19.0, 102.0, 130.1); // hsv
     public static Scalar upperYellow = new Scalar(30.0, 255.0, 255.0); // hsv

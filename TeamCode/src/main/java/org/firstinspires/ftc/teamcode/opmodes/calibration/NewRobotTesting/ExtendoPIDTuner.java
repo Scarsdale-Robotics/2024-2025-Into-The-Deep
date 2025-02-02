@@ -1,10 +1,7 @@
-package org.firstinspires.ftc.teamcode.opmodes.calibration.ExampleSynchroPather;
+package org.firstinspires.ftc.teamcode.opmodes.calibration.NewRobotTesting;
 
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
-import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
-import com.arcrobotics.ftclib.geometry.Pose2d;
-import com.arcrobotics.ftclib.geometry.Rotation2d;
 import com.arcrobotics.ftclib.hardware.motors.Motor;
 import com.arcrobotics.ftclib.hardware.motors.MotorEx;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
@@ -12,39 +9,28 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-import org.firstinspires.ftc.teamcode.RobotSystem;
-import org.firstinspires.ftc.teamcode.opmodes.calibration.Drawing;
 import org.firstinspires.ftc.teamcode.synchropather.subsystemclasses.LinearSlidesSubsystem;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.Synchronizer;
-import org.firstinspires.ftc.teamcode.synchropather.systems.lift.LiftPlan;
-import org.firstinspires.ftc.teamcode.synchropather.systems.lift.LiftState;
-import org.firstinspires.ftc.teamcode.synchropather.systems.lift.movements.LinearLift;
-import org.firstinspires.ftc.teamcode.synchropather.systems.rotation.RotationPlan;
-import org.firstinspires.ftc.teamcode.synchropather.systems.rotation.RotationState;
-import org.firstinspires.ftc.teamcode.synchropather.systems.rotation.movements.LinearRotation;
-import org.firstinspires.ftc.teamcode.synchropather.systems.translation.TranslationPlan;
-import org.firstinspires.ftc.teamcode.synchropather.systems.translation.TranslationState;
-import org.firstinspires.ftc.teamcode.synchropather.systems.translation.movements.LinearTranslation;
+import org.firstinspires.ftc.teamcode.synchropather.systems.extendo.ExtendoPlan;
+import org.firstinspires.ftc.teamcode.synchropather.systems.extendo.ExtendoState;
+import org.firstinspires.ftc.teamcode.synchropather.systems.extendo.movements.LinearExtendo;
 
 import java.util.ArrayDeque;
 
-@Autonomous(name="Debugging SynchroPather Lift OpMode", group = "Calibration")
-public class DebuggingSynchroPatherLift extends LinearOpMode {
+@Autonomous(name="Extendo PID Tuner", group = "Calibration")
+public class ExtendoPIDTuner extends LinearOpMode {
 
-    Synchronizer synchronizer;
+    private Synchronizer synchronizer;
 
-    volatile ArrayDeque<Double> loopTicks;
-    volatile ElapsedTime runtime;
+    private ArrayDeque<Double> loopTicks;
+    private ElapsedTime runtime;
 
     private LinearSlidesSubsystem linearSlides;
-    private MotorEx leftLift;
-    private MotorEx rightLift;
 
     @Override
     public void runOpMode() throws InterruptedException {
         initSubsystems();
         initSynchronizer();
-
 
         loopTicks = new ArrayDeque<>();
         runtime = new ElapsedTime(0);
@@ -56,23 +42,38 @@ public class DebuggingSynchroPatherLift extends LinearOpMode {
         waitForStart();
 
         while (opModeIsActive()) {
+            // Create synchronizer on button press
+            while (opModeIsActive() && gamepad1.square) updateTPS();
+            while (opModeIsActive() && !gamepad1.square) updateTPS();
+
+            // Run synchronizer
             synchronizer.start();
             while (opModeIsActive() && synchronizer.update()) {
                 updateTPS();
             }
             while (opModeIsActive() && !gamepad1.square) {
-                updateTPS();
                 synchronizer.update();
+                updateTPS();
             }
             synchronizer.stop();
-            updateTPS();
         }
     }
 
     private void initSubsystems() {
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
-        leftLift = new MotorEx(hardwareMap, "leftLift", Motor.GoBILDA.RPM_312);
-        rightLift = new MotorEx(hardwareMap, "rightLift", Motor.GoBILDA.RPM_312);
+
+        // init linear slides
+        // TODO: FIGURE OUT WHAT RPM EXTENDO MOTOR IS
+        Motor extendo = new MotorEx(hardwareMap, "extendo", Motor.GoBILDA.RPM_312);
+        Motor leftLift = new MotorEx(hardwareMap, "leftLift", Motor.GoBILDA.RPM_312);
+        Motor rightLift = new MotorEx(hardwareMap, "rightLift", Motor.GoBILDA.RPM_312);
+
+        extendo.motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        extendo.motor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        extendo.setRunMode(Motor.RunMode.RawPower);
+        extendo.motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        extendo.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
+        extendo.setInverted(false);
 
         leftLift.motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         leftLift.motor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -88,19 +89,11 @@ public class DebuggingSynchroPatherLift extends LinearOpMode {
         rightLift.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
         rightLift.setInverted(true);
 
-        this.linearSlides = new LinearSlidesSubsystem(
-                null,
-                leftLift,
-                rightLift,
-                telemetry
-        );
+        this.linearSlides = new LinearSlidesSubsystem(extendo, leftLift, rightLift, telemetry);
     }
 
     private void updateTPS() {
-        /////////////////
-        // TPS COUNTER //
-        /////////////////
-
+        // TPS counter
         double currentTime = runtime.seconds();
         loopTicks.add(currentTime);
         while (!loopTicks.isEmpty() && currentTime - loopTicks.getFirst() > 1d) loopTicks.removeFirst();
@@ -108,26 +101,29 @@ public class DebuggingSynchroPatherLift extends LinearOpMode {
         telemetry.update();
     }
 
-
     private void initSynchronizer() {
-        // Translation plan
-        LinearLift lift1 = new LinearLift(0,
-                new LiftState(0),
-                new LiftState(1100)
+        double currentExtendoPosition = linearSlides.getExtendoPosition();
+        double extendoTarget = 10; // inches
+
+        // Extendo
+        LinearExtendo extendoOut = new LinearExtendo(0,
+                new ExtendoState(currentExtendoPosition),
+                new ExtendoState(extendoTarget)
         );
-        LinearLift lift2 = new LinearLift(lift1.getEndTime(),
-                new LiftState(1100),
-                new LiftState(0)
+        LinearExtendo extendoIn = new LinearExtendo(extendoOut.getEndTime(),
+                new ExtendoState(extendoTarget),
+                new ExtendoState(0)
         );
-        LiftPlan liftPlan = new LiftPlan(linearSlides,
-                lift1,
-                lift2
+
+        // Create Plans
+        ExtendoPlan extendo_plan = new ExtendoPlan(linearSlides,
+                extendoOut,
+                extendoIn
         );
 
         // Synchronizer
         this.synchronizer = new Synchronizer(
-                liftPlan
+                extendo_plan
         );
     }
-
 }

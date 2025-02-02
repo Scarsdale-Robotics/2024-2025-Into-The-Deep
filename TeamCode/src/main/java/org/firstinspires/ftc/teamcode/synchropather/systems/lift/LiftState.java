@@ -31,7 +31,7 @@ public class LiftState extends RobotState {
     }
     @Override
     public String toString() {
-        return String.format("%s ticks", height);
+        return String.format("%s inches", height);
     }
     @Override
     public String getDisplayName() {
