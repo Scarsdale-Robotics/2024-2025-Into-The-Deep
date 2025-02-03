@@ -7,7 +7,7 @@ public class IntakeSubsystem extends SubInDepSubsystem<
         IntakeSubsystem.SemidirectControlData,
         IntakeSubsystem.DirectControlData
 > {
-    private HardwareRobot robot;
+    private final HardwareRobot robot;
     private State state;
     private PositionTargetData targetData;
 
@@ -18,7 +18,7 @@ public class IntakeSubsystem extends SubInDepSubsystem<
         this.targetData = state.data;
     }
 
-    private final int SKIP = -1000;
+    private static final int SKIP = -1000;
 
     public enum State {
         //tune these
