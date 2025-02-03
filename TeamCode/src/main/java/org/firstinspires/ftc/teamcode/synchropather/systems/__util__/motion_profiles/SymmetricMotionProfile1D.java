@@ -1,25 +1,31 @@
-package org.firstinspires.ftc.teamcode.synchropather.systems.__util__.calculators;
+package org.firstinspires.ftc.teamcode.synchropather.systems.__util__.motion_profiles;
 
 
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.TimeSpan;
 
 /**
- * Object that calculates position based on elapsed time from a velocity curve defined by displacement, time and adjusted max velocity, and max acceleration.
+ * Calculates position based on elapsed time from a velocity curve defined by displacement, time and adjusted max velocity, and max acceleration.
  */
-public class StretchedDisplacementCalculator extends DisplacementCalculator {
+public class SymmetricMotionProfile1D extends MotionProfile1D {
+
+	private double distance, duration, sign;
+	private double v_max, a_max;
 
 	private double minDuration;
 	private TimeSpan timeSpan;
 
 	/**
-	 * Creates a new StretchedDisplacementCalculator with a given target, timeSpan, and kinematic constraints.
-	 * @param targetDisplacement
+	 * Creates a new SymmetricMotionProfile1D with a given target, timeSpan, and kinematic constraints.
+	 * @param targetDisplacement units
 	 * @param timeSpan
-	 * @param MV
-	 * @param MA
+	 * @param v_max units/second
+	 * @param a_max units/second^2
 	 */
-	public StretchedDisplacementCalculator(double targetDisplacement, TimeSpan timeSpan, double MV, double MA) {
-		super(targetDisplacement, MV, MA);
+	public SymmetricMotionProfile1D(double targetDisplacement, TimeSpan timeSpan, double v_max, double a_max) {
+		this.sign = Math.signum(targetDisplacement);
+		this.distance = Math.abs(targetDisplacement);
+		this.v_max = v_max;
+		this.a_max = a_max;
 		this.timeSpan = timeSpan;
 		this.duration = timeSpan.getDuration();
 		init();
@@ -88,22 +94,22 @@ public class StretchedDisplacementCalculator extends DisplacementCalculator {
 			timeSpan = new TimeSpan(getStartTime(), getStartTime() + minDuration);
 		}
 
-		/// calculate MV
+		/// calculate v_max
 		// we now know that time >= min_time, so we might need to stretch the graph
-		// we use quadratic formula to find MV (minus root)
+		// we use quadratic formula to find v_max (minus root)
 		double a, b, c, discriminant;
-		a = 1/MA;
+		a = 1/a_max;
 		b = -getDuration();
 		c = distance;
 		// clip to prevent floating point error and ensure d >= 0
 		discriminant = Math.max(0, b*b - 4*a*c);
-		MV = (-b - Math.sqrt(discriminant))/(2*a);
+		v_max = (-b - Math.sqrt(discriminant))/(2*a);
 
 	}
 
 	/**
 	 * Calculates the displacement at a certain elapsed time.
-	 * @param elapsedTime
+	 * @param elapsedTime seconds
 	 * @return the displacement value the given elapsed time.
 	 */
 	public double getDisplacement(double elapsedTime) {
@@ -112,20 +118,20 @@ public class StretchedDisplacementCalculator extends DisplacementCalculator {
 		double D = Math.abs(this.distance);
 		double displacement;
 
-		double t_n = getDuration() - elapsedTime, t_a = MV/MA;
+		double t_n = getDuration() - elapsedTime, t_a = v_max/a_max;
 		if (getDuration() <= 2*t_a) {
 			// triangle graph
 			if (elapsedTime <= getDuration()/2)
-				displacement = 0.5*MA*elapsedTime*elapsedTime;
+				displacement = 0.5*a_max*elapsedTime*elapsedTime;
 			else
-				displacement = D - 0.5*MA*t_n*t_n;
+				displacement = D - 0.5*a_max*t_n*t_n;
 		}
 		else {
 			// trapezoid graph
 			if (elapsedTime <= getDuration()/2)
-				displacement = 0.5*(elapsedTime + Math.max(0, elapsedTime - t_a))* Math.min(MV, MA*elapsedTime);
+				displacement = 0.5*(elapsedTime + Math.max(0, elapsedTime - t_a))* Math.min(v_max, a_max*elapsedTime);
 			else
-				displacement = D - 0.5*(t_n + Math.max(0, t_n - t_a))* Math.min(MV, MA*t_n);
+				displacement = D - 0.5*(t_n + Math.max(0, t_n - t_a))* Math.min(v_max, a_max*t_n);
 		}
 
 		displacement *= sign;
@@ -135,7 +141,7 @@ public class StretchedDisplacementCalculator extends DisplacementCalculator {
 
 	/**
 	 * Calculates the velocity at a certain elapsed time.
-	 * @param elapsedTime
+	 * @param elapsedTime seconds
 	 * @return the velocity value the given elapsed time.
 	 */
 	public double getVelocity(double elapsedTime) {
@@ -144,20 +150,20 @@ public class StretchedDisplacementCalculator extends DisplacementCalculator {
 
 		double velocity;
 
-		double t_n = getDuration() - elapsedTime, t_a = MV/MA;
+		double t_n = getDuration() - elapsedTime, t_a = v_max/a_max;
 		if (getDuration() <= 2*t_a) {
 			// triangle graph
 			if (elapsedTime <= getDuration()/2)
-				velocity = MA*elapsedTime;
+				velocity = a_max*elapsedTime;
 			else
-				velocity = MA*t_n;
+				velocity = a_max*t_n;
 		}
 		else {
 			// trapezoid graph
 			if (elapsedTime <= getDuration()/2)
-				velocity = Math.min(MV, MA*elapsedTime);
+				velocity = Math.min(v_max, a_max*elapsedTime);
 			else
-				velocity = Math.min(MV, MA*t_n);
+				velocity = Math.min(v_max, a_max*t_n);
 		}
 
 		velocity *= sign;
@@ -167,7 +173,7 @@ public class StretchedDisplacementCalculator extends DisplacementCalculator {
 
 	/**
 	 * Calculates the acceleration at a certain elapsed time.
-	 * @param elapsedTime
+	 * @param elapsedTime seconds
 	 * @return the acceleration value the given elapsed time.
 	 */
 	public double getAcceleration(double elapsedTime) {
@@ -179,20 +185,20 @@ public class StretchedDisplacementCalculator extends DisplacementCalculator {
 
 		double acceleration;
 
-		double t_n = getDuration() - elapsedTime, t_a = MV/MA;
+		double t_n = getDuration() - elapsedTime, t_a = v_max/a_max;
 		if (getDuration() <= 2*t_a) {
 			// triangle graph
 			if (elapsedTime <= getDuration()/2)
-				acceleration = MA;
+				acceleration = a_max;
 			else
-				acceleration = -MA;
+				acceleration = -a_max;
 		}
 		else {
 			// trapezoid graph
 			if (elapsedTime <= t_a)
-				acceleration = MA;
+				acceleration = a_max;
 			else if (t_n <= t_a)
-				acceleration = -MA;
+				acceleration = -a_max;
 			else
 				acceleration = 0;
 		}
@@ -202,14 +208,55 @@ public class StretchedDisplacementCalculator extends DisplacementCalculator {
 		return acceleration;
 	}
 
-	public static double findMinDuration(double distance, double MV, double MA) {
-		double d_a = 0.5 * MV*MV / MA;
+	/**
+	 * Calculates the elapsed time at the given signed displacement value.
+	 * @param displacement units
+	 * @return the elapsed time at which the calculator has reached the given displacement value.
+	 */
+	public double getElapsedTime(double displacement) {
+		displacement = bound(displacement * sign, 0, distance); // positive in [0, distance]
+
+		double elapsedTime;
+		double d_n = distance - displacement, d_a = 0.5 * v_max*v_max/a_max, t_a = v_max/a_max;
+		if (duration <= 2*t_a) {
+			// triangle graph
+			if (displacement <= distance/2)
+				elapsedTime = Math.sqrt(2*displacement/a_max);
+			else
+				elapsedTime = duration - Math.sqrt(2*d_n/a_max);
+		}
+		else {
+			// trapezoid graph
+			if (displacement <= distance/2)
+				if (displacement <= d_a)
+					// in first slope
+					elapsedTime = Math.sqrt(2*displacement/a_max);
+				else
+					// in first plateau
+					elapsedTime = displacement/v_max + t_a/2d;
+			else
+			if (d_n <= d_a)
+				// in last slope
+				elapsedTime = duration - Math.sqrt(2*d_n/a_max);
+			else
+				// in second plateau
+				elapsedTime = duration - (d_n/v_max + t_a/2d);
+		}
+
+		return elapsedTime;
+	}
+
+	/**
+	 * Calculates min time of a symmetric motion profile with the given parameters.
+	 */
+	public static double findMinDuration(double distance, double v_max, double a_max) {
+		double d_a = 0.5 * v_max*v_max / a_max;
 		if (distance / 2 <= d_a) {
 			// triangle graph
-			return 2*Math.sqrt(distance/MA);
+			return 2*Math.sqrt(distance/a_max);
 		} else {
 			// trapezoid graph
-			return distance/MV + MV/MA;
+			return distance/v_max + v_max/a_max;
 		}
 	}
 
@@ -217,7 +264,7 @@ public class StretchedDisplacementCalculator extends DisplacementCalculator {
 	 * Calculates min time and max velocity.
 	 */
 	public void init() {
-		minDuration = findMinDuration(distance, MV, MA);
+		minDuration = findMinDuration(distance, v_max, a_max);
 		setTimeSpan(timeSpan);
 	}
 

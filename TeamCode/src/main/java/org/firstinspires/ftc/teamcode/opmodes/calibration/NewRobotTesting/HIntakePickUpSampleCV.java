@@ -105,7 +105,7 @@ public class HIntakePickUpSampleCV extends LinearOpMode {
         // Move arm down
         LinearHArm h_arm_down = new LinearHArm(0,
                 new HArmState(0.5),
-                new HArmState(1)
+                new HArmState(1.05)
         );
         MoveHWrist h_wrist_align = new MoveHWrist(0, angle);
         ReleaseHClaw h_claw_release = new ReleaseHClaw(0);
@@ -114,7 +114,7 @@ public class HIntakePickUpSampleCV extends LinearOpMode {
         GrabHClaw h_claw_grab = new GrabHClaw(h_arm_down.getEndTime());
         MoveHWrist h_wrist_reset = new MoveHWrist(h_claw_grab.getEndTime(), 0);
         LinearHArm h_arm_up = new LinearHArm(h_wrist_reset.getEndTime(),
-                new HArmState(1),
+                new HArmState(1.05),
                 new HArmState(0.5)
         );
 

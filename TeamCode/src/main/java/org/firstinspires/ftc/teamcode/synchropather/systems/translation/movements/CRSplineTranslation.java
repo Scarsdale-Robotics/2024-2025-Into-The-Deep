@@ -2,7 +2,7 @@ package org.firstinspires.ftc.teamcode.synchropather.systems.translation.movemen
 
 import org.firstinspires.ftc.teamcode.synchropather.systems.MovementType;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.TimeSpan;
-import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.calculators.StretchedDisplacementCalculator;
+import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.motion_profiles.SymmetricMotionProfile1D;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.superclasses.Movement;
 import org.firstinspires.ftc.teamcode.synchropather.systems.translation.TranslationConstants;
 import org.firstinspires.ftc.teamcode.synchropather.systems.translation.TranslationState;
@@ -15,7 +15,7 @@ public class CRSplineTranslation extends Movement {
 	private double distance, minDuration;
 	private double[] partialProps;
 	private final TranslationState[] anchors;
-	private StretchedDisplacementCalculator calculator;
+	private SymmetricMotionProfile1D calculator;
 
 	/**
 	 * Creates a new CRSplineTranslation object with the given anchor TranslationStates allotted for the given TimeSpan.
@@ -313,12 +313,12 @@ public class CRSplineTranslation extends Movement {
 		double MA = TranslationConstants.MAX_ACCELERATION;
 
 		if (startTimeConstructor) {
-			minDuration = StretchedDisplacementCalculator.findMinDuration(distance, MV, MA);
+			minDuration = SymmetricMotionProfile1D.findMinDuration(distance, MV, MA);
 			timeSpan = new TimeSpan(startTime, startTime + minDuration);
 		}
 
 		// create calculator object
-		calculator = new StretchedDisplacementCalculator(distance, timeSpan, MV, MA);
+		calculator = new SymmetricMotionProfile1D(distance, timeSpan, MV, MA);
 
 		minDuration = calculator.getMinDuration();
 		

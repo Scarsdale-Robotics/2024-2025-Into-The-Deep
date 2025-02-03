@@ -2,7 +2,7 @@ package org.firstinspires.ftc.teamcode.synchropather.systems.lift.movements;
 
 import org.firstinspires.ftc.teamcode.synchropather.systems.MovementType;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.TimeSpan;
-import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.calculators.StretchedDisplacementCalculator;
+import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.motion_profiles.SymmetricMotionProfile1D;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.superclasses.Movement;
 import org.firstinspires.ftc.teamcode.synchropather.systems.lift.LiftConstants;
 import org.firstinspires.ftc.teamcode.synchropather.systems.lift.LiftState;
@@ -10,7 +10,7 @@ import org.firstinspires.ftc.teamcode.synchropather.systems.lift.LiftState;
 public class LinearLift extends Movement {
     private double distance, minDuration;
     private LiftState start, end;
-    private StretchedDisplacementCalculator calculator;
+    private SymmetricMotionProfile1D calculator;
 
     public LinearLift(TimeSpan timeSpan, LiftState start, LiftState end) {
         super(timeSpan, MovementType.LIFT);
@@ -103,12 +103,12 @@ public class LinearLift extends Movement {
         double MAA = LiftConstants.MAX_ACCELERATION;
 
         if (startTimeConstructor) {
-            minDuration = StretchedDisplacementCalculator.findMinDuration(distance, MAV, MAA);
+            minDuration = SymmetricMotionProfile1D.findMinDuration(distance, MAV, MAA);
             timeSpan = new TimeSpan(startTime, startTime + minDuration);
         }
 
         // create calculator object
-        calculator = new StretchedDisplacementCalculator(distance, timeSpan, MAV, MAA);
+        calculator = new SymmetricMotionProfile1D(distance, timeSpan, MAV, MAA);
 
         minDuration = calculator.getMinDuration();
     }

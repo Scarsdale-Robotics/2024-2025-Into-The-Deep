@@ -9,7 +9,7 @@ import com.acmerobotics.dashboard.config.Config;
 public class HWristConstants {
 
     // Wrist homing positions
-    public static double wristMinusNinetyPosition = 0.785;
-    public static double wristPlusNinetyPosition = 0.155;
+    public static double wristMinusNinetyPosition = 0.155;
+    public static double wristPlusNinetyPosition = 0.785;
 
 }

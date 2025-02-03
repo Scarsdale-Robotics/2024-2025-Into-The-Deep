@@ -2,7 +2,7 @@ package org.firstinspires.ftc.teamcode.synchropather.systems.hArm.movements;
 
 import org.firstinspires.ftc.teamcode.synchropather.systems.MovementType;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.TimeSpan;
-import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.calculators.StretchedDisplacementCalculator;
+import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.motion_profiles.SymmetricMotionProfile1D;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.superclasses.Movement;
 import org.firstinspires.ftc.teamcode.synchropather.systems.hArm.HArmConstants;
 import org.firstinspires.ftc.teamcode.synchropather.systems.hArm.HArmState;
@@ -13,7 +13,7 @@ import org.firstinspires.ftc.teamcode.synchropather.systems.hArm.HArmState;
 public class LinearHArm extends Movement {
     private double distance, minDuration;
     private HArmState start, end;
-    private StretchedDisplacementCalculator calculator;
+    private SymmetricMotionProfile1D calculator;
 
     public LinearHArm(TimeSpan timeSpan, HArmState start, HArmState end) {
         super(timeSpan, MovementType.HORIZONTAL_ARM);
@@ -112,12 +112,12 @@ public class LinearHArm extends Movement {
         double MAA = HArmConstants.MAX_ACCELERATION;
 
         if (startTimeConstructor) {
-            minDuration = StretchedDisplacementCalculator.findMinDuration(distance, MAV, MAA);
+            minDuration = SymmetricMotionProfile1D.findMinDuration(distance, MAV, MAA);
             timeSpan = new TimeSpan(startTime, startTime + minDuration);
         }
 
         // create calculator object
-        calculator = new StretchedDisplacementCalculator(distance, timeSpan, MAV, MAA);
+        calculator = new SymmetricMotionProfile1D(distance, timeSpan, MAV, MAA);
 
         minDuration = calculator.getMinDuration();
     }

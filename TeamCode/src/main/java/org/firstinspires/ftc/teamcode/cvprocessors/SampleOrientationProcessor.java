@@ -85,7 +85,7 @@ public class SampleOrientationProcessor implements VisionProcessor {
         Core.inRange(gray, lowerBound, upperBound, mask);
         Scalar maskedMean = Core.mean(gray, mask);
         averageBrightness = maskedMean.val[0];
-        telemetry.addData("averageBrightness", averageBrightness);
+//        telemetry.addData("averageBrightness", averageBrightness);
         double targetAverageInRange = 120;
         frame.convertTo(frame, -1, targetAverageInRange/ averageBrightness, 0);
 
@@ -173,7 +173,7 @@ public class SampleOrientationProcessor implements VisionProcessor {
             }
             filteredRects.add(rotatedRects.get(maxIndex));
         }
-        telemetry.addData("filteredRects.size()", filteredRects.size());
+//        telemetry.addData("filteredRects.size()", filteredRects.size());
 
 
         // Draw filtered rects as green
@@ -206,26 +206,26 @@ public class SampleOrientationProcessor implements VisionProcessor {
 
         // telemetry
         if (!filteredRects.isEmpty()) {
-            telemetry.addData("width ", filteredRects.get(0).size.width);
-            telemetry.addData("height ", filteredRects.get(0).size.height);
-            telemetry.addData("angle ", filteredRects.get(0).angle);
-            telemetry.addData("center ", filteredRects.get(0).center);
+//            telemetry.addData("width ", filteredRects.get(0).size.width);
+//            telemetry.addData("height ", filteredRects.get(0).size.height);
+//            telemetry.addData("angle ", filteredRects.get(0).angle);
+//            telemetry.addData("center ", filteredRects.get(0).center);
             double procAngle = filteredRects.get(0).angle;
             if (filteredRects.get(0).size.width > filteredRects.get(0).size.height)
                 procAngle *= -1;
             else
                 procAngle = 90-procAngle;
-            telemetry.addData("procAngle ", procAngle);
+//            telemetry.addData("procAngle ", procAngle);
             sampleAngle = Math.toRadians(procAngle);
             sampleDetected = true;
         } else {
             sampleDetected = false;
         }
-        telemetry.addData("sampleAngle", sampleAngle);
+//        telemetry.addData("sampleAngle", sampleAngle);
 
 
 
-        telemetry.update();
+//        telemetry.update();
         return frame;
     }
 
