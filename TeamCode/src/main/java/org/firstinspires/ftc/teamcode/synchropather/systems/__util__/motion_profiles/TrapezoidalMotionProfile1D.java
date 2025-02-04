@@ -17,7 +17,7 @@ public class TrapezoidalMotionProfile1D extends MotionProfile1D {
     private TimeSpan timeSpan;
 
     /**
-     * Creates a new DynamicMotionProfile1D object with the given parameters.
+     * Creates a new TrapezoidalMotionProfile1D object with the given parameters.
      * @param targetDisplacement units
      * @param startTime seconds
      * @param v0 units/second
