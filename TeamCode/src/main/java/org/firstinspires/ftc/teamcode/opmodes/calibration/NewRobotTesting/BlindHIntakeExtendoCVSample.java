@@ -48,7 +48,7 @@ public class BlindHIntakeExtendoCVSample extends LinearOpMode {
     private LinearSlidesSubsystem linearSlides;
 
     private final double timeBuffer = 0;
-    private double[] lastBufferedExtendoPosition; // {position, timestamp}
+    private double[] lastBufferedExtendoPosition;  // {position, timestamp}
 
     @Override
     public void runOpMode() throws InterruptedException {
