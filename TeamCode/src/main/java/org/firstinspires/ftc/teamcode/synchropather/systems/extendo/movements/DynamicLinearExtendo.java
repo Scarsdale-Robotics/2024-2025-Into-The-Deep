@@ -2,20 +2,22 @@ package org.firstinspires.ftc.teamcode.synchropather.systems.extendo.movements;
 
 import org.firstinspires.ftc.teamcode.synchropather.systems.MovementType;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.TimeSpan;
-import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.motion_profiles.SymmetricMotionProfile1D;
+import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.motion_profiles.DynamicMotionProfile1D;
+import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.motion_profiles.MotionProfile1D;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.superclasses.Movement;
 import org.firstinspires.ftc.teamcode.synchropather.systems.extendo.ExtendoConstants;
 import org.firstinspires.ftc.teamcode.synchropather.systems.extendo.ExtendoState;
 
-public class LinearExtendo extends Movement {
+public class DynamicLinearExtendo extends Movement {
     private double distance, minDuration;
-    private ExtendoState start, end;
-    private SymmetricMotionProfile1D motionProfile;
+    private ExtendoState start, end, v0;
+    private MotionProfile1D motionProfile;
 
-    public LinearExtendo(TimeSpan timeSpan, ExtendoState start, ExtendoState end) {
+    public DynamicLinearExtendo(TimeSpan timeSpan, ExtendoState start, ExtendoState end, ExtendoState v0) {
         super(timeSpan, MovementType.EXTENDO);
         this.start = start;
         this.end = end;
+        this.v0 = v0;
         init(false, 0);
     }
     /**
@@ -24,10 +26,11 @@ public class LinearExtendo extends Movement {
      * @param start
      * @param end
      */
-    public LinearExtendo(double startTime, ExtendoState start, ExtendoState end) {
+    public DynamicLinearExtendo(double startTime, ExtendoState start, ExtendoState end, ExtendoState v0) {
         super(MovementType.EXTENDO);
         this.start = start;
         this.end = end;
+        this.v0 = v0;
         init(true, startTime);
     }
 
@@ -99,14 +102,15 @@ public class LinearExtendo extends Movement {
     private void init(boolean startTimeConstructor, double startTime) {
         distance = end.minus(start).abs();
 
+        double v0 = this.v0.getLength();
         double v_max = ExtendoConstants.MAX_VELOCITY;
         double a_max = ExtendoConstants.MAX_ACCELERATION;
 
         if (startTimeConstructor) {
-            motionProfile = new SymmetricMotionProfile1D(distance, startTime, v_max, a_max);
+            motionProfile = new DynamicMotionProfile1D(distance, startTime, v0, v_max, a_max, a_max);
             timeSpan = motionProfile.getTimeSpan();
         } else {
-            motionProfile = new SymmetricMotionProfile1D(distance, timeSpan, v_max, a_max);
+            motionProfile = new DynamicMotionProfile1D(distance, timeSpan, v0, v_max, a_max, a_max);
         }
 
         minDuration = motionProfile.getMinDuration();

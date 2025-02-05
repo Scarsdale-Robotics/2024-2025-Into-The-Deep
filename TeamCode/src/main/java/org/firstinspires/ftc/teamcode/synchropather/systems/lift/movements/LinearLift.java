@@ -2,7 +2,9 @@ package org.firstinspires.ftc.teamcode.synchropather.systems.lift.movements;
 
 import org.firstinspires.ftc.teamcode.synchropather.systems.MovementType;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.TimeSpan;
+import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.motion_profiles.MotionProfile1D;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.motion_profiles.SymmetricMotionProfile1D;
+import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.motion_profiles.TrapezoidalMotionProfile1D;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.superclasses.Movement;
 import org.firstinspires.ftc.teamcode.synchropather.systems.lift.LiftConstants;
 import org.firstinspires.ftc.teamcode.synchropather.systems.lift.LiftState;
@@ -10,16 +12,23 @@ import org.firstinspires.ftc.teamcode.synchropather.systems.lift.LiftState;
 public class LinearLift extends Movement {
     private double distance, minDuration;
     private LiftState start, end;
-    private SymmetricMotionProfile1D calculator;
+    private MotionProfile1D motionProfile;
 
+    /**
+     * Creates a new LinearLift object with a given start and end LiftState throughout the given TimeSpan.
+     * @param timeSpan
+     * @param start
+     * @param end
+     */
     public LinearLift(TimeSpan timeSpan, LiftState start, LiftState end) {
         super(timeSpan, MovementType.LIFT);
         this.start = start;
         this.end = end;
-        init(false, 0);
+        init(false, 0, false);
     }
+
     /**
-     * Creates a new LinearRotation object with a given start and end RotationState at the given startTime.
+     * Creates a new LinearLift object with a given start and end LiftState at the given startTime.
      * @param startTime
      * @param start
      * @param end
@@ -28,7 +37,35 @@ public class LinearLift extends Movement {
         super(MovementType.LIFT);
         this.start = start;
         this.end = end;
-        init(true, startTime);
+        init(true, startTime, false);
+    }
+
+    /**
+     * Creates a new LinearLift object with a given start and end LiftState throughout the given TimeSpan.
+     * @param timeSpan
+     * @param start
+     * @param end
+     * @param useDifferentDeceleration whether to use a trapezoidal motion profile
+     */
+    public LinearLift(TimeSpan timeSpan, LiftState start, LiftState end, boolean useDifferentDeceleration) {
+        super(timeSpan, MovementType.LIFT);
+        this.start = start;
+        this.end = end;
+        init(false, 0, useDifferentDeceleration);
+    }
+
+    /**
+     * Creates a new LinearLift object with a given start and end LiftState at the given startTime.
+     * @param startTime
+     * @param start
+     * @param end
+     * @param useDifferentDeceleration whether to use a trapezoidal motion profile
+     */
+    public LinearLift(double startTime, LiftState start, LiftState end, boolean useDifferentDeceleration) {
+        super(MovementType.LIFT);
+        this.start = start;
+        this.end = end;
+        init(true, startTime, useDifferentDeceleration);
     }
 
     @Override
@@ -40,7 +77,7 @@ public class LinearLift extends Movement {
      */
     @Override
     public LiftState getState(double elapsedTime) {
-        double t = distance!=0 ? calculator.getDisplacement(elapsedTime) / distance : 0;
+        double t = distance!=0 ? motionProfile.getDisplacement(elapsedTime) / distance : 0;
 
         double q0 = 1 - t;
         double q1 = t;
@@ -54,7 +91,7 @@ public class LinearLift extends Movement {
     @Override
     public LiftState getVelocity(double elapsedTime) {
         double sign = end.minus(start).sign();
-        double speed = calculator.getVelocity(elapsedTime);
+        double speed = motionProfile.getVelocity(elapsedTime);
 
         // scaled velocity vector
         return new LiftState(sign * speed);
@@ -65,7 +102,7 @@ public class LinearLift extends Movement {
     @Override
     public LiftState getAcceleration(double elapsedTime) {
         double sign = end.minus(start).sign();
-        double speed = calculator.getAcceleration(elapsedTime);
+        double speed = motionProfile.getAcceleration(elapsedTime);
 
         // scaled acceleration vector
         return new LiftState(sign * speed);
@@ -96,20 +133,28 @@ public class LinearLift extends Movement {
     /**
      * Calculates total time.
      */
-    private void init(boolean startTimeConstructor, double startTime) {
+    private void init(boolean startTimeConstructor, double startTime, boolean useDifferentDeceleration) {
         distance = end.minus(start).abs();
 
-        double MAV = LiftConstants.MAX_VELOCITY;
-        double MAA = LiftConstants.MAX_ACCELERATION;
+        double v_max = LiftConstants.MAX_VELOCITY;
+        double a_max_1 = LiftConstants.MAX_ACCELERATION;
+        double a_max_2 = LiftConstants.MAX_DECELERATION;
 
         if (startTimeConstructor) {
-            minDuration = SymmetricMotionProfile1D.findMinDuration(distance, MAV, MAA);
-            timeSpan = new TimeSpan(startTime, startTime + minDuration);
+            if (useDifferentDeceleration) {
+                motionProfile = new TrapezoidalMotionProfile1D(distance, startTime, v_max, a_max_1, a_max_2);
+            } else {
+                motionProfile = new SymmetricMotionProfile1D(distance, startTime, v_max, a_max_1);
+            }
+            timeSpan = motionProfile.getTimeSpan();
+        } else {
+            if (useDifferentDeceleration) {
+                motionProfile = new TrapezoidalMotionProfile1D(distance, timeSpan, v_max, a_max_1, a_max_2);
+            } else {
+                motionProfile = new SymmetricMotionProfile1D(distance, timeSpan, v_max, a_max_1);
+            }
         }
 
-        // create calculator object
-        calculator = new SymmetricMotionProfile1D(distance, timeSpan, MAV, MAA);
-
-        minDuration = calculator.getMinDuration();
+        minDuration = motionProfile.getMinDuration();
     }
 }

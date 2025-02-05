@@ -14,7 +14,7 @@ public class LinearTranslation extends Movement {
 	
 	private double distance, minDuration;
 	private TranslationState start, end;
-	private SymmetricMotionProfile1D calculator;
+	private SymmetricMotionProfile1D motionProfile;
 	
 	
 	/**
@@ -48,7 +48,7 @@ public class LinearTranslation extends Movement {
 	 */
 	@Override
 	public TranslationState getState(double elapsedTime) {
-		double t = distance!=0 ? calculator.getDisplacement(elapsedTime) / distance : 0;
+		double t = distance!=0 ? motionProfile.getDisplacement(elapsedTime) / distance : 0;
 
 		double q0 = 1 - t;
 		double q1 = t;
@@ -63,7 +63,7 @@ public class LinearTranslation extends Movement {
 	@Override
 	public TranslationState getVelocity(double elapsedTime) {
 		double theta = end.minus(start).theta();
-		double speed = calculator.getVelocity(elapsedTime);
+		double speed = motionProfile.getVelocity(elapsedTime);
 
 		// scaled velocity vector
 		return new TranslationState(speed, theta, true);
@@ -75,7 +75,7 @@ public class LinearTranslation extends Movement {
 	@Override
 	public TranslationState getAcceleration(double elapsedTime) {
 		double theta = end.minus(start).theta();
-		double speed = calculator.getAcceleration(elapsedTime);
+		double speed = motionProfile.getAcceleration(elapsedTime);
 
 		// scaled acceleration vector
 		return new TranslationState(speed, theta, true);
@@ -116,18 +116,17 @@ public class LinearTranslation extends Movement {
 	private void init(boolean startTimeConstructor, double startTime) {
 		distance = end.minus(start).hypot();
 
-		double MV = TranslationConstants.MAX_VELOCITY;
-		double MA = TranslationConstants.MAX_ACCELERATION;
+		double v_max = TranslationConstants.MAX_VELOCITY;
+		double a_max = TranslationConstants.MAX_ACCELERATION;
 
 		if (startTimeConstructor) {
-			minDuration = SymmetricMotionProfile1D.findMinDuration(distance, MV, MA);
-			timeSpan = new TimeSpan(startTime, startTime + minDuration);
+			motionProfile = new SymmetricMotionProfile1D(distance, startTime, v_max, a_max);
+			timeSpan = motionProfile.getTimeSpan();
+		} else {
+			motionProfile = new SymmetricMotionProfile1D(distance, timeSpan, v_max, a_max);
 		}
 		
-		// create calculator object
-		calculator = new SymmetricMotionProfile1D(distance, timeSpan, MV, MA);
-		
-		minDuration = calculator.getMinDuration();
+		minDuration = motionProfile.getMinDuration();
 	}
 
 }

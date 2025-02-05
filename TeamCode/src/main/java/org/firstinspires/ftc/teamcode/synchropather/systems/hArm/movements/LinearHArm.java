@@ -13,7 +13,7 @@ import org.firstinspires.ftc.teamcode.synchropather.systems.hArm.HArmState;
 public class LinearHArm extends Movement {
     private double distance, minDuration;
     private HArmState start, end;
-    private SymmetricMotionProfile1D calculator;
+    private SymmetricMotionProfile1D motionProfile;
 
     public LinearHArm(TimeSpan timeSpan, HArmState start, HArmState end) {
         super(timeSpan, MovementType.HORIZONTAL_ARM);
@@ -45,7 +45,7 @@ public class LinearHArm extends Movement {
      */
     @Override
     public HArmState getState(double elapsedTime) {
-        double t = distance!=0 ? calculator.getDisplacement(elapsedTime) / distance : 0;
+        double t = distance!=0 ? motionProfile.getDisplacement(elapsedTime) / distance : 0;
 
         double q0 = 1 - t;
         double q1 = t;
@@ -60,7 +60,7 @@ public class LinearHArm extends Movement {
     @Override
     public HArmState getVelocity(double elapsedTime) {
         double sign = end.minus(start).sign();
-        double speed = calculator.getVelocity(elapsedTime);
+        double speed = motionProfile.getVelocity(elapsedTime);
 
         // scaled velocity vector
         return new HArmState(sign * speed);
@@ -72,7 +72,7 @@ public class LinearHArm extends Movement {
     @Override
     public HArmState getAcceleration(double elapsedTime) {
         double sign = end.minus(start).sign();
-        double speed = calculator.getAcceleration(elapsedTime);
+        double speed = motionProfile.getAcceleration(elapsedTime);
 
         // scaled acceleration vector
         return new HArmState(sign * speed);
@@ -108,17 +108,16 @@ public class LinearHArm extends Movement {
     private void init(boolean startTimeConstructor, double startTime) {
         distance = end.minus(start).abs();
 
-        double MAV = HArmConstants.MAX_VELOCITY;
-        double MAA = HArmConstants.MAX_ACCELERATION;
+        double v_max = HArmConstants.MAX_VELOCITY;
+        double a_max = HArmConstants.MAX_ACCELERATION;
 
         if (startTimeConstructor) {
-            minDuration = SymmetricMotionProfile1D.findMinDuration(distance, MAV, MAA);
-            timeSpan = new TimeSpan(startTime, startTime + minDuration);
+            motionProfile = new SymmetricMotionProfile1D(distance, startTime, v_max, a_max);
+            timeSpan = motionProfile.getTimeSpan();
+        } else {
+            motionProfile = new SymmetricMotionProfile1D(distance, timeSpan, v_max, a_max);
         }
 
-        // create calculator object
-        calculator = new SymmetricMotionProfile1D(distance, timeSpan, MAV, MAA);
-
-        minDuration = calculator.getMinDuration();
+        minDuration = motionProfile.getMinDuration();
     }
 }

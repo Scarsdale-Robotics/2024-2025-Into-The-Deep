@@ -16,7 +16,12 @@ public class LiftConstants {
     /**
      *  Max lift acceleration in inches/s^2.
      */
-    public static double MAX_ACCELERATION = ticksToInches(4000);
+    public static double MAX_ACCELERATION = ticksToInches(6000);
+
+    /**
+     *  Max lift deceleration in inches/s^2.
+     */
+    public static double MAX_DECELERATION = ticksToInches(4000);
 
     /**
      *  Conversion factor

@@ -117,7 +117,8 @@ public class DebuggingSynchroPatherLift extends LinearOpMode {
         );
         LinearLift lift2 = new LinearLift(lift1.getEndTime(),
                 new LiftState(1100),
-                new LiftState(0)
+                new LiftState(0),
+                true
         );
         LiftPlan liftPlan = new LiftPlan(linearSlides,
                 lift1,

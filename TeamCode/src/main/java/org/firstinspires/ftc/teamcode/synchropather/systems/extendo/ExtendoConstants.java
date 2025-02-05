@@ -24,6 +24,11 @@ public class ExtendoConstants {
     public static double CLAW_OFFSET_DISTANCE = 3.47830709;
 
     /**
+     *  Max extendo extension length in inches.
+     */
+    public static double MAX_EXTENSION = ticksToInches(4000);
+
+    /**
      *  Conversion factor
      */
     public static double TICKS_PER_INCH = 75; // TODO: TUNE
