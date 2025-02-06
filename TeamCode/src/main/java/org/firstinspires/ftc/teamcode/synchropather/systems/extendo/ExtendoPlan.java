@@ -96,7 +96,7 @@ public class ExtendoPlan extends Plan<ExtendoState> {
         double u = 0;
 
         // Extendo PID
-        u += (kP*e + kI*intedt + kD*dedt) / ExtendoConstants.MAX_VELOCITY;
+        u += (kP*Math.signum(e)*Math.sqrt(Math.abs(e)) + kI*intedt + kD*dedt) / ExtendoConstants.MAX_VELOCITY;
 
         // Feedforward
         double fu = (kS*Math.signum(dv) + kV*dv + kA*da) / ExtendoConstants.MAX_VELOCITY;
