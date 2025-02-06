@@ -25,7 +25,7 @@ public class LiftPlan extends Plan<LiftState> {
     //TODO: TUNE
     public static double kP = 16;
     public static double kI = 0.0;
-    public static double kD = 0.4;
+    public static double kD = 0.2;
 
     private double lintedt = 0;
     private double rintedt = 0;
@@ -119,8 +119,8 @@ public class LiftPlan extends Plan<LiftState> {
         double ru = 0;
 
         // Lift PID
-        lu += (kP*le + kI*lintedt + kD*ldedt) / LiftConstants.MAX_VELOCITY;
-        ru += (kP*re + kI*rintedt + kD*rdedt) / LiftConstants.MAX_VELOCITY;
+        lu += (kP*Math.signum(le)*Math.sqrt(Math.abs(le)) + kI*lintedt + kD*ldedt) / LiftConstants.MAX_VELOCITY;
+        ru += (kP*Math.signum(re)*Math.sqrt(Math.abs(re)) + kI*rintedt + kD*rdedt) / LiftConstants.MAX_VELOCITY;
 
         // Feedforward
         double fu = (kS*Math.signum(dv) + kV*dv + kA*da) / LiftConstants.MAX_VELOCITY;

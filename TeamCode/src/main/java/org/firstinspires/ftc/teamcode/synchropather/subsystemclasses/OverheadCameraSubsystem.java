@@ -23,7 +23,7 @@ public class OverheadCameraSubsystem {
 
     // (X,Y)
     // +X is forward, +Y is to the left
-    public static double[] CLAW_POSITION = new double[]{-4.8267717, 0};
+    public static double[] CLAW_POSITION = new double[]{-4, 0}; // TODO: TUNE THIS
 
 
     public OverheadCameraSubsystem(WebcamName cameraName, Telemetry telemetry) {

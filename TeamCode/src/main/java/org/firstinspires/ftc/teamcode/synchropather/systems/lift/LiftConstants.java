@@ -9,9 +9,18 @@ import com.acmerobotics.dashboard.config.Config;
 public class LiftConstants {
 
     /**
+     *  Conversion factor
+     */
+    public static double TICKS_PER_INCH = 42.202;
+
+    private static double ticksToInches(double ticks) {
+        return ticks / TICKS_PER_INCH;
+    }
+
+    /**
      *  Max lift velocity in inches/s.
      */
-    public static double MAX_VELOCITY = ticksToInches(2500);
+    public static double MAX_VELOCITY = ticksToInches(2200);
 
     /**
      *  Max lift acceleration in inches/s^2.
@@ -21,15 +30,11 @@ public class LiftConstants {
     /**
      *  Max lift deceleration in inches/s^2.
      */
-    public static double MAX_DECELERATION = ticksToInches(4000);
+    public static double MAX_DECELERATION = ticksToInches(3000);
 
     /**
-     *  Conversion factor
+     * Maximum lift height in inches.
      */
-    public static double TICKS_PER_INCH = 25;  // TODO: TUNE
-
-    private static double ticksToInches(double ticks) {
-        return ticks / TICKS_PER_INCH;
-    }
+    public static double MAX_HEIGHT = 27.25;
 
 }
