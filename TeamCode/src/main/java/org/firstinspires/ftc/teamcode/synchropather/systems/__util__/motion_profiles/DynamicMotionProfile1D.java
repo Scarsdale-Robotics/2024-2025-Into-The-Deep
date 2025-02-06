@@ -271,7 +271,7 @@ public class DynamicMotionProfile1D extends MotionProfile1D {
         // Zero acceleration if T=0.
         if (T==0) return 0;
         // Zero acceleration if outside of TimeSpan.
-        if (elapsedTime-getStartTime() < 0 || T < elapsedTime-getStartTime()) return 0;
+        if (elapsedTime-getStartTime() <= 0 || T <= elapsedTime-getStartTime()) return 0;
 
         elapsedTime = bound(elapsedTime-getStartTime(), 0, T);
 
