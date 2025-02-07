@@ -22,6 +22,8 @@ public class HardwareRobot {
     public final MotorEx leftLift;
     public final MotorEx rightLift;
 
+    public final MotorEx extendo;
+
     public final GoBildaPinpointDriver pinpoint;
 
     public final Limelight3A limelight;
@@ -92,6 +94,13 @@ public class HardwareRobot {
         rightLift.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
         rightLift.setInverted(true);
 
+        extendo = new MotorEx(hardwareMap, "extendo", Motor.GoBILDA.RPM_312);
+        leftLift.motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        leftLift.motor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        leftLift.setRunMode(Motor.RunMode.RawPower);
+        leftLift.motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        leftLift.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
+        leftLift.setInverted(false);
 
         //////////////
         // PINPOINT //

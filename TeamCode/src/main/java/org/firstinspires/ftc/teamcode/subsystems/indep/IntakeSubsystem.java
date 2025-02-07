@@ -38,7 +38,6 @@ public class IntakeSubsystem extends SubInDepSubsystem<
             data.wristPos = wristPos;
             data.clawPos = clawPos;
             data.extendoPos = intakeSlidePos;
-            data.intakeRightSlidePos = intakeSlidePos;
         }
     }
 
@@ -47,8 +46,7 @@ public class IntakeSubsystem extends SubInDepSubsystem<
                 elbowPos,
                 wristPos,
                 clawPos,
-                extendoPos,
-                intakeRightSlidePos;
+                extendoPos;
     }
 
     public static class DirectControlData {
@@ -108,18 +106,13 @@ public class IntakeSubsystem extends SubInDepSubsystem<
 
         if (state.data.extendoPos == SKIP)
             this.targetData.extendoPos = pastTargetData.extendoPos;
-        if (state.data.intakeRightSlidePos == SKIP)
-            this.targetData.intakeRightSlidePos = pastTargetData.intakeRightSlidePos;
 
         robot.claw.setPosition(targetData.clawPos);
         robot.wrist.setPosition(targetData.wristPos);
         robot.elbow.setPosition(targetData.elbowPos);
 
         if (targetData.extendoPos >= 0)
-            robot.extendo.setPosition(targetData.extendoPos);
-
-        if (targetData.intakeRightSlidePos >= 0)
-            robot.rightIntakeLift.setPosition(targetData.intakeRightSlidePos);
+            robot.extendo.setTargetPosition(targetData.extendoPos);
     }
 
     public State getState() {
@@ -131,7 +124,7 @@ public class IntakeSubsystem extends SubInDepSubsystem<
             approxEq(robot.claw.getPosition(), targetData.clawPos) &&
             approxEq(robot.wrist.getPosition(), targetData.wristPos) &&
             approxEq(robot.elbow.getPosition(), targetData.elbowPos) &&
-            approxEq(robot.extendo.getPosition(), targetData.extendoPos)
+            approxEq(robot.extendo.getCurrentPosition(), targetData.extendoPos)
         );
     }
 
