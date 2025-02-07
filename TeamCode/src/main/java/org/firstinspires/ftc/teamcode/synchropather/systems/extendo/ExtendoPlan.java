@@ -16,13 +16,13 @@ public class ExtendoPlan extends Plan<ExtendoState> {
 
     // Feedforward constants
     //TODO: TUNE
-    public static double kS = 4;
-    public static double kV = 1.5;
-    public static double kA = 0.1;
+    public static double kS = 6;
+    public static double kV = 1;
+    public static double kA = 0.2;
 
     // Positional PD constants
     //TODO: TUNE
-    public static double kP = 32;
+    public static double kP = 16;
     public static double kI = 0;
     public static double kD = 1;
 

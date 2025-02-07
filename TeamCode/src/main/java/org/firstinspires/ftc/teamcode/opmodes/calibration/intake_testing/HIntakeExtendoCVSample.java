@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.opmodes.calibration.intake_testing;
 
 import com.acmerobotics.dashboard.FtcDashboard;
+import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.arcrobotics.ftclib.hardware.motors.Motor;
 import com.arcrobotics.ftclib.hardware.motors.MotorEx;
@@ -31,6 +32,7 @@ import org.firstinspires.ftc.teamcode.synchropather.systems.hWrist.movements.Mov
 
 import java.util.ArrayDeque;
 
+@Config
 @Autonomous(name="Pick Up Sample Using Horizontal Intake, Extendo, and CV (no drivetrain)", group = "Calibration")
 public class HIntakeExtendoCVSample extends LinearOpMode {
 
@@ -42,6 +44,8 @@ public class HIntakeExtendoCVSample extends LinearOpMode {
     private HorizontalIntakeSubsystem horizontalIntake;
     private OverheadCameraSubsystem overheadCamera;
     private LinearSlidesSubsystem linearSlides;
+
+    public static double timeClip = 1;
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -154,11 +158,11 @@ public class HIntakeExtendoCVSample extends LinearOpMode {
         );
 
         // Move arm down
-        LinearHArm h_arm_down = new LinearHArm(extendoOut.getEndTime(),
+        LinearHArm h_arm_down = new LinearHArm(Math.max(0,extendoOut.getEndTime()-timeClip),
                 new HArmState(0.5),
                 new HArmState(1.075)
         );
-        MoveHWrist h_wrist_align = new MoveHWrist(h_arm_down.getStartTime(), angle);
+        MoveHWrist h_wrist_align = new MoveHWrist(extendoOut.getStartTime(), angle);
         ReleaseHClaw h_claw_release = new ReleaseHClaw(h_arm_down.getStartTime());
 
         // Pick up and move arm up

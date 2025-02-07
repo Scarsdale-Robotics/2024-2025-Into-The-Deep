@@ -2,6 +2,8 @@ package org.firstinspires.ftc.teamcode.synchropather.subsystemclasses;
 
 import android.util.Size;
 
+import com.acmerobotics.dashboard.config.Config;
+
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.controls.ExposureControl;
@@ -12,6 +14,7 @@ import org.firstinspires.ftc.vision.VisionPortal;
 import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 
+@Config
 public class OverheadCameraSubsystem {
 
     private final Size CAMERA_RESOLUTION = new Size(320, 240);
@@ -23,7 +26,7 @@ public class OverheadCameraSubsystem {
 
     // (X,Y)
     // +X is forward, +Y is to the left
-    public static double[] CLAW_POSITION = new double[]{-4, 0}; // TODO: TUNE THIS
+    public static double[] CLAW_POSITION = new double[]{-4.2, 0}; // TODO: TUNE THIS
 
 
     public OverheadCameraSubsystem(WebcamName cameraName, Telemetry telemetry) {

@@ -7,14 +7,18 @@ import com.arcrobotics.ftclib.hardware.motors.MotorEx;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.ServoImplEx;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.firstinspires.ftc.teamcode.synchropather.subsystemclasses.HorizontalIntakeSubsystem;
 import org.firstinspires.ftc.teamcode.synchropather.subsystemclasses.LinearSlidesSubsystem;
 import org.firstinspires.ftc.teamcode.synchropather.systems.MovementType;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.Synchronizer;
 import org.firstinspires.ftc.teamcode.synchropather.systems.extendo.ExtendoPlan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.extendo.ExtendoState;
 import org.firstinspires.ftc.teamcode.synchropather.systems.extendo.movements.DynamicLinearExtendo;
+import org.firstinspires.ftc.teamcode.synchropather.systems.hClaw.HClawConstants;
 
 import java.util.ArrayDeque;
 
@@ -72,6 +76,21 @@ public class DynamicExtendoSpamTest extends LinearOpMode {
     private void initSubsystems() {
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
 
+        // init horizontal intake
+        Servo leftHorizontalArm = hardwareMap.get(ServoImplEx.class, "leftHorizontalArm");
+        Servo rightHorizontalArm = hardwareMap.get(ServoImplEx.class, "rightHorizontalArm");
+        Servo horizontalWrist = hardwareMap.get(ServoImplEx.class, "horizontalWrist");
+        Servo horizontalClaw = hardwareMap.get(ServoImplEx.class, "horizontalClaw");
+        HorizontalIntakeSubsystem horizontalIntake = new HorizontalIntakeSubsystem(
+                leftHorizontalArm,
+                rightHorizontalArm,
+                horizontalWrist,
+                horizontalClaw
+        );
+        horizontalIntake.setClawPosition(HClawConstants.RELEASE_POSITION);
+        horizontalIntake.setWristAngle(0);
+        horizontalIntake.setArmPosition(0.5);
+
         // init linear slides
         Motor extendo = new MotorEx(hardwareMap, "extendo", Motor.GoBILDA.RPM_1620);
         Motor leftLift = new MotorEx(hardwareMap, "leftLift", Motor.GoBILDA.RPM_312);
@@ -112,7 +131,7 @@ public class DynamicExtendoSpamTest extends LinearOpMode {
 
     private void initSynchronizer(ExtendoState position, ExtendoState velocity) {
         double extendoTarget; // inches
-        if (extending) extendoTarget = 24;
+        if (extending) extendoTarget = 15;
         else extendoTarget = 0;
 
         // Extendo

@@ -9,8 +9,8 @@ import com.acmerobotics.dashboard.config.Config;
 public class HClawConstants {
 
     // Claw positions
-    public static double GRAB_POSITION = 0.15; // TODO: RETUNE THESE B/C DOESN'T CLOSE FULLY
-    public static double RELEASE_POSITION = 0;
+    public static double GRAB_POSITION = 0.5;
+    public static double RELEASE_POSITION = 0.22;
 
     /**
      * in servo/sec

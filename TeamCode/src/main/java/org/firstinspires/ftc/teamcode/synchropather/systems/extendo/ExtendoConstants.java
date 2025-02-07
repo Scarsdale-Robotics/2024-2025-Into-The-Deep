@@ -20,7 +20,7 @@ public class ExtendoConstants {
     /**
      *  Max extendo velocity in inches/s.
      */
-    public static double MAX_VELOCITY = ticksToInches(2200);
+    public static double MAX_VELOCITY = 105;
 
     /**
      *  Max extendo acceleration in inches/s^2.
