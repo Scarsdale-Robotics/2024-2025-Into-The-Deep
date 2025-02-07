@@ -27,6 +27,7 @@ repositories {
     maven {
         url = 'https://maven.brott.dev/'
     }
+    maven { url 'https://jitpack.io' }
 }
 
 dependencies {
@@ -35,4 +36,5 @@ dependencies {
     implementation 'org.ftclib.ftclib:core:2.1.1' // core
     implementation 'com.acmerobotics.roadrunner:core:1.0.0'
     implementation 'com.acmerobotics.dashboard:dashboard:0.4.16'
+    implementation 'cz.adaptech.tesseract4android:tesseract4android:4.8.0'
 }

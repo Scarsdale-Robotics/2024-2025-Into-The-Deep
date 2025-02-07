@@ -31,6 +31,19 @@ public class HardwareRobot {
     public final Servo claw;  // claw open/close servo
     public final Servo wrist;
 
+    public final Servo intakePivot;
+    public final Servo intakeWrist;
+    public final Servo intakeClaw;
+    public final Servo depositWrist;
+    public final Servo depositClaw;
+    public final Servo clipIntake;
+    public final Servo clipPusher;
+    public final Servo maker;
+    public final Servo leftDepositLift;
+    public final Servo rightDepositLift;
+    public final Servo leftIntakeLift;
+    public final Servo rightIntakeLift;
+
 
     public HardwareRobot(HardwareMap hardwareMap) {
 
@@ -107,6 +120,24 @@ public class HardwareRobot {
         claw = hardwareMap.get(ServoImplEx.class, "claw");
         wrist = hardwareMap.get(ServoImplEx.class, "wrist");
 
+        ////////////
+        // SERVOS //
+        ////////////
+        intakePivot = hardwareMap.get(ServoImplEx.class, "intakePivot");
+        intakeWrist = hardwareMap.get(ServoImplEx.class, "intakeWrist");
+        intakeClaw = hardwareMap.get(ServoImplEx.class, "intakeClaw");
+        depositClaw = hardwareMap.get(ServoImplEx.class, "depositClaw");
+        depositWrist = hardwareMap.get(ServoImplEx.class, "depositWrist");
+        clipIntake = hardwareMap.get(ServoImplEx.class, "clipIntake");
+        clipPusher = hardwareMap.get(ServoImplEx.class, "clipPusher");
+        maker = hardwareMap.get(ServoImplEx.class, "maker");
+        //////////
+        // LIFT //
+        //////////
+        leftIntakeLift = hardwareMap.get(ServoImplEx.class, "leftIntakeLift");
+        rightIntakeLift = hardwareMap.get(ServoImplEx.class, "rightIntakeLift");
+        leftDepositLift = hardwareMap.get(ServoImplEx.class, "leftDepositLift");
+        rightDepositLift = hardwareMap.get(ServoImplEx.class, "rightDepositLift");
 
         ////////////
         // CAMERA //

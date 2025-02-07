@@ -60,33 +60,43 @@ public class ExtendoPlan extends Plan<ExtendoState> {
 
         // State error
         double e = desiredState.getLength() - extendoLength;
+        eHistory.add(e);
+        if (eHistory.size() > 5) eHistory.remove(0);
 
         // Get delta time
         double deltaTime;
+        boolean runtimeWasNull = false;
         if (runtime==null) {
             runtime = new ElapsedTime(0);
-            deltaTime = 1;
+            deltaTime = 0;
+            runtimeWasNull = true;
         } else {
             deltaTime = runtime.seconds();
             runtime.reset();
+            dtHistory.add(deltaTime);
+            if (dtHistory.size()>5) dtHistory.remove(0);
         }
-        dtHistory.add(deltaTime);
-        if (dtHistory.size()>5) dtHistory.remove(0);
 
         // Error integrals
-        intedt += deltaTime * e;
+        if (!runtimeWasNull) {
+            intedt += deltaTime * e;
+        }
         if (eHistory.size() > 1) {
             if (eHistory.get(eHistory.size() - 2) * e <= 0) {
                 // flush integral stack
                 intedt = 0;
             }
         }
+        if (kI != 0) {
+            // Limit integrator to prevent windup
+            double integralPowerThreshold = 0.25;
+            double integralThresholdBound = Math.abs(integralPowerThreshold * ExtendoConstants.MAX_VELOCITY / kI);
+            intedt = bound(intedt, -integralThresholdBound, integralThresholdBound);
+        }
 
         // Error derivatives
         double dedt = 0;
         if (dtHistory.size()==5) {
-            eHistory.add(e);
-            if (eHistory.size() > 5) eHistory.remove(0);
             if (eHistory.size() == 5) {
                 dedt = stencil(eHistory);
             }
@@ -108,6 +118,8 @@ public class ExtendoPlan extends Plan<ExtendoState> {
         telemetry.addData("[SYNCHROPATHER] ExtendoPlan extendoLength", extendoLength);
         telemetry.addData("[SYNCHROPATHER] ExtendoPlan error", e);
         telemetry.addData("[SYNCHROPATHER] ExtendoPlan desiredState.getLength()", desiredState.getLength());
+        telemetry.addData("[SYNCHROPATHER] ExtendoPlan dedt", dedt);
+        telemetry.addData("[SYNCHROPATHER] ExtendoPlan intedt", intedt);
         telemetry.update();
 
     }
@@ -125,5 +137,16 @@ public class ExtendoPlan extends Plan<ExtendoState> {
         double averageDeltaTime = dtHistory.stream().mapToDouble(aa -> aa).average().orElse(0);
         return (-a.get(4) + 8*a.get(3) - 8*a.get(1) + a.get(0)) /
                 (12 * averageDeltaTime);
+    }
+
+    /**
+     * Clips the input x between a given lower and upper bound.
+     * @param x
+     * @param lower
+     * @param upper
+     * @return the clipped value of x.
+     */
+    private static double bound(double x, double lower, double upper) {
+        return Math.max(lower, Math.min(upper, x));
     }
 }
