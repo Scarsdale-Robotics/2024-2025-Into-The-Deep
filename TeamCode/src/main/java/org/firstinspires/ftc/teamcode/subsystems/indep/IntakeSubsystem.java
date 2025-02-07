@@ -32,52 +32,52 @@ public class IntakeSubsystem extends SubInDepSubsystem<
 
         private final PositionTargetData data;
 
-        State(double intakePivotPos, double intakeWristPos, double intakeClawPos, double intakeSlidePos){
+        State(double elbowPos, double wristPos, double clawPos, double intakeSlidePos){
             data = new PositionTargetData();
-            data.intakePivotPos = intakePivotPos;
-            data.intakeWristPos = intakeWristPos;
-            data.intakeClawPos = intakeClawPos;
-            data.intakeLeftSlidePos = intakeSlidePos;
+            data.elbowPos = elbowPos;
+            data.wristPos = wristPos;
+            data.clawPos = clawPos;
+            data.extendoPos = intakeSlidePos;
             data.intakeRightSlidePos = intakeSlidePos;
         }
     }
 
     public static class PositionTargetData {
         private double
-                intakePivotPos,
-                intakeWristPos,
-                intakeClawPos,
-                intakeLeftSlidePos,
+                elbowPos,
+                wristPos,
+                clawPos,
+                extendoPos,
                 intakeRightSlidePos;
     }
 
     public static class DirectControlData {
-        public double intakeClawPower;
-        public double intakeWristPower;
-        public double intakePivotPower;
+        public double clawPower;
+        public double wristPower;
+        public double elbowPower;
         public double intakeLeftLiftPower;
         public double intakeRightLiftPower;
     }
 
     public static class SemidirectControlData {
-        public double intakeClawPower;
-        public double intakeWristPower;
-        public double intakePivotPower;
+        public double clawPower;
+        public double wristPower;
+        public double elbowPower;
         public double intakeLiftPower;
     }
 
     public void semidirectControl(SemidirectControlData data) {
-        targetData.intakeClawPos = InDepSubsystem.clamp(
-                targetData.intakeClawPos + data.intakeClawPower, 0, 1
+        targetData.clawPos = InDepSubsystem.clamp(
+                targetData.clawPos + data.clawPower, 0, 1
         );  // update clamp bounds later
-        targetData.intakePivotPos = InDepSubsystem.clamp(
-                targetData.intakePivotPos + data.intakePivotPower, 0, 1
+        targetData.elbowPos = InDepSubsystem.clamp(
+                targetData.elbowPos + data.elbowPower, 0, 1
         );
-        targetData.intakeWristPos = InDepSubsystem.clamp(
-                targetData.intakeWristPos + data.intakeWristPower, 0, 1
+        targetData.wristPos = InDepSubsystem.clamp(
+                targetData.wristPos + data.wristPower, 0, 1
         );
-        targetData.intakeLeftSlidePos = InDepSubsystem.clamp(
-                targetData.intakeLeftSlidePos
+        targetData.extendoPos = InDepSubsystem.clamp(
+                targetData.extendoPos
                         + 0.5*(InDepSubsystem.sigmoid(20*data.intakeLiftPower-10)+0.5),
                 0, 1
         );
@@ -89,16 +89,16 @@ public class IntakeSubsystem extends SubInDepSubsystem<
     }
 
     public void directControl(DirectControlData data) {
-        targetData.intakeClawPos += data.intakeClawPower;
-        targetData.intakePivotPos += data.intakePivotPower;
-        targetData.intakeWristPos += data.intakeWristPower;
-        targetData.intakeLeftSlidePos += data.intakeLeftLiftPower;
+        targetData.clawPos += data.clawPower;
+        targetData.elbowPos += data.elbowPower;
+        targetData.wristPos += data.wristPower;
+        targetData.extendoPos += data.intakeLeftLiftPower;
         targetData.intakeRightSlidePos += data.intakeRightLiftPower;
     }
 
     public void powerLift(double power) {
         this.targetData.intakeRightSlidePos += power;
-        this.targetData.intakeLeftSlidePos += power;
+        this.targetData.extendoPos += power;
     }
 
     public void setState(State state) {
@@ -106,17 +106,17 @@ public class IntakeSubsystem extends SubInDepSubsystem<
         PositionTargetData pastTargetData = this.targetData;
         this.targetData = state.data;
 
-        if (state.data.intakeLeftSlidePos == SKIP)
-            this.targetData.intakeLeftSlidePos = pastTargetData.intakeLeftSlidePos;
+        if (state.data.extendoPos == SKIP)
+            this.targetData.extendoPos = pastTargetData.extendoPos;
         if (state.data.intakeRightSlidePos == SKIP)
             this.targetData.intakeRightSlidePos = pastTargetData.intakeRightSlidePos;
 
-        robot.intakeClaw.setPosition(targetData.intakeClawPos);
-        robot.intakeWrist.setPosition(targetData.intakeWristPos);
-        robot.intakePivot.setPosition(targetData.intakePivotPos);
+        robot.claw.setPosition(targetData.clawPos);
+        robot.wrist.setPosition(targetData.wristPos);
+        robot.elbow.setPosition(targetData.elbowPos);
 
-        if (targetData.intakeLeftSlidePos >= 0)
-            robot.leftIntakeLift.setPosition(targetData.intakeLeftSlidePos);
+        if (targetData.extendoPos >= 0)
+            robot.extendo.setPosition(targetData.extendoPos);
 
         if (targetData.intakeRightSlidePos >= 0)
             robot.rightIntakeLift.setPosition(targetData.intakeRightSlidePos);
@@ -128,11 +128,10 @@ public class IntakeSubsystem extends SubInDepSubsystem<
 
     public boolean jobFulfilled() {
         return (
-            approxEq(robot.intakeClaw.getPosition(), targetData.intakeClawPos) &&
-            approxEq(robot.intakeWrist.getPosition(), targetData.intakeWristPos) &&
-            approxEq(robot.intakePivot.getPosition(), targetData.intakePivotPos) &&
-            approxEq(robot.leftIntakeLift.getPosition(), targetData.intakeLeftSlidePos) &&
-            approxEq(robot.rightIntakeLift.getPosition(), targetData.intakeRightSlidePos)
+            approxEq(robot.claw.getPosition(), targetData.clawPos) &&
+            approxEq(robot.wrist.getPosition(), targetData.wristPos) &&
+            approxEq(robot.elbow.getPosition(), targetData.elbowPos) &&
+            approxEq(robot.extendo.getPosition(), targetData.extendoPos)
         );
     }
 
