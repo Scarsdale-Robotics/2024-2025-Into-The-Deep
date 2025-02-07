@@ -7,7 +7,6 @@ import com.arcrobotics.ftclib.geometry.Pose2d;
 import com.arcrobotics.ftclib.geometry.Rotation2d;
 
 import org.firstinspires.ftc.teamcode.RobotSystem;
-import org.firstinspires.ftc.teamcode.opmodes.calibration.Drawing;
 import org.firstinspires.ftc.teamcode.synchropather.DriveConstants;
 import org.firstinspires.ftc.teamcode.synchropather.systems.MovementType;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.superclasses.Movement;

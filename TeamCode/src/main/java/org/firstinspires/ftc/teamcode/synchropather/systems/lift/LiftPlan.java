@@ -10,6 +10,7 @@ import org.firstinspires.ftc.teamcode.synchropather.subsystemclasses.LinearSlide
 import org.firstinspires.ftc.teamcode.synchropather.systems.MovementType;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.superclasses.Movement;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.superclasses.Plan;
+import org.firstinspires.ftc.teamcode.synchropather.systems.extendo.ExtendoConstants;
 
 import java.util.ArrayList;
 
@@ -25,7 +26,7 @@ public class LiftPlan extends Plan<LiftState> {
     //TODO: TUNE
     public static double kP = 16;
     public static double kI = 0.0;
-    public static double kD = 0.4;
+    public static double kD = 0.2;
 
     private double lintedt = 0;
     private double rintedt = 0;
@@ -71,22 +72,30 @@ public class LiftPlan extends Plan<LiftState> {
         LiftState rightError = desiredState.minus(currentRightState);
         double le = leftError.getHeight();
         double re = rightError.getHeight();
+        leHistory.add(le);
+        reHistory.add(re);
+        if (leHistory.size() > 5) leHistory.remove(0);
+        if (reHistory.size() > 5) reHistory.remove(0);
 
         // Get delta time
         double deltaTime;
+        boolean runtimeWasNull = false;
         if (runtime==null) {
             runtime = new ElapsedTime(0);
-            deltaTime = 1;
+            deltaTime = 0;
+            runtimeWasNull = true;
         } else {
             deltaTime = runtime.seconds();
             runtime.reset();
+            dtHistory.add(deltaTime);
+            if (dtHistory.size()>5) dtHistory.remove(0);
         }
-        dtHistory.add(deltaTime);
-        if (dtHistory.size()>5) dtHistory.remove(0);
 
         // Error integrals
-        lintedt += deltaTime * le;
-        rintedt += deltaTime * re;
+        if (!runtimeWasNull) {
+            lintedt += deltaTime * le;
+            rintedt += deltaTime * re;
+        }
         if (leHistory.size() > 1) {
             if (leHistory.get(leHistory.size() - 2) * le <= 0) {
                 // flush integral stack
@@ -99,19 +108,24 @@ public class LiftPlan extends Plan<LiftState> {
                 rintedt = 0;
             }
         }
+        if (kI != 0) {
+            // Limit integrator to prevent windup
+            double integralPowerThreshold = 0.25;
+            double integralThresholdBound = Math.abs(integralPowerThreshold * LiftConstants.MAX_VELOCITY / kI);
+            lintedt = bound(lintedt, -integralThresholdBound, integralThresholdBound);
+            rintedt = bound(rintedt, -integralThresholdBound, integralThresholdBound);
+        }
 
         // Error derivatives
         double ldedt = 0;
         double rdedt = 0;
         if (dtHistory.size()==5) {
-            leHistory.add(le);
-            reHistory.add(re);
-            if (leHistory.size() > 5) leHistory.remove(0);
-            if (reHistory.size() > 5) reHistory.remove(0);
-            if (leHistory.size() == 5)
-                ldedt = stencil(leHistory); // this is pos2D but still works (same formula)
-            if (reHistory.size() == 5)
-                rdedt = stencil(reHistory); // this is pos2D but still works (same formula)
+            if (leHistory.size() == 5) {
+                ldedt = stencil(leHistory);
+            }
+            if (reHistory.size() == 5) {
+                rdedt = stencil(reHistory);
+            }
         }
 
         // Control output
@@ -119,8 +133,8 @@ public class LiftPlan extends Plan<LiftState> {
         double ru = 0;
 
         // Lift PID
-        lu += (kP*le + kI*lintedt + kD*ldedt) / LiftConstants.MAX_VELOCITY;
-        ru += (kP*re + kI*rintedt + kD*rdedt) / LiftConstants.MAX_VELOCITY;
+        lu += (kP*Math.signum(le)*Math.sqrt(Math.abs(le)) + kI*lintedt + kD*ldedt) / LiftConstants.MAX_VELOCITY;
+        ru += (kP*Math.signum(re)*Math.sqrt(Math.abs(re)) + kI*rintedt + kD*rdedt) / LiftConstants.MAX_VELOCITY;
 
         // Feedforward
         double fu = (kS*Math.signum(dv) + kV*dv + kA*da) / LiftConstants.MAX_VELOCITY;
@@ -136,6 +150,10 @@ public class LiftPlan extends Plan<LiftState> {
         telemetry.addData("[SYNCHROPATHER] LiftPlan leftError", le);
         telemetry.addData("[SYNCHROPATHER] LiftPlan rightError", re);
         telemetry.addData("[SYNCHROPATHER] LiftPlan desiredState.getHeight()", desiredState.getHeight());
+        telemetry.addData("[SYNCHROPATHER] LiftPlan ldedt", ldedt);
+        telemetry.addData("[SYNCHROPATHER] LiftPlan rdedt", rdedt);
+        telemetry.addData("[SYNCHROPATHER] LiftPlan lintedt", lintedt);
+        telemetry.addData("[SYNCHROPATHER] LiftPlan rintedt", rintedt);
         telemetry.update();
 
     }
@@ -153,5 +171,16 @@ public class LiftPlan extends Plan<LiftState> {
         double averageDeltaTime = dtHistory.stream().mapToDouble(aa -> aa).average().orElse(0);
         return (-a.get(4) + 8*a.get(3) - 8*a.get(1) + a.get(0)) /
                 (12 * averageDeltaTime);
+    }
+
+    /**
+     * Clips the input x between a given lower and upper bound.
+     * @param x
+     * @param lower
+     * @param upper
+     * @return the clipped value of x.
+     */
+    private static double bound(double x, double lower, double upper) {
+        return Math.max(lower, Math.min(upper, x));
     }
 }
