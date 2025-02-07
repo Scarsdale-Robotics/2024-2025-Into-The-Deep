@@ -90,7 +90,7 @@ public class OverheadCameraSubsystem {
         if (!processorEnabled) return null;
         ArrayList<double[]> samplePositions = getSamplePositions();
         ArrayList<Double> sampleAngles = getSampleAngles();
-        if (samplePositions.isEmpty()) return null;
+        if (samplePositions.isEmpty() || sampleAngles.isEmpty()) return null;
 
         // iterate through samples list
         double bestDistance = Double.POSITIVE_INFINITY;

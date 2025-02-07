@@ -46,6 +46,7 @@ public class HIntakeExtendoCVSample extends LinearOpMode {
     private LinearSlidesSubsystem linearSlides;
 
     public static double timeClip = 1;
+    public static double armDownPosition = 1.025;
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -160,7 +161,7 @@ public class HIntakeExtendoCVSample extends LinearOpMode {
         // Move arm down
         LinearHArm h_arm_down = new LinearHArm(Math.max(0,extendoOut.getEndTime()-timeClip),
                 new HArmState(0.5),
-                new HArmState(1.075)
+                new HArmState(armDownPosition)
         );
         MoveHWrist h_wrist_align = new MoveHWrist(extendoOut.getStartTime(), angle);
         ReleaseHClaw h_claw_release = new ReleaseHClaw(h_arm_down.getStartTime());
@@ -169,7 +170,7 @@ public class HIntakeExtendoCVSample extends LinearOpMode {
         GrabHClaw h_claw_grab = new GrabHClaw(h_arm_down.getEndTime());
         MoveHWrist h_wrist_reset = new MoveHWrist(h_claw_grab.getEndTime(), 0);
         LinearHArm h_arm_up = new LinearHArm(h_wrist_reset.getEndTime(),
-                new HArmState(1.075),
+                new HArmState(armDownPosition),
                 new HArmState(0.5)
         );
 

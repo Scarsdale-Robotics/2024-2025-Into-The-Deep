@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.opmodes.calibration.intake_testing;
 
 import com.acmerobotics.dashboard.FtcDashboard;
+import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.arcrobotics.ftclib.hardware.motors.Motor;
 import com.arcrobotics.ftclib.hardware.motors.MotorEx;
@@ -34,6 +35,7 @@ import org.firstinspires.ftc.teamcode.synchropather.systems.hWrist.movements.Mov
 
 import java.util.ArrayDeque;
 
+@Config
 @Autonomous(name="Blind Search For Sample Using Horizontal Intake, Extendo, and CV (no drivetrain)", group = "Calibration")
 public class BlindHIntakeExtendoCVSample extends LinearOpMode {
 
@@ -46,8 +48,13 @@ public class BlindHIntakeExtendoCVSample extends LinearOpMode {
     private OverheadCameraSubsystem overheadCamera;
     private LinearSlidesSubsystem linearSlides;
 
-    private final double timeBuffer = 0;
+    public static double timeBuffer = 0.11;
+    public static double armDownPosition = 1.025;
     private double[] lastBufferedExtendoPosition;  // {position, timestamp}
+
+    public static double searchSpeedDivisor = 6;
+    public static double pickupSpeedDivisor = 8;
+    public static double clawGrabClipTime = 0.15;
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -67,6 +74,7 @@ public class BlindHIntakeExtendoCVSample extends LinearOpMode {
         };
 
         waitForStart();
+        overheadCamera.correctExposure();
 
         while (opModeIsActive()) {
             // Wait for button press
@@ -179,8 +187,10 @@ public class BlindHIntakeExtendoCVSample extends LinearOpMode {
 
     private void initSearch() {
         double currentExtendoPosition = linearSlides.getExtendoPosition();
-        double extendoTarget = ExtendoConstants.MAX_EXTENSION;
+        double extendoTarget = 15;
 
+        double previousMaxVelocity = ExtendoConstants.MAX_VELOCITY;
+        ExtendoConstants.MAX_VELOCITY = previousMaxVelocity / searchSpeedDivisor;
         // Extend and retract
         LinearExtendo extendoOut = new LinearExtendo(0,
                 new ExtendoState(currentExtendoPosition),
@@ -190,6 +200,7 @@ public class BlindHIntakeExtendoCVSample extends LinearOpMode {
                 new ExtendoState(extendoTarget),
                 new ExtendoState(0)
         );
+        ExtendoConstants.MAX_VELOCITY = previousMaxVelocity;
 
         // Keep other subsystems still
         MoveHWrist h_wrist_reset = new MoveHWrist(0, 0);
@@ -233,25 +244,28 @@ public class BlindHIntakeExtendoCVSample extends LinearOpMode {
         extendoTarget = Math.max(0, extendoTarget);
 
         // Extendo
+        double previousMaxVelocity = ExtendoConstants.MAX_VELOCITY;
+        ExtendoConstants.MAX_VELOCITY = previousMaxVelocity / pickupSpeedDivisor;
         DynamicLinearExtendo extendoOut = new DynamicLinearExtendo(0,
                 new ExtendoState(currentExtendoPosition),
                 new ExtendoState(extendoTarget),
                 velocity
         );
+        ExtendoConstants.MAX_VELOCITY = previousMaxVelocity;
 
         // Move arm down
         LinearHArm h_arm_down = new LinearHArm(extendoOut.getEndTime(),
                 new HArmState(0.5),
-                new HArmState(1)
+                new HArmState(armDownPosition)
         );
         MoveHWrist h_wrist_align = new MoveHWrist(h_arm_down.getStartTime(), angle);
         ReleaseHClaw h_claw_release = new ReleaseHClaw(h_arm_down.getStartTime());
 
         // Pick up and move arm up
-        GrabHClaw h_claw_grab = new GrabHClaw(h_arm_down.getEndTime());
-        MoveHWrist h_wrist_reset = new MoveHWrist(h_claw_grab.getEndTime(), 0);
+        GrabHClaw h_claw_grab = new GrabHClaw(h_arm_down.getEndTime()-clawGrabClipTime);
+        MoveHWrist h_wrist_reset = new MoveHWrist(h_claw_grab.getEndTime()+clawGrabClipTime, 0);
         LinearHArm h_arm_up = new LinearHArm(h_wrist_reset.getEndTime(),
-                new HArmState(1),
+                new HArmState(armDownPosition),
                 new HArmState(0.5)
         );
 

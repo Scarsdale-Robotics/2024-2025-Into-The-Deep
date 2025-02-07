@@ -126,7 +126,23 @@ public class SampleOrientationProcessor implements VisionProcessor {
         for (MatOfPoint contour : unfilteredContours) {
             RotatedRect minAreaRect = Imgproc.minAreaRect(new MatOfPoint2f(contour.toArray()));
             double area = minAreaRect.size.area();
-            if (area > minArea) {
+            Point[] corners = new Point[4];
+            minAreaRect.points(corners);
+
+            // Valid rectangle doesn't touch the frame's borders and is larger than minArea
+            boolean validRect = true;
+            double frameMargin = 5;
+            for (Point corner : corners) {
+                double cornerX = corner.x;
+                double cornerY = corner.y;
+                if (cornerX <= frameMargin || cornerX >= frame.width() - frameMargin || cornerY <= frameMargin || cornerY >= frame.height() - frameMargin) {
+                    validRect = false;
+                }
+            }
+            if (area < minArea) {
+                validRect = false;
+            }
+            if (validRect) {
                 filteredContours.add(contour);
                 rotatedRects.add(minAreaRect);
             }
