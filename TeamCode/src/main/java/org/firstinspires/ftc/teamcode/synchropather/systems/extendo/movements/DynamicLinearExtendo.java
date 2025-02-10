@@ -21,10 +21,11 @@ public class DynamicLinearExtendo extends Movement {
         init(false, 0);
     }
     /**
-     * Creates a new LinearRotation object with a given start and end RotationState at the given startTime.
+     * Creates a new DynamicLinearExtendo object with a given start, end, and initial velocity ExtendoState at the given startTime.
      * @param startTime
      * @param start
      * @param end
+     * @param v0
      */
     public DynamicLinearExtendo(double startTime, ExtendoState start, ExtendoState end, ExtendoState v0) {
         super(MovementType.EXTENDO);

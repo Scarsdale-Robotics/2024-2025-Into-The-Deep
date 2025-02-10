@@ -35,6 +35,24 @@ public class LinearHArm extends Movement {
         init(true, startTime);
     }
 
+    /**
+     * Creates a new LinearHArm object with a given start and end HArmState at the given startTime.
+     * @param endTime
+     * @param start
+     * @param end
+     * @param alignToEndTime if this Movement should end at the given time
+     */
+    public LinearHArm(double endTime, HArmState start, HArmState end, boolean alignToEndTime) {
+        super(MovementType.HORIZONTAL_ARM);
+        this.start = start;
+        this.end = end;
+        init(true, endTime);
+        if (alignToEndTime) {
+            double startTime = Math.max(0, endTime-minDuration);
+            this.timeSpan = new TimeSpan(startTime, startTime+minDuration);
+        }
+    }
+
     @Override
     public double getMinDuration() {
         return minDuration;

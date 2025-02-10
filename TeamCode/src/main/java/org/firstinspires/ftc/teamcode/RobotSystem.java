@@ -46,7 +46,6 @@ public class RobotSystem {
                 telemetry);
         this.localization = new LocalizationSubsystem(
                 initialPose,
-                cv,
                 hardwareRobot.pinpoint,
                 opMode
                 ,telemetry

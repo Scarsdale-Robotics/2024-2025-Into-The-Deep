@@ -226,10 +226,10 @@ public class CRSplineTranslation extends Movement {
 		return new TranslationState(
 				// X Unit Acceleration
 				(v*xpp - xp*(vx*xpp + vy*ypp)) /
-						(v*v),
+						(v*v*v),
 				// Y Unit Acceleration
 				(v*ypp - yp*(vx*xpp + vy*ypp)) /
-						(v*v)
+						(v*v*v)
 		);
 	}
 	

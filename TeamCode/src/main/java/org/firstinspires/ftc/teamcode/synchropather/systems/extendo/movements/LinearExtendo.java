@@ -18,6 +18,7 @@ public class LinearExtendo extends Movement {
         this.end = end;
         init(false, 0);
     }
+
     /**
      * Creates a new LinearRotation object with a given start and end RotationState at the given startTime.
      * @param startTime
@@ -29,6 +30,24 @@ public class LinearExtendo extends Movement {
         this.start = start;
         this.end = end;
         init(true, startTime);
+    }
+
+    /**
+     * Creates a new LinearExtendo object with a given start and end ExtendoState at the given startTime.
+     * @param endTime
+     * @param start
+     * @param end
+     * @param alignToEndTime if this Movement should end at the given time
+     */
+    public LinearExtendo(double endTime, ExtendoState start, ExtendoState end, boolean alignToEndTime) {
+        super(MovementType.EXTENDO);
+        this.start = start;
+        this.end = end;
+        init(true, endTime);
+        if (alignToEndTime) {
+            double startTime = Math.max(0, endTime-minDuration);
+            this.timeSpan = new TimeSpan(startTime, startTime+minDuration);
+        }
     }
 
     @Override

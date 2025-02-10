@@ -19,6 +19,14 @@ public class ReleaseHClaw extends Movement {
         timeSpan = new TimeSpan(startTime, startTime + duration);
     }
 
+    public ReleaseHClaw(double endTime, boolean alignToEndTime) {
+        this(endTime);
+        if (alignToEndTime) {
+            double startTime = Math.max(0, endTime - duration);
+            timeSpan = new TimeSpan(startTime, startTime + duration);
+        }
+    }
+
     @Override
     public double getMinDuration() {
         return duration;

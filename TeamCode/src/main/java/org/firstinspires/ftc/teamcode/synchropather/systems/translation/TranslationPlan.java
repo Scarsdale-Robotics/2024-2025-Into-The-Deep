@@ -6,7 +6,10 @@ import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.arcrobotics.ftclib.geometry.Pose2d;
 import com.arcrobotics.ftclib.geometry.Rotation2d;
 
+import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.RobotSystem;
+import org.firstinspires.ftc.teamcode.subsystems.DriveSubsystem;
+import org.firstinspires.ftc.teamcode.subsystems.LocalizationSubsystem;
 import org.firstinspires.ftc.teamcode.synchropather.DriveConstants;
 import org.firstinspires.ftc.teamcode.synchropather.systems.MovementType;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.superclasses.Movement;
@@ -35,27 +38,45 @@ public class TranslationPlan extends Plan<TranslationState> {
 	private final ArrayList<Double> exHistory;
 	private final ArrayList<Double> eyHistory;
 
-	private RobotSystem robot;
+	private DriveSubsystem drive;
+	private LocalizationSubsystem localization;
+	private Telemetry telemetry;
 
 	/**
 	 * Creates a new TranslationPlan object with the given Movements.
-	 * @param robot The RobotSystem containing a DriveSubsystem.
+	 * @param drive the robot's DriveSubsystem.
+	 * @param localization the robot's LocalizationSubsystem.
+	 * @param telemetry the robot's telemetry
 	 * @param movements
 	 */
-	public TranslationPlan(RobotSystem robot, Movement... movements) {
+	public TranslationPlan(DriveSubsystem drive, LocalizationSubsystem localization, Telemetry telemetry, Movement... movements) {
 		super(MovementType.TRANSLATION, movements);
-		this.robot = robot;
+		this.drive = drive;
+		this.localization = localization;
+		this.telemetry = telemetry;
 		this.exHistory = new ArrayList<>();
 		this.eyHistory = new ArrayList<>();
 
-//		robot.telemetry.addData("[SYNCHROPATHER] Translation desiredVelocity.getX()", 0);
-//		robot.telemetry.addData("[SYNCHROPATHER] Translation desiredVelocity.getY()", 0);
-//		robot.telemetry.addData("[SYNCHROPATHER] Translation ut.getX()", 0);
-//		robot.telemetry.addData("[SYNCHROPATHER] Translation ut.getY()", 0);
-//		robot.telemetry.addData("[SYNCHROPATHER] robot.drive.driveTheta", 0);
-//		robot.telemetry.addData("[SYNCHROPATHER] robot.drive.driveSpeed", 0);
-//		robot.telemetry.addData("[SYNCHROPATHER] currentPose.getHeading()", 0);
-//		robot.telemetry.update();
+		if (telemetry != null) {
+			telemetry.addData("[SYNCHROPATHER] Translation desiredVelocity.getX()", 0);
+			telemetry.addData("[SYNCHROPATHER] Translation desiredVelocity.getY()", 0);
+			telemetry.addData("[SYNCHROPATHER] Translation ut.getX()", 0);
+			telemetry.addData("[SYNCHROPATHER] Translation ut.getY()", 0);
+			telemetry.addData("[SYNCHROPATHER] robot.drive.driveTheta", 0);
+			telemetry.addData("[SYNCHROPATHER] robot.drive.driveSpeed", 0);
+			telemetry.addData("[SYNCHROPATHER] currentPose.getHeading()", 0);
+			telemetry.update();
+		}
+	}
+
+	/**
+	 * Creates a new TranslationPlan object with the given Movements.
+	 * @param drive the robot's DriveSubsystem.
+	 * @param localization the robot's LocalizationSubsystem.
+	 * @param movements
+	 */
+	public TranslationPlan(DriveSubsystem drive, LocalizationSubsystem localization, Movement... movements) {
+		this(drive, localization, null, movements);
 	}
 
 	/**
@@ -73,7 +94,7 @@ public class TranslationPlan extends Plan<TranslationState> {
 		double dya = desiredAcceleration.getY();
 
 		// Current state
-		Pose2d currentPose = robot.localization.getPose();
+		Pose2d currentPose = localization.getPose();
 		TranslationState currentState = new TranslationState(currentPose.getX(), currentPose.getY());
 
 		// State error
@@ -88,8 +109,8 @@ public class TranslationPlan extends Plan<TranslationState> {
 		eyHistory.add(ey);
 		if (exHistory.size()>5) exHistory.remove(0);
 		if (eyHistory.size()>5) eyHistory.remove(0);
-		if (exHistory.size()==5) dexdt = robot.localization.stencil(exHistory);
-		if (eyHistory.size()==5) deydt = robot.localization.stencil(eyHistory);
+		if (exHistory.size()==5) dexdt = localization.stencil(exHistory);
+		if (eyHistory.size()==5) deydt = localization.stencil(eyHistory);
 
 		// Control output
 		double ux = 0;
@@ -107,31 +128,28 @@ public class TranslationPlan extends Plan<TranslationState> {
 		TranslationState ut = new TranslationState(ux, uy);
 		TranslationState u_static = new TranslationState(kS, ut.theta(), true);
 		ut = ut.plus(u_static);
-		robot.drive.driveTheta = ut.theta();
-		robot.drive.driveSpeed = ut.hypot();
-		robot.drive.driveFieldCentric(currentPose.getHeading());
-		robot.drive.targetX = desiredState.getX();
-		robot.drive.targetY = desiredState.getY();
+		drive.driveTheta = ut.theta();
+		drive.driveSpeed = ut.hypot();
+		drive.driveFieldCentric(currentPose.getHeading());
+		drive.targetX = desiredState.getX();
+		drive.targetY = desiredState.getY();
 
-		robot.telemetry.addData("[SYNCHROPATHER] Translation desiredVelocity.getX()", desiredVelocity.getX());
-		robot.telemetry.addData("[SYNCHROPATHER] Translation desiredVelocity.getY()", desiredVelocity.getY());
-		robot.telemetry.addData("[SYNCHROPATHER] Translation ut.getX()", ut.getX());
-		robot.telemetry.addData("[SYNCHROPATHER] Translation ut.getY()", ut.getY());
-		robot.telemetry.addData("[SYNCHROPATHER] robot.drive.driveTheta", robot.drive.driveTheta);
-		robot.telemetry.addData("[SYNCHROPATHER] robot.drive.driveSpeed", robot.drive.driveSpeed);
-		robot.telemetry.addData("[SYNCHROPATHER] currentPose.getHeading()", currentPose.getHeading());
-
+		if (telemetry != null) {
+			telemetry.addData("[SYNCHROPATHER] Translation desiredVelocity.getX()", desiredVelocity.getX());
+			telemetry.addData("[SYNCHROPATHER] Translation desiredVelocity.getY()", desiredVelocity.getY());
+			telemetry.addData("[SYNCHROPATHER] Translation ut.getX()", ut.getX());
+			telemetry.addData("[SYNCHROPATHER] Translation ut.getY()", ut.getY());
+			telemetry.addData("[SYNCHROPATHER] robot.drive.driveTheta", drive.driveTheta);
+			telemetry.addData("[SYNCHROPATHER] robot.drive.driveSpeed", drive.driveSpeed);
+			telemetry.addData("[SYNCHROPATHER] currentPose.getHeading()", currentPose.getHeading());
+		}
 	}
 
 	@Override
 	public void stop() {
-		robot.drive.driveTheta = 0;
-		robot.drive.driveSpeed = 0;
-		robot.drive.stopController();
-	}
-
-	public void setRobot(RobotSystem robot) {
-		this.robot = robot;
+		drive.driveTheta = 0;
+		drive.driveSpeed = 0;
+		drive.stopController();
 	}
 
 }
