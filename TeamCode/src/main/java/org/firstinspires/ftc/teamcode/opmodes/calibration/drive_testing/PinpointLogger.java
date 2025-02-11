@@ -22,7 +22,7 @@ public class PinpointLogger extends LinearOpMode {
     double oldTime = 0;
 
 
-    private static final double xOffset = 144.0, yOffset = -120.0;
+    private static final double xOffset = 92.0, yOffset = 48.0;
     private static final double ENCODER_CPR = 4096; // Optii v1
     private static final double WHEEL_DIAMETER = 35.0; // mm
     private static final double TICKS_PER_MM = ENCODER_CPR / (Math.PI * WHEEL_DIAMETER);

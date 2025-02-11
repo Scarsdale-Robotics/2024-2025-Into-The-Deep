@@ -33,7 +33,11 @@ public enum MovementType {
 	/**
 	 * A Movement involving the horizontal claw.
 	 */
-	HORIZONTAL_CLAW();
+	HORIZONTAL_CLAW(),
+	/**
+	 * A Movement involving the clipbot's magazine
+	 */
+	CLIPBOT_MAGAZINE();
 
 	MovementType() {};
 }
