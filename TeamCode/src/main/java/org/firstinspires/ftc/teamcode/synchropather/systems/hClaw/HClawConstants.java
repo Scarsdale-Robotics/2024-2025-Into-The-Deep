@@ -15,7 +15,7 @@ public class HClawConstants {
     /**
      * in servo/sec
      */
-    public static double MAX_SPEED = 4;
+    public static double MAX_SPEED = 2;
 
     public static double MOVEMENT_TIME = Math.abs(GRAB_POSITION - RELEASE_POSITION) / MAX_SPEED;
 

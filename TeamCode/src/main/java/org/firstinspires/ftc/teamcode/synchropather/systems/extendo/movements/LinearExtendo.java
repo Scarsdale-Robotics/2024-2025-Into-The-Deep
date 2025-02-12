@@ -46,7 +46,7 @@ public class LinearExtendo extends Movement {
         init(true, endTime);
         if (alignToEndTime) {
             double startTime = Math.max(0, endTime-minDuration);
-            this.timeSpan = new TimeSpan(startTime, startTime+minDuration);
+            init(true, startTime);
         }
     }
 

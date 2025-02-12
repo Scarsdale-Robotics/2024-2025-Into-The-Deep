@@ -7,7 +7,6 @@ import com.arcrobotics.ftclib.geometry.Pose2d;
 import com.arcrobotics.ftclib.geometry.Rotation2d;
 import com.arcrobotics.ftclib.hardware.motors.Motor;
 import com.arcrobotics.ftclib.hardware.motors.MotorEx;
-import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -384,7 +383,7 @@ public class DriveCVSampleMacro extends LinearOpMode {
         double currentExtendoPosition = position.getLength();
 
         // Convert to robot frame
-        double robotSampleX = OverheadCameraSubsystem.CAMERA_X_OFFSET + currentExtendoPosition + sampleX;
+        double robotSampleX = OverheadCameraSubsystem.CAMERA_OFFSET[0] + currentExtendoPosition + sampleX;
         double robotSampleY = sampleY;
         double deltaHeading = Math.atan2(robotSampleY, robotSampleX);
 
@@ -393,7 +392,7 @@ public class DriveCVSampleMacro extends LinearOpMode {
         double rotatedSampleDistance = Math.hypot(robotSampleX, robotSampleY);
 
         // Calculate subsystem setpoints
-        double extendoTarget = rotatedSampleDistance - OverheadCameraSubsystem.CAMERA_X_OFFSET - OverheadCameraSubsystem.CLAW_POSITION[0];
+        double extendoTarget = rotatedSampleDistance - OverheadCameraSubsystem.CAMERA_OFFSET[0] - OverheadCameraSubsystem.CLAW_OFFSET[0];
         extendoTarget = bound(extendoTarget, 0, ExtendoConstants.MAX_EXTENSION);
 
         double currentHeading = localization.getH();

@@ -25,8 +25,6 @@ import org.firstinspires.ftc.teamcode.synchropather.subsystemclasses.HorizontalI
 import org.firstinspires.ftc.teamcode.synchropather.subsystemclasses.LinearSlidesSubsystem;
 import org.firstinspires.ftc.teamcode.synchropather.subsystemclasses.OverheadCameraSubsystem;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.Synchronizer;
-import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.TimeSpan;
-import org.firstinspires.ftc.teamcode.synchropather.systems.extendo.ExtendoConstants;
 import org.firstinspires.ftc.teamcode.synchropather.systems.extendo.ExtendoPlan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.extendo.ExtendoState;
 import org.firstinspires.ftc.teamcode.synchropather.systems.extendo.movements.LinearExtendo;
@@ -36,9 +34,7 @@ import org.firstinspires.ftc.teamcode.synchropather.systems.hArm.movements.Linea
 import org.firstinspires.ftc.teamcode.synchropather.systems.hClaw.HClawConstants;
 import org.firstinspires.ftc.teamcode.synchropather.systems.hClaw.HClawPlan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.hClaw.movements.GrabHClaw;
-import org.firstinspires.ftc.teamcode.synchropather.systems.hClaw.movements.ReleaseHClaw;
 import org.firstinspires.ftc.teamcode.synchropather.systems.hWrist.HWristPlan;
-import org.firstinspires.ftc.teamcode.synchropather.systems.hWrist.HWristState;
 import org.firstinspires.ftc.teamcode.synchropather.systems.hWrist.movements.MoveHWrist;
 import org.firstinspires.ftc.teamcode.synchropather.systems.rotation.RotationPlan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.rotation.RotationState;
@@ -64,12 +60,11 @@ public class XTranslationHIntakeExtendoCVSample extends LinearOpMode {
     private LocalizationSubsystem localization;
     private DriveSubsystem drive;
 
-    public static double timeClip = 1;
     public static double armDownPosition = 1.025;
 
     @Override
     public void runOpMode() throws InterruptedException {
-        initSubsystems(new Pose2d(0,0,new Rotation2d(0)));
+        initSubsystems(new Pose2d(0,0,new Rotation2d(Math.toRadians(90))));
 
         loopTicks = new ArrayDeque<>();
         runtime = new ElapsedTime(0);
@@ -79,6 +74,7 @@ public class XTranslationHIntakeExtendoCVSample extends LinearOpMode {
         telemetry.update();
 
         waitForStart();
+        overheadCamera.correctExposure();
 
         while (opModeIsActive()) {
             // Create synchronizer on button press
@@ -117,7 +113,7 @@ public class XTranslationHIntakeExtendoCVSample extends LinearOpMode {
         );
         horizontalIntake.setClawPosition(HClawConstants.RELEASE_POSITION);
         horizontalIntake.setWristAngle(0);
-        horizontalIntake.setArmPosition(0.5);
+        horizontalIntake.setArmPosition(0.9);
 
         // init overhead camera
         WebcamName cameraName = hardwareMap.get(WebcamName.class, "Webcam 1");
@@ -257,20 +253,20 @@ public class XTranslationHIntakeExtendoCVSample extends LinearOpMode {
     private void initSynchronizer(double[] samplePosition, Pose2d botPose, double extendoPosition) {
         //// Calculating real sample position
 
-        // unpack bot pose
+        // unpack bot pose & extendo state
         double x_bot = botPose.getX();
         double y_bot = botPose.getY();
         double heading_bot = botPose.getHeading();
+        double x_extendo = extendoPosition;
 
-        // get cv readings & current state of robot
+        // get cv readings
         double x_sample_cam = samplePosition[0];
         double y_sample_cam = samplePosition[1];
         double theta_sample_cam = samplePosition[2];
-        double x_extendo = linearSlides.getExtendoPosition();
 
         // convert to robot frame
-        double x_sample_bot = OverheadCameraSubsystem.CAMERA_X_OFFSET + x_extendo + x_sample_cam;
-        double y_sample_bot = y_sample_cam;
+        double x_sample_bot = OverheadCameraSubsystem.CAMERA_OFFSET[0] + x_extendo + x_sample_cam;
+        double y_sample_bot = OverheadCameraSubsystem.CAMERA_OFFSET[1] + y_sample_cam;
         double theta_sample_bot = Math.atan2(y_sample_bot, x_sample_bot);
         double distance_sample_bot = Math.hypot(x_sample_bot, y_sample_bot);
         double bearing = heading_bot + theta_sample_bot;
@@ -281,12 +277,18 @@ public class XTranslationHIntakeExtendoCVSample extends LinearOpMode {
         double theta_sample = (theta_sample_cam + heading_bot) - Math.PI/2;
 
         // get subsystem setpoints along the X
-        TranslationState translationTarget = new TranslationState(x_sample, y_bot);
+        TranslationState translationTarget;
         RotationState rotationTarget;
-        if (y_sample < y_bot) rotationTarget = new RotationState(-Math.PI/2);
-        else rotationTarget = new RotationState(Math.PI/2);
+        if (y_sample < y_bot) {
+            translationTarget = new TranslationState(x_sample-OverheadCameraSubsystem.CAMERA_OFFSET[1], y_bot);
+            rotationTarget = new RotationState(-Math.PI/2);
+        }
+        else {
+            translationTarget = new TranslationState(x_sample+OverheadCameraSubsystem.CAMERA_OFFSET[1], y_bot);
+            rotationTarget = new RotationState(Math.PI/2);
+        }
         ExtendoState extendoTarget = new ExtendoState(
-                Math.abs(y_sample - y_bot) - (OverheadCameraSubsystem.CAMERA_X_OFFSET + OverheadCameraSubsystem.CLAW_POSITION[0])
+                Math.abs(y_sample - y_bot) - (OverheadCameraSubsystem.CAMERA_OFFSET[0] + OverheadCameraSubsystem.CLAW_OFFSET[0])
         );
         double hWristTarget = normalizeAngle(theta_sample);
 
@@ -309,23 +311,23 @@ public class XTranslationHIntakeExtendoCVSample extends LinearOpMode {
         );
 
         // Move arm down
-        LinearHArm h_arm_down = new LinearHArm(Math.max(0,Math.max(extendoOut.getEndTime(), rotation.getEndTime())-timeClip),
-                new HArmState(0.5),
-                new HArmState(armDownPosition)
+        LinearHArm h_arm_down = new LinearHArm(Math.max(extendoOut.getEndTime(), rotation.getEndTime()),
+                new HArmState(0.9),
+                new HArmState(armDownPosition),
+                true
         );
         MoveHWrist h_wrist_align = new MoveHWrist(extendoOut.getStartTime(), hWristTarget);
-        ReleaseHClaw h_claw_release = new ReleaseHClaw(h_arm_down.getStartTime());
 
         // Pick up and move arm up
-        GrabHClaw h_claw_grab = new GrabHClaw(h_arm_down.getEndTime());
-        MoveHWrist h_wrist_reset = new MoveHWrist(h_claw_grab.getEndTime(), 0);
-        LinearHArm h_arm_up = new LinearHArm(h_wrist_reset.getEndTime(),
+        GrabHClaw h_claw_grab = new GrabHClaw(h_arm_down.getEndTime(), true);
+        LinearHArm h_arm_up = new LinearHArm(h_claw_grab.getEndTime(),
                 new HArmState(armDownPosition),
-                new HArmState(0.5)
+                new HArmState(0.9)
         );
+        MoveHWrist h_wrist_reset = new MoveHWrist(h_arm_up.getEndTime(), 0, true);
 
         // Retract extendo
-        LinearExtendo extendoIn = new LinearExtendo(h_arm_up.getStartTime(),
+        LinearExtendo extendoIn = new LinearExtendo(h_wrist_reset.getStartTime(),
                 extendoTarget,
                 new ExtendoState(0)
         );
@@ -350,7 +352,6 @@ public class XTranslationHIntakeExtendoCVSample extends LinearOpMode {
                 h_arm_up
         );
         HClawPlan h_claw_plan = new HClawPlan(horizontalIntake,
-                h_claw_release,
                 h_claw_grab
         );
 

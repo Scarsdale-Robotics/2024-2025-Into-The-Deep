@@ -356,7 +356,7 @@ public class SampleCycleAuto extends LinearOpMode {
         double x_extendo = currentExtendoPosition.getLength();
 
         // Convert to robot frame
-        double x_sample_bot = OverheadCameraSubsystem.CAMERA_X_OFFSET + x_extendo + x_sample_cam;
+        double x_sample_bot = OverheadCameraSubsystem.CAMERA_OFFSET[0] + x_extendo + x_sample_cam;
         double y_sample_bot = y_sample_cam;
         double bearing = Math.atan2(y_sample_bot, x_sample_bot);
 
@@ -365,7 +365,7 @@ public class SampleCycleAuto extends LinearOpMode {
         double distance_sample_bot = Math.hypot(x_sample_bot, y_sample_bot);
 
         // Calculate subsystem setpoints
-        double extendoTarget = distance_sample_bot - OverheadCameraSubsystem.CAMERA_X_OFFSET - OverheadCameraSubsystem.CLAW_POSITION[0];
+        double extendoTarget = distance_sample_bot - OverheadCameraSubsystem.CAMERA_OFFSET[0] - OverheadCameraSubsystem.CLAW_OFFSET[0];
         extendoTarget = bound(extendoTarget, 0, ExtendoConstants.MAX_EXTENSION);
 
         double currentHeading = currentRotation.getHeading();
@@ -449,7 +449,7 @@ public class SampleCycleAuto extends LinearOpMode {
 
         ExtendoConstants.MAX_VELOCITY = 105;
 
-        double extendoLengthModifier = OverheadCameraSubsystem.CAMERA_X_OFFSET + OverheadCameraSubsystem.CLAW_POSITION[0];
+        double extendoLengthModifier = OverheadCameraSubsystem.CAMERA_OFFSET[0] + OverheadCameraSubsystem.CLAW_OFFSET[0];
         double extendoLength = ExtendoConstants.MAX_EXTENSION + extendoLengthModifier;
 
         // unpacking current position and calculating net zone setpoints

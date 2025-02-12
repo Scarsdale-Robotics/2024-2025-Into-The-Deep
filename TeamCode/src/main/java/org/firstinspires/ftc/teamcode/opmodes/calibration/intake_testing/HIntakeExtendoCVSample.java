@@ -149,7 +149,7 @@ public class HIntakeExtendoCVSample extends LinearOpMode {
         double angle = samplePosition[2];
 
         double currentExtendoPosition = linearSlides.getExtendoPosition();
-        double extendoTarget = currentExtendoPosition + x - OverheadCameraSubsystem.CLAW_POSITION[0];
+        double extendoTarget = currentExtendoPosition + x - OverheadCameraSubsystem.CLAW_OFFSET[0];
         extendoTarget = Math.max(0, extendoTarget);
 
         // Extendo

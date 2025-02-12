@@ -19,6 +19,14 @@ public class GrabHClaw extends Movement {
         timeSpan = new TimeSpan(startTime, startTime + duration);
     }
 
+    public GrabHClaw(double endTime, boolean alignToEndTime) {
+        this(endTime);
+        if (alignToEndTime) {
+            double startTime = Math.max(0, endTime-duration);
+            this.timeSpan = new TimeSpan(startTime, startTime+duration);
+        }
+    }
+
     @Override
     public double getMinDuration() {
         return duration;
@@ -29,6 +37,8 @@ public class GrabHClaw extends Movement {
      */
     @Override
     public HClawState getState(double elapsedTime) {
+        double clampedElapsedTime = timeSpan.clamp(elapsedTime)-getStartTime();
+        if (clampedElapsedTime<=0) return getStartState();
         return state;
     }
 
@@ -52,7 +62,7 @@ public class GrabHClaw extends Movement {
      */
     @Override
     public HClawState getStartState() {
-        return state;
+        return new HClawState(HClawConstants.RELEASE_POSITION);
     }
 
     /**

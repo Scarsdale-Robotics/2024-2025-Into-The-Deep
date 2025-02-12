@@ -240,7 +240,7 @@ public class BlindHIntakeExtendoCVSample extends LinearOpMode {
         double angle = samplePosition[2];
 
         double currentExtendoPosition = position.getLength();
-        double extendoTarget = currentExtendoPosition + x - OverheadCameraSubsystem.CLAW_POSITION[0];
+        double extendoTarget = currentExtendoPosition + x - OverheadCameraSubsystem.CLAW_OFFSET[0];
         extendoTarget = Math.max(0, extendoTarget);
 
         // Extendo

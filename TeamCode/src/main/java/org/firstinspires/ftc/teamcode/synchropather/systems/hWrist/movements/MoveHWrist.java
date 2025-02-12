@@ -23,6 +23,14 @@ public class MoveHWrist extends Movement {
         this(startTime, new HWristState(targetAngle));
     }
 
+    public MoveHWrist(double endTime, double targetAngle, boolean alignToEndTime) {
+        this(endTime, targetAngle);
+        if (alignToEndTime) {
+            double startTime = Math.max(0, endTime-duration);
+            this.timeSpan = new TimeSpan(startTime, startTime+duration);
+        }
+    }
+
     @Override
     public double getMinDuration() {
         return duration;

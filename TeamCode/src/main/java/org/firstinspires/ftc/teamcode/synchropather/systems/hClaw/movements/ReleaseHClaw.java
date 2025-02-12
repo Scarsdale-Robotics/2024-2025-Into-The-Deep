@@ -37,6 +37,8 @@ public class ReleaseHClaw extends Movement {
      */
     @Override
     public HClawState getState(double elapsedTime) {
+        double clampedElapsedTime = timeSpan.clamp(elapsedTime)-getStartTime();
+        if (clampedElapsedTime<=0) return getStartState();
         return state;
     }
 
@@ -60,7 +62,7 @@ public class ReleaseHClaw extends Movement {
      */
     @Override
     public HClawState getStartState() {
-        return state;
+        return new HClawState(HClawConstants.GRAB_POSITION);
     }
 
     /**

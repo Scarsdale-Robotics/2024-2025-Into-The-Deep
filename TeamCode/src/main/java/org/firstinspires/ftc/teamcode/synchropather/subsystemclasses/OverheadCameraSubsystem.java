@@ -27,11 +27,11 @@ public class OverheadCameraSubsystem {
     // (X,Y)
     // +X is forward, +Y is to the left
     // How far forward the claw (at pickup position) is from the camera, in inches
-    public static double[] CLAW_POSITION = new double[]{-4.2, 0}; // TODO: TUNE THIS
+    public static double[] CLAW_OFFSET = new double[]{-4.2, 0}; // TODO: TUNE THIS
 
-    // How far forward the camera is from the robot's center of rotation
+    // How far forward and to the left the camera is from the robot's center of rotation
     // when the extendo is fully retracted, in inches.
-    public static double CAMERA_X_OFFSET = 8.30511811;
+    public static double[] CAMERA_OFFSET = new double[]{8.30511811, -0.57047244};
 
 
     public OverheadCameraSubsystem(WebcamName cameraName, Telemetry telemetry) {
@@ -103,8 +103,8 @@ public class OverheadCameraSubsystem {
         for (int i = 0; i < samplePositions.size(); i++) {
             double[] position = samplePositions.get(i);
             double distance = Math.hypot(
-                    position[0] - CLAW_POSITION[0],
-                    position[1] - CLAW_POSITION[1]
+                    position[0] - CLAW_OFFSET[0],
+                    position[1] - CLAW_OFFSET[1]
             );
             if (distance < bestDistance) {
                 bestDistance = distance;
