@@ -2,13 +2,20 @@ package org.firstinspires.ftc.teamcode.opmodes.teleop.indep_full;
 
 import static org.firstinspires.ftc.teamcode.Auxiliary.initMotor;
 import static org.firstinspires.ftc.teamcode.Auxiliary.initServo;
+import static org.firstinspires.ftc.teamcode.Auxiliary.initWebcam;
 
 import com.arcrobotics.ftclib.hardware.motors.Motor;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.firstinspires.ftc.robotcore.external.hardware.camera.CameraName;
+import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
+import org.firstinspires.ftc.teamcode.HardwareRobot;
+import org.firstinspires.ftc.teamcode.subsystems.indep.MagazineSubsystem;
+import org.firstinspires.ftc.teamcode.synchropather.subsystemclasses.ClipbotSubsystem;
 import org.firstinspires.ftc.teamcode.synchropather.subsystemclasses.HorizontalIntakeSubsystem;
 import org.firstinspires.ftc.teamcode.synchropather.subsystemclasses.LinearSlidesSubsystem;
+import org.firstinspires.ftc.teamcode.synchropather.subsystemclasses.OverheadCameraSubsystem;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.Synchronizer;
 import org.firstinspires.ftc.teamcode.synchropather.systems.extendo.ExtendoPlan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.extendo.ExtendoState;
@@ -22,6 +29,7 @@ import org.firstinspires.ftc.teamcode.synchropather.systems.hClaw.movements.Grab
 import org.firstinspires.ftc.teamcode.synchropather.systems.hClaw.movements.ReleaseHClaw;
 import org.firstinspires.ftc.teamcode.synchropather.systems.hWrist.HWristPlan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.hWrist.movements.MoveHWrist;
+import org.firstinspires.ftc.teamcode.synchropather.systems.magazine.movements.LinearMagazine;
 
 import java.util.function.Supplier;
 
@@ -31,6 +39,7 @@ public class SynchroTeleop extends LinearOpMode {
     private Synchronizer autoIntake;
 
     private Synchronizer[] manualIntakes;
+    private Synchronizer[] magazineSyncs;
 
     private double wristPos = 0;
     private double extendoPos = 0;
@@ -43,11 +52,21 @@ public class SynchroTeleop extends LinearOpMode {
     private static final int MAX_EXTENDO = 2000;
     private static final int MIN_EXTENDO = 200;  // pos must be safe to flip arm
 
+    private static final int MAX_MAG_PUSHER = 10000;
+    private static final int MIN_MAG_PUSHER = 0;
+
     private static final double TRANSFER_ARM = 0.2;
     private static final double TRANSFER_WRIST = 0;
     private static final double APPROACH_ARM = 0.95;
     private static final double INTAKE_ARM = 1.05;
     private static final int TRANSFER_EXTENDO = 200;
+
+    private LinearSlidesSubsystem linearSlides;
+    private HorizontalIntakeSubsystem horizontalIntake;
+    private ClipbotSubsystem clipbot;
+    private OverheadCameraSubsystem overheadCamera;
+
+    private ElapsedTime runtime;
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -58,12 +77,56 @@ public class SynchroTeleop extends LinearOpMode {
 
         // NO MOVEMENT BEFORE START
 
+        // TODO: check motor types are correct
+        linearSlides = new LinearSlidesSubsystem(
+                initMotor(hardwareMap, "extendo", Motor.GoBILDA.RPM_1620),
+                initMotor(hardwareMap, "leftLift", Motor.GoBILDA.RPM_312),
+                initMotor(hardwareMap, "rightLift", Motor.GoBILDA.RPM_312),
+                telemetry
+        );
+
+        horizontalIntake = new HorizontalIntakeSubsystem(
+                initServo(hardwareMap,"leftHorizontalArm"),
+                initServo(hardwareMap, "rightHorizontalArm"),
+                initServo(hardwareMap, "horizontalWrist"),
+                initServo(hardwareMap, "horizontalClaw")
+        );
+
+        clipbot = new ClipbotSubsystem(
+                initMotor(hardwareMap, "magazine", Motor.GoBILDA.RPM_312),
+                initServo(hardwareMap, "clipper"),
+                telemetry
+        );
+
+        overheadCamera = new OverheadCameraSubsystem(
+                initWebcam(hardwareMap, "Webcam 1"),
+                telemetry
+        );
+
+//        GoBildaPinpointDriver pinpoint = initPinpoint(
+//                hardwareMap,
+//                "pinpoint",
+//                GoBildaPinpointDriver.EncoderDirection.FORWARD,
+//                GoBildaPinpointDriver.EncoderDirection.FORWARD
+//        );
+
+
+
         waitForStart();
+
+        runtime = new ElapsedTime(0);
+        runtime.reset();
+
+        horizontalIntake.setClawPosition(HClawConstants.RELEASE_POSITION);
+        horizontalIntake.setWristAngle(0);
+        horizontalIntake.setArmPosition(0.5);
+
+        clipbot.homeMagazine(this, telemetry);  // TODO: TEST IF HOMING HERE IS HELPFUL
 
         boolean autoIntakeRunning = false;
         boolean manualIntakeRunning = false;
         while (opModeIsActive()) {
-            updateSynchronizers();
+            updateIntakeSynchronizers();
 
             boolean currAutoIntakeCommand = gamepad1.dpad_left && gamepad1.cross;
             if (lastAutoIntakeCommand && !currAutoIntakeCommand) {
@@ -90,6 +153,8 @@ public class SynchroTeleop extends LinearOpMode {
                 if (gamepad1.square) intakeIndex--;
                 if (gamepad1.circle) intakeIndex++;
 
+                intakeIndex %= manualIntakes.length;
+
                 if (gamepad1.square || gamepad1.triangle || gamepad1.circle) {
                     manualIntakes[intakeIndex].start();
 
@@ -97,9 +162,7 @@ public class SynchroTeleop extends LinearOpMode {
                     autoIntakeRunning = false;
                 }
 
-                if (gamepad2.left_stick_button) {
-                    wristPos = Math.atan2(gamepad2.left_stick_y, gamepad2.left_stick_x);
-                }
+                if (gamepad2.left_stick_button) wristPos = (Math.atan2(gamepad2.left_stick_y, gamepad2.left_stick_x) + Math.PI) % Math.PI / Math.PI * (MAX_WRIST - MIN_WRIST) + MIN_WRIST;
                 extendoPos += (gamepad1.right_trigger - gamepad1.left_trigger) * EXTENDO_SPEED;
 
 //                if (intakeIndex == 0 || intakeIndex == 1) {
@@ -122,30 +185,8 @@ public class SynchroTeleop extends LinearOpMode {
         }
     }
 
-    private void updateSynchronizers() {
+    private void updateIntakeSynchronizers() {
         autoIntake = new Synchronizer();
-
-        LinearSlidesSubsystem linearSlides = new LinearSlidesSubsystem(
-                initMotor(hardwareMap, "extendo", Motor.GoBILDA.RPM_1620),
-                initMotor(hardwareMap, "leftLift", Motor.GoBILDA.RPM_312),
-                initMotor(hardwareMap, "rightLift", Motor.GoBILDA.RPM_312),
-                telemetry
-        );
-
-        Servo leftHorizontalArm = initServo(hardwareMap,"leftHorizontalArm");
-        Servo rightHorizontalArm = initServo(hardwareMap, "rightHorizontalArm");
-        Servo horizontalWrist = initServo(hardwareMap, "horizontalWrist");
-        Servo horizontalClaw = initServo(hardwareMap, "horizontalClaw");
-
-        HorizontalIntakeSubsystem horizontalIntake = new HorizontalIntakeSubsystem(
-                leftHorizontalArm,
-                rightHorizontalArm,
-                horizontalWrist,
-                horizontalClaw
-        );
-        horizontalIntake.setClawPosition(HClawConstants.RELEASE_POSITION);
-        horizontalIntake.setWristAngle(0);
-        horizontalIntake.setArmPosition(0.5);
 
         Supplier<Synchronizer> transferToApproachSync = () -> {
             LinearHArm armDown = new LinearHArm(0,
@@ -262,5 +303,16 @@ public class SynchroTeleop extends LinearOpMode {
 //                extendo1
 //        );
 //        this.synchronizer = new Synchronizer(extendoPlan);
+    }
+
+    private void updateMagazineSynchronizers() {
+//        Supplier<Synchronizer> magazineOpen = () -> {
+//
+//            return new Synchronizer();
+//        };
+//
+//        Supplier<Synchronizer> magazineClose = () -> {
+//            // slow
+//        };
     }
 }
