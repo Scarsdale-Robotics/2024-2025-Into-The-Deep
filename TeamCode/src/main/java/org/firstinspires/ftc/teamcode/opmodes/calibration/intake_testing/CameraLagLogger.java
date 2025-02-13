@@ -233,4 +233,15 @@ public class CameraLagLogger extends LinearOpMode {
             };
         }
     }
+
+    /**
+     * Determines whether the two inputs are approximately equal to each other
+     * within an epsilon of 1e-3
+     * @param a
+     * @param b
+     * @return Math.abs(a-b) <= 1e-3
+     */
+    private static boolean equal(double a, double b) {
+        return Math.abs(a-b) <= 1e-3;
+    }
 }
