@@ -20,9 +20,9 @@ public class ExtendoPlan extends Plan<ExtendoState> {
     public static double kV = 1;
     public static double kA = 0.2;
 
-    // Positional PD constants
+    // Positional SQUID constants
     //TODO: TUNE
-    public static double kP = 16;
+    public static double kSQU = 16;
     public static double kI = 0;
     public static double kD = 1;
 
@@ -66,7 +66,7 @@ public class ExtendoPlan extends Plan<ExtendoState> {
         // Get delta time
         double deltaTime;
         boolean runtimeWasNull = false;
-        if (runtime==null) {
+        if (runtime==null || runtime.seconds()>0.1) {
             runtime = new ElapsedTime(0);
             deltaTime = 0;
             runtimeWasNull = true;
@@ -105,8 +105,9 @@ public class ExtendoPlan extends Plan<ExtendoState> {
         // Control output
         double u = 0;
 
-        // Extendo PID
-        u += (kP*Math.signum(e)*Math.sqrt(Math.abs(e)) + kI*intedt + kD*dedt) / ExtendoConstants.MAX_VELOCITY;
+        // Extendo SQUID
+        double squ = Math.signum(e)*Math.sqrt(Math.abs(e));
+        u += (kSQU*squ + kI*intedt + kD*dedt) / ExtendoConstants.MAX_VELOCITY;
 
         // Feedforward
         double fu = (kS*Math.signum(dv) + kV*dv + kA*da) / ExtendoConstants.MAX_VELOCITY;

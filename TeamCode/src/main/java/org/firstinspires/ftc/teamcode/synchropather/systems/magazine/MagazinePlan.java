@@ -16,15 +16,15 @@ public class MagazinePlan extends Plan<MagazineState> {
 
     // Feedforward constants
     //TODO: TUNE
-    public static double kS = 6;
+    public static double kS = 0;
     public static double kV = 1;
-    public static double kA = 0.2;
+    public static double kA = 0;
 
-    // Positional PD constants
+    // Positional SQUID constants
     //TODO: TUNE
-    public static double kP = 16;
+    public static double kSQU = 0;
     public static double kI = 0;
-    public static double kD = 1;
+    public static double kD = 0;
 
     private double intedt = 0;
 
@@ -66,7 +66,7 @@ public class MagazinePlan extends Plan<MagazineState> {
         // Get delta time
         double deltaTime;
         boolean runtimeWasNull = false;
-        if (runtime==null) {
+        if (runtime==null || runtime.seconds()>0.1) {
             runtime = new ElapsedTime(0);
             deltaTime = 0;
             runtimeWasNull = true;
@@ -105,8 +105,9 @@ public class MagazinePlan extends Plan<MagazineState> {
         // Control output
         double u = 0;
 
-        // Magazine PID
-        u += (kP*Math.signum(e)*Math.sqrt(Math.abs(e)) + kI*intedt + kD*dedt) / MagazineConstants.MAX_VELOCITY;
+        // Magazine SQUID
+        double squ = Math.signum(e)*Math.sqrt(Math.abs(e));
+        u += (kSQU*squ + kI*intedt + kD*dedt) / MagazineConstants.MAX_VELOCITY;
 
         // Feedforward
         double fu = (kS*Math.signum(dv) + kV*dv + kA*da) / MagazineConstants.MAX_VELOCITY;

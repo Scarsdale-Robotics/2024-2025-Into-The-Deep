@@ -1,16 +1,13 @@
 package org.firstinspires.ftc.teamcode.synchropather.systems.lift;
 
 import com.acmerobotics.dashboard.config.Config;
-import com.arcrobotics.ftclib.hardware.motors.Motor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
-import org.firstinspires.ftc.teamcode.RobotSystem;
 import org.firstinspires.ftc.teamcode.synchropather.subsystemclasses.LinearSlidesSubsystem;
 import org.firstinspires.ftc.teamcode.synchropather.systems.MovementType;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.superclasses.Movement;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.superclasses.Plan;
-import org.firstinspires.ftc.teamcode.synchropather.systems.extendo.ExtendoConstants;
 
 import java.util.ArrayList;
 
@@ -22,9 +19,9 @@ public class LiftPlan extends Plan<LiftState> {
     public static double kV = 1;
     public static double kA = 0.05;
 
-    // Positional PD constants
+    // Positional SQUID constants
     //TODO: TUNE
-    public static double kP = 16;
+    public static double kSQU = 16;
     public static double kI = 0.0;
     public static double kD = 0.2;
 
@@ -80,7 +77,7 @@ public class LiftPlan extends Plan<LiftState> {
         // Get delta time
         double deltaTime;
         boolean runtimeWasNull = false;
-        if (runtime==null) {
+        if (runtime==null || runtime.seconds()>0.1) {
             runtime = new ElapsedTime(0);
             deltaTime = 0;
             runtimeWasNull = true;
@@ -132,9 +129,11 @@ public class LiftPlan extends Plan<LiftState> {
         double lu = 0;
         double ru = 0;
 
-        // Lift PID
-        lu += (kP*Math.signum(le)*Math.sqrt(Math.abs(le)) + kI*lintedt + kD*ldedt) / LiftConstants.MAX_VELOCITY;
-        ru += (kP*Math.signum(re)*Math.sqrt(Math.abs(re)) + kI*rintedt + kD*rdedt) / LiftConstants.MAX_VELOCITY;
+        // Lift SQUID
+        double lsqu = Math.signum(le)*Math.sqrt(Math.abs(le));
+        double rsqu = Math.signum(re)*Math.sqrt(Math.abs(re));
+        lu += (kSQU*lsqu + kI*lintedt + kD*ldedt) / LiftConstants.MAX_VELOCITY;
+        ru += (kSQU*rsqu + kI*rintedt + kD*rdedt) / LiftConstants.MAX_VELOCITY;
 
         // Feedforward
         double fu = (kS*Math.signum(dv) + kV*dv + kA*da) / LiftConstants.MAX_VELOCITY;

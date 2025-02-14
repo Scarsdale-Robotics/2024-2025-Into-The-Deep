@@ -37,7 +37,7 @@ public class CameraLagLogger extends LinearOpMode {
     private LocalizationSubsystem localization;
     private DriveSubsystem drive;
 
-    public static double timeBuffer = 0.185;
+    public static double timeBuffer = 0;
     private double[] lastBufferedExtendoPosition;  // {position, timestamp}
 
     @Override
