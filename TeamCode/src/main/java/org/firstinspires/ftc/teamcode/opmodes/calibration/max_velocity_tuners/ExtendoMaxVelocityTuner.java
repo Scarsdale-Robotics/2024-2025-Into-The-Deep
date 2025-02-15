@@ -22,25 +22,39 @@ import org.firstinspires.ftc.teamcode.synchropather.systems.extendo.ExtendoConst
 import java.util.ArrayList;
 
 @Config
-@TeleOp(name="Extendo Max Velocity Tuner", group="Calibration")
+@TeleOp(name="Extendo Max Velocity/Acceleration Tuner", group="Calibration")
 public class ExtendoMaxVelocityTuner extends LinearOpMode {
 
     private Motor extendo;
     public static double SPEED = 1;
 
     private ArrayList<Double> posHistory;
+    private ArrayList<Double> veloHistory;
     private ArrayList<Double> dtHistory;
     private ElapsedTime runtime;
 
     public double maxExtendoSpeed = 0;
+    public double maxExtendoAcceleration = 0;
 
     @Override
     public void runOpMode() throws InterruptedException {
         initSubsystems();
-        waitForStart();
 
         posHistory = new ArrayList<>();
+        veloHistory = new ArrayList<>();
         dtHistory = new ArrayList<>();
+
+        telemetry.addData("power", 0);
+        telemetry.addData("extendoLength", 0);
+        telemetry.addData("extendoVelocity", 0);
+        telemetry.addData("extendoSpeed", 0);
+        telemetry.addData("maxExtendoSpeed", 0);
+        telemetry.addData("extendoAcceleration", 0);
+        telemetry.addData("extendoAbsAcceleration", 0);
+        telemetry.addData("maxExtendoAcceleration", 0);
+        telemetry.update();
+
+        waitForStart();
 
         while (opModeIsActive()) {
             double power = gamepad1.right_trigger - gamepad1.left_trigger;
@@ -64,22 +78,38 @@ public class ExtendoMaxVelocityTuner extends LinearOpMode {
                 if (dtHistory.size()>5) dtHistory.remove(0);
             }
 
-            // derivative approx
+            // velocity approx
             double extendoVelocity = 0;
             if (dtHistory.size()==5) {
                 if (posHistory.size() == 5) {
                     extendoVelocity = stencil(posHistory);
                 }
             }
+            veloHistory.add(extendoVelocity);
+            if (veloHistory.size() > 5) veloHistory.remove(0);
+
+            // acceleration approx
+            double extendoAcceleration = 0;
+            if (dtHistory.size()==5) {
+                if (veloHistory.size() == 5) {
+                    extendoAcceleration = stencil(veloHistory);
+                }
+            }
 
             double extendoSpeed = Math.abs(extendoVelocity);
             maxExtendoSpeed = Math.max(maxExtendoSpeed, extendoSpeed);
+
+            double extendoAbsAcceleration = Math.abs(extendoAcceleration);
+            maxExtendoAcceleration = Math.max(maxExtendoAcceleration, extendoAbsAcceleration);
 
             telemetry.addData("power", power);
             telemetry.addData("extendoLength", extendoLength);
             telemetry.addData("extendoVelocity", extendoVelocity);
             telemetry.addData("extendoSpeed", extendoSpeed);
             telemetry.addData("maxExtendoSpeed", maxExtendoSpeed);
+            telemetry.addData("extendoAcceleration", extendoAcceleration);
+            telemetry.addData("extendoAbsAcceleration", extendoAbsAcceleration);
+            telemetry.addData("maxExtendoAcceleration", maxExtendoAcceleration);
             telemetry.update();
         }
     }
