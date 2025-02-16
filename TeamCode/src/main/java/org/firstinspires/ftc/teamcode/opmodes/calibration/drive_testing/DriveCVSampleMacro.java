@@ -15,6 +15,7 @@ import com.qualcomm.robotcore.hardware.ServoImplEx;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
+import org.firstinspires.ftc.teamcode.opmodes.algorithms.SampleDataBufferFilter;
 import org.firstinspires.ftc.teamcode.subsystems.DriveSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.GoBildaPinpointDriver;
 import org.firstinspires.ftc.teamcode.subsystems.LocalizationSubsystem;
@@ -62,13 +63,9 @@ public class DriveCVSampleMacro extends LinearOpMode {
     private LocalizationSubsystem localization;
     private DriveSubsystem drive;
 
-    public static double armDownPosition = 1.025;
+    private SampleDataBufferFilter sampleData;
 
-    public static double timeBuffer = 0.045;
-    private ArrayList<double[]> bufferedExtendoPositions;  // [{position, timestamp}, ...]
-    private ArrayList<Pose2d> bufferedBotPoses;
-    private double lastBufferedExtendoPosition;
-    private Pose2d lastBufferedBotPose;
+    public static double armDownPosition = 1.025;
 
     public static double searchSpeedDivisor = 2;
 
@@ -79,31 +76,23 @@ public class DriveCVSampleMacro extends LinearOpMode {
         initSubsystems(new Pose2d(0,0,new Rotation2d(0)));
         initSearch();
 
-        runtime = new ElapsedTime(0);
-        bufferedExtendoPositions = new ArrayList<>();
-        bufferedExtendoPositions.add(new double[] {
-                linearSlides.getExtendoPosition(),
-                runtime.seconds()
-        });
-        lastBufferedExtendoPosition = bufferedExtendoPositions.get(0)[0];
-        bufferedBotPoses = new ArrayList<>();
-        bufferedBotPoses.add(
-                localization.getPose()
-        );
-        lastBufferedBotPose = bufferedBotPoses.get(0);
-
         waitForStart();
 
-        ExtendoState extendoPosition = null;
-        ExtendoState extendoVelocity = null;
-        Pose2d botPose = null;
-        double[] closestSample = null;
+        sampleData = new SampleDataBufferFilter(
+                linearSlides,
+                localization,
+                0.045,
+                5
+        );
 
         boolean toggleTriangle = false;
         boolean sampleMacroRunning = false;
         boolean clawGrabbed = false;
+        ExtendoState extendoVelocity = null;
         while (opModeIsActive()) {
-            updateBufferedData();
+            localization.update();
+            linearSlides.update();
+            sampleData.updateBufferData();
             boolean driverControlling = controlDrive(sampleMacroRunning);
 
             // Triangle is pick up sample macro
@@ -112,13 +101,13 @@ public class DriveCVSampleMacro extends LinearOpMode {
                 toggleTriangle = true;
                 // init search
                 search.start();
-                extendoPosition = null;
-                extendoVelocity = null;
-                botPose = null;
-                closestSample = null;
-            } else if (clawGrabbed){
+                sampleData.clearFilterData();
+            } else if (gamepad1.triangle && !toggleTriangle && !sampleMacroRunning && clawGrabbed) {
                 horizontalIntake.setClawPosition(HClawConstants.RELEASE_POSITION);
                 clawGrabbed = false;
+                toggleTriangle = true;
+            } else if (gamepad1.triangle && !toggleTriangle && sampleMacroRunning) {
+                sampleMacroRunning = false;
                 toggleTriangle = true;
             } else if (!gamepad1.triangle) {
                 toggleTriangle = false;
@@ -127,7 +116,7 @@ public class DriveCVSampleMacro extends LinearOpMode {
             // Sample macro control
             if (sampleMacroRunning) {
                 // Search motion
-                if (extendoPosition==null || extendoVelocity==null || closestSample==null) {
+                if (!sampleData.isFilterFull()) {
                     boolean searchRunning = search.update();
                     // Did not find sample
                     if (!searchRunning) {
@@ -136,10 +125,8 @@ public class DriveCVSampleMacro extends LinearOpMode {
                     }
                     // Try to detect sample
                     else {
-                        closestSample = overheadCamera.getClosestSample(); // Can return null
-                        extendoPosition = new ExtendoState(lastBufferedExtendoPosition);
+                        sampleData.updateFilterData(overheadCamera.getClosestSample()); // Can return null
                         extendoVelocity = (ExtendoState) search.getVelocity(MovementType.EXTENDO);
-                        botPose = lastBufferedBotPose;
                     }
                 }
                 // Pickup motion
@@ -147,7 +134,7 @@ public class DriveCVSampleMacro extends LinearOpMode {
                     // Init pickup
                     if ((pickup==null || !pickup.getIsRunning()) || search.getIsRunning()) {
                         search.stop();
-                        initPickupMotion(closestSample, extendoPosition, extendoVelocity, botPose);
+                        initPickupMotion(extendoVelocity);
                         pickup.start();
                     }
                     // Stop macro if driver took over (or macro ended)
@@ -290,36 +277,6 @@ public class DriveCVSampleMacro extends LinearOpMode {
 
     }
 
-    /**
-     * To account for the camera's lag.
-     */
-    private void updateBufferedData() {
-        double currentTime = runtime.seconds();
-
-        // extendo
-        double currentExtendoPosition = linearSlides.getExtendoPosition();
-        bufferedExtendoPositions.add(new double[]{
-                currentExtendoPosition,
-                currentTime
-        });
-
-        // botpose
-        Pose2d currentBotPose = localization.getPose();
-        bufferedBotPoses.add(
-                currentBotPose
-        );
-
-        // clear data outside buffer
-        while (currentTime - bufferedExtendoPositions.get(0)[1] > timeBuffer) {
-            bufferedExtendoPositions.remove(0);
-            bufferedBotPoses.remove(0);
-        }
-
-        // store latest data
-        lastBufferedExtendoPosition = bufferedExtendoPositions.get(0)[0];
-        lastBufferedBotPose = bufferedBotPoses.get(0);
-    }
-
     private void initSearch() {
         double currentExtendoPosition = linearSlides.getExtendoPosition();
         double extendoTarget = 16;
@@ -369,22 +326,40 @@ public class DriveCVSampleMacro extends LinearOpMode {
         );
     }
 
-    private void initPickupMotion(double[] samplePosition, ExtendoState position, ExtendoState velocity, Pose2d botPose) {
-        // Calculating rotated sample position
-        double x_sample_cam = samplePosition[0];
-        double y_sample_cam = samplePosition[1];
-        double theta_sample_cam = samplePosition[2];
-        double x_extendo = position.getLength();
+    private void initPickupMotion(ExtendoState extendoVelocity) {
+        // Unpack bot pose
+        Pose2d botPose = localization.getPose();
+        double x_bot = botPose.getX();
+        double y_bot = botPose.getY();
+        double heading_bot = botPose.getHeading();
 
-        // Convert to robot frame
-        double x_sample_bot = OverheadCameraSubsystem.CAMERA_OFFSET[0] + x_extendo + x_sample_cam;
-        double y_sample_bot = OverheadCameraSubsystem.CAMERA_OFFSET[1] + y_sample_cam;
+        // Get extendo state
+        double x_extendo = linearSlides.getExtendoPosition();
+        ExtendoState extendoPosition = new ExtendoState(x_extendo);
+
+        // Unpack sample pose
+        Pose2d samplePose = sampleData.getFilteredSamplePosition();
+        double x_sample = samplePose.getX();
+        double y_sample = samplePose.getY();
+        double theta_sample = samplePose.getHeading();
+
+        // Convert global sample pose to robot frame
+        double dx = x_sample - x_bot;
+        double dy = y_sample - y_bot;
+        double sin = Math.sin(-heading_bot);
+        double cos = Math.cos(-heading_bot);
+        double x_sample_bot = dx*cos - dy*sin;
+        double y_sample_bot = dx*sin + dy*cos;
+        double theta_sample_bot = theta_sample - heading_bot + Math.PI/2.0;
+
+        // Calculate heading difference given horizontal claw offset
         double r_sample_bot_norm = Math.hypot(x_sample_bot, y_sample_bot);
         double theta_sample_tangent = Math.atan2(y_sample_bot, x_sample_bot) + Math.acos(OverheadCameraSubsystem.CAMERA_OFFSET[1]/r_sample_bot_norm);
         double delta_heading = theta_sample_tangent + Math.PI/2;
+
         // Extendo prep calculations
-        double rcos = r_sample_bot_norm*Math.cos(theta_sample_tangent);
-        double rsin = r_sample_bot_norm*Math.sin(theta_sample_tangent);
+        double rcos = OverheadCameraSubsystem.CAMERA_OFFSET[1]*Math.cos(theta_sample_tangent);
+        double rsin = OverheadCameraSubsystem.CAMERA_OFFSET[1]*Math.sin(theta_sample_tangent);
         double d_sample_bot = Math.hypot(rcos-x_sample_bot, rsin-y_sample_bot);
 
         // Get subsystem setpoints
@@ -397,9 +372,7 @@ public class DriveCVSampleMacro extends LinearOpMode {
         ExtendoState extendoTarget = new ExtendoState(
                 d_sample_bot - (OverheadCameraSubsystem.CAMERA_OFFSET[0] + OverheadCameraSubsystem.CLAW_OFFSET[0])
         );
-        double hWristTarget = normalizeAngle(theta_sample_cam - delta_heading);
-
-
+        double hWristTarget = normalizeAngle(theta_sample_bot - delta_heading);
 
 
         //// SYNCHRONIZER
@@ -417,9 +390,9 @@ public class DriveCVSampleMacro extends LinearOpMode {
         double previousMaxVelocity = ExtendoConstants.MAX_PATHING_VELOCITY;
         ExtendoConstants.MAX_PATHING_VELOCITY = previousMaxVelocity / 3;
         DynamicLinearExtendo extendoOut = new DynamicLinearExtendo(0,
-                position,
+                extendoPosition,
                 extendoTarget,
-                velocity
+                extendoVelocity
         );
         ExtendoConstants.MAX_PATHING_VELOCITY = previousMaxVelocity;
 

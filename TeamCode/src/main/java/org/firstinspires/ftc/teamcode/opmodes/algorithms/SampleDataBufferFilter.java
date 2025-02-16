@@ -16,6 +16,9 @@ import java.util.Collections;
 @Config
 public class SampleDataBufferFilter {
 
+    private final LinearSlidesSubsystem linearSlides;
+    private final LocalizationSubsystem localization;
+
     // For data buffering to account for the camera's lag
     private final ElapsedTime runtime;
     private final double timeBuffer;
@@ -28,7 +31,10 @@ public class SampleDataBufferFilter {
     private final int filterLength;
     private final ArrayList<Pose2d> samplePoses; // {x_sample, y_sample, theta_sample}
 
-    public SampleDataBufferFilter(double timeBuffer, int filterLength) {
+    public SampleDataBufferFilter(LinearSlidesSubsystem linearSlides, LocalizationSubsystem localization, double timeBuffer, int filterLength) {
+        this.linearSlides = linearSlides;
+        this.localization = localization;
+
         // init buffer
         runtime = new ElapsedTime(0);
         runtime.reset();
@@ -46,8 +52,8 @@ public class SampleDataBufferFilter {
     /**
      * Initializes with timeBuffer=0.045, and filterLength=5.
      */
-    public SampleDataBufferFilter() {
-        this(0.045, 5);
+    public SampleDataBufferFilter(LinearSlidesSubsystem linearSlides, LocalizationSubsystem localization) {
+        this(linearSlides, localization, 0.045, 5);
     }
 
     /**
@@ -55,7 +61,7 @@ public class SampleDataBufferFilter {
      * @param samplePosition
      */
     public void updateFilterData(double[] samplePosition) {
-        if (lastBufferedExtendoPosition==null || lastBufferedBotPose==null) return;
+        if (samplePosition==null || lastBufferedExtendoPosition==null || lastBufferedBotPose==null) return;
 
         //// Append current data to end of filter
         // calculate sample position
@@ -95,6 +101,10 @@ public class SampleDataBufferFilter {
         //// Remove data outside filter
         while (samplePoses.size()>filterLength) samplePoses.remove(0);
 
+    }
+
+    public void clearFilterData() {
+        samplePoses.clear();
     }
 
     /**
@@ -156,7 +166,7 @@ public class SampleDataBufferFilter {
     /**
      * Add the most recent measurements to the buffer and clear old measurements.
      */
-    public void updateBufferData(LinearSlidesSubsystem linearSlides, LocalizationSubsystem localization) {
+    public void updateBufferData() {
         double currentTime = runtime.seconds();
 
         // extendo

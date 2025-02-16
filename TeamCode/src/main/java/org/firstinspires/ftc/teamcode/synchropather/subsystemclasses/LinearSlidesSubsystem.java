@@ -16,13 +16,29 @@ public class LinearSlidesSubsystem {
 
     public final Telemetry telemetry;
 
-    public static double extendoOffset = 2;
+    public static double extendoOffset = 2; // TODO: REMOVE!!!!!!!!!!! (AFTER WIRING IS FIXED)
+
+    private double extendoPosition;
+    private double leftLiftPosition;
+    private double rightLiftPosition;
 
     public LinearSlidesSubsystem(Motor extendo, Motor leftLift, Motor rightLift, Telemetry telemetry) {
         this.extendo = extendo;
         this.leftLift = leftLift;
         this.rightLift = rightLift;
         this.telemetry = telemetry;
+        extendoPosition = this.extendo.getCurrentPosition();
+        leftLiftPosition = this.leftLift.getCurrentPosition();
+        rightLiftPosition = this.rightLift.getCurrentPosition();
+    }
+
+    /**
+     * Performs a bulk hardware call and gets current motor positions.
+     */
+    public void update() {
+        extendoPosition = extendo.getCurrentPosition();
+        leftLiftPosition = leftLift.getCurrentPosition();
+        rightLiftPosition = rightLift.getCurrentPosition();
     }
 
     /**
@@ -87,28 +103,28 @@ public class LinearSlidesSubsystem {
      * @return extendo length in inches, where fully retracted = 0
      */
     public double getExtendoPosition() {
-        return extendo.getCurrentPosition() / ExtendoConstants.TICKS_PER_INCH;
+        return extendoOffset + extendoPosition / ExtendoConstants.TICKS_PER_INCH;
     }
 
     /**
      * @return the current distance from the claw (at pickup position) to the robot's center of rotation.
      */
     public double getExtendoClawPosition() {
-        return extendoOffset + ExtendoConstants.CLAW_OFFSET_DISTANCE + getExtendoPosition();
+        return ExtendoConstants.CLAW_OFFSET_DISTANCE + getExtendoPosition();
     }
 
     /**
      * @return left lift height in inches
      */
     public double getLeftLiftPosition() {
-        return leftLift.getCurrentPosition() / LiftConstants.TICKS_PER_INCH;
+        return leftLiftPosition / LiftConstants.TICKS_PER_INCH;
     }
 
     /**
      * @return right lift height in inches
      */
     public double getRightLiftPosition() {
-        return rightLift.getCurrentPosition() / LiftConstants.TICKS_PER_INCH;
+        return rightLiftPosition / LiftConstants.TICKS_PER_INCH;
     }
 
 }

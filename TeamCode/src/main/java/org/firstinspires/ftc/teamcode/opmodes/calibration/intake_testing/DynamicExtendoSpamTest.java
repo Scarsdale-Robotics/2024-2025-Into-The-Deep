@@ -126,6 +126,7 @@ public class DynamicExtendoSpamTest extends LinearOpMode {
         loopTicks.add(currentTime);
         while (!loopTicks.isEmpty() && currentTime - loopTicks.getFirst() > 1d) loopTicks.removeFirst();
         telemetry.addData("[MAIN] TPS", loopTicks.size());
+        linearSlides.update();
         telemetry.update();
     }
 

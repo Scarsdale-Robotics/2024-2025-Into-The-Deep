@@ -330,6 +330,7 @@ public class SampleCycleAuto extends LinearOpMode {
         while (!loopTicks.isEmpty() && currentTime - loopTicks.getFirst() > 1d) loopTicks.removeFirst();
         telemetry.addData("[MAIN] TPS", loopTicks.size());
         localization.update();
+        linearSlides.update();
         telemetry.update();
 
         if (currentTime - lastBufferedExtendoPosition[1] > timeBuffer) {

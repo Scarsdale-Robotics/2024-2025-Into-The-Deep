@@ -253,6 +253,7 @@ public class RotationHIntakeExtendoCVSample extends LinearOpMode {
         while (!loopTicks.isEmpty() && currentTime - loopTicks.getFirst() > 1d) loopTicks.removeFirst();
         telemetry.addData("[MAIN] TPS", loopTicks.size());
         localization.update();
+        linearSlides.update();
         telemetry.update();
     }
 
