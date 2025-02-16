@@ -15,9 +15,6 @@ import com.qualcomm.robotcore.hardware.ServoImplEx;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 import org.firstinspires.ftc.teamcode.subsystems.DriveSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.GoBildaPinpointDriver;
 import org.firstinspires.ftc.teamcode.subsystems.LocalizationSubsystem;
@@ -26,7 +23,6 @@ import org.firstinspires.ftc.teamcode.synchropather.subsystemclasses.LinearSlide
 import org.firstinspires.ftc.teamcode.synchropather.subsystemclasses.OverheadCameraSubsystem;
 import org.firstinspires.ftc.teamcode.synchropather.systems.MovementType;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.Synchronizer;
-import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.TimeSpan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.extendo.ExtendoConstants;
 import org.firstinspires.ftc.teamcode.synchropather.systems.extendo.ExtendoPlan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.extendo.ExtendoState;
@@ -66,7 +62,6 @@ public class DriveCVSampleMacro extends LinearOpMode {
     private LocalizationSubsystem localization;
     private DriveSubsystem drive;
 
-    public static double timeClip = 1;
     public static double armDownPosition = 1.025;
 
     public static double timeBuffer = 0.045;
@@ -76,7 +71,6 @@ public class DriveCVSampleMacro extends LinearOpMode {
     private Pose2d lastBufferedBotPose;
 
     public static double searchSpeedDivisor = 2;
-    public static double pickupSpeedDivisor = 8;
 
     public static double driveSpeed = 0.5;
 
@@ -85,13 +79,7 @@ public class DriveCVSampleMacro extends LinearOpMode {
         initSubsystems(new Pose2d(0,0,new Rotation2d(0)));
         initSearch();
 
-        loopTicks = new ArrayDeque<>();
         runtime = new ElapsedTime(0);
-        runtime.reset();
-
-        telemetry.addData("[MAIN] TPS", 0);
-        telemetry.update();
-
         bufferedExtendoPositions = new ArrayList<>();
         bufferedExtendoPositions.add(new double[] {
                 linearSlides.getExtendoPosition(),
@@ -115,8 +103,8 @@ public class DriveCVSampleMacro extends LinearOpMode {
         boolean sampleMacroRunning = false;
         boolean clawGrabbed = false;
         while (opModeIsActive()) {
-            updateTPS();
-            boolean driverControlling = controlDrive();
+            updateBufferedData();
+            boolean driverControlling = controlDrive(sampleMacroRunning);
 
             // Triangle is pick up sample macro
             if (gamepad1.triangle && !toggleTriangle && !sampleMacroRunning && !clawGrabbed) {
@@ -179,17 +167,19 @@ public class DriveCVSampleMacro extends LinearOpMode {
      * Field centric drive (based on driver POV)
      * @return whether or not the driver is controlling the drivetrain
      */
-    private boolean controlDrive() {
+    private boolean controlDrive(boolean macroRunning) {
         double forward = -gamepad1.left_stick_y;
         double strafe = -gamepad1.left_stick_x;
         double turn = gamepad1.right_stick_x;
         boolean driving = !(forward==0 && strafe==0 && turn ==0);
 //        drive.driveFieldCentricPowers(forward, strafe, turn, Math.toDegrees(localization.getH()));
-        drive.driveRobotCentricPowers(
-                driveSpeed * forward,
-                driveSpeed * strafe,
-                driveSpeed * turn
-        );
+        if (driving || !macroRunning) {
+            drive.driveRobotCentricPowers(
+                    driveSpeed * forward,
+                    driveSpeed * strafe,
+                    driveSpeed * turn
+            );
+        }
         return driving;
     }
 
@@ -244,17 +234,6 @@ public class DriveCVSampleMacro extends LinearOpMode {
 
         this.linearSlides = new LinearSlidesSubsystem(extendo, leftLift, rightLift, telemetry);
 
-        // init localization
-        GoBildaPinpointDriver pinpoint = hardwareMap.get(GoBildaPinpointDriver.class,"pinpoint");
-        pinpoint.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.FORWARD, GoBildaPinpointDriver.EncoderDirection.FORWARD);
-
-        this.localization = new LocalizationSubsystem(
-                initialPose,
-                pinpoint,
-                this,
-                telemetry
-        );
-
         // init drive
         MotorEx leftFront = new MotorEx(hardwareMap, "leftFront", Motor.GoBILDA.RPM_312);
         MotorEx rightFront = new MotorEx(hardwareMap, "rightFront", Motor.GoBILDA.RPM_312);
@@ -298,69 +277,45 @@ public class DriveCVSampleMacro extends LinearOpMode {
                 rightBack
         );
 
+        // init localization
+        GoBildaPinpointDriver pinpoint = hardwareMap.get(GoBildaPinpointDriver.class,"pinpoint");
+        pinpoint.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.FORWARD, GoBildaPinpointDriver.EncoderDirection.FORWARD);
 
-        //// init initial pose
-        telemetry.addData("status", "setting pinpoint initialPose");
-        telemetry.update();
+        this.localization = new LocalizationSubsystem(
+                initialPose,
+                pinpoint,
+                this,
+                telemetry
+        );
 
-        // wait for pinpoint to get ready
-        while (opModeIsActive() && pinpoint.getDeviceStatus() != GoBildaPinpointDriver.DeviceStatus.READY);
-
-        // create comparators
-        Pose2D initialPose2D = new Pose2D(DistanceUnit.INCH, initialPose.getX(), initialPose.getY(), AngleUnit.RADIANS, initialPose.getHeading());
-        double initialX = initialPose.getX();
-        double initialY = initialPose.getY();
-        double initialH = initialPose.getHeading();
-        Pose2D ppPose = pinpoint.getPosition();
-        double ppX = ppPose.getX(DistanceUnit.INCH);
-        double ppY = ppPose.getY(DistanceUnit.INCH);
-        double ppH = ppPose.getHeading(AngleUnit.RADIANS);
-
-        // wait until initial position has been set
-        while (!(equal(ppX,initialX) && equal(ppY,initialY) && equal(ppH,initialH))) {
-            pinpoint.setPosition(initialPose2D);
-            pinpoint.update();
-            ppPose = pinpoint.getPosition();
-            ppX = ppPose.getX(DistanceUnit.INCH);
-            ppY = ppPose.getY(DistanceUnit.INCH);
-            ppH = ppPose.getHeading(AngleUnit.RADIANS);
-
-            // Telemetry
-            telemetry.addData("status", "setting pinpoint initialPose");
-            telemetry.addData("(status) ppX", ppX);
-            telemetry.addData("(status) ppY", ppY);
-            telemetry.addData("(status) ppH", ppH);
-            telemetry.update();
-        }
-        telemetry.addData("status", "finished init");
-        telemetry.update();
     }
 
-    private void updateTPS() {
-        // TPS counter
+    /**
+     * To account for the camera's lag.
+     */
+    private void updateBufferedData() {
         double currentTime = runtime.seconds();
-        loopTicks.add(currentTime);
-        while (!loopTicks.isEmpty() && currentTime - loopTicks.getFirst() > 1d) loopTicks.removeFirst();
-        telemetry.addData("[MAIN] TPS", loopTicks.size());
-        localization.update();
-        telemetry.update();
 
-        //// camera lag buffering
         // extendo
         double currentExtendoPosition = linearSlides.getExtendoPosition();
         bufferedExtendoPositions.add(new double[]{
                 currentExtendoPosition,
-                runtime.seconds()
+                currentTime
         });
+
         // botpose
         Pose2d currentBotPose = localization.getPose();
         bufferedBotPoses.add(
                 currentBotPose
         );
+
+        // clear data outside buffer
         while (currentTime - bufferedExtendoPositions.get(0)[1] > timeBuffer) {
             bufferedExtendoPositions.remove(0);
             bufferedBotPoses.remove(0);
         }
+
+        // store latest data
         lastBufferedExtendoPosition = bufferedExtendoPositions.get(0)[0];
         lastBufferedBotPose = bufferedBotPoses.get(0);
     }
@@ -544,17 +499,6 @@ public class DriveCVSampleMacro extends LinearOpMode {
      */
     private static double bound(double x, double lower, double upper) {
         return Math.max(lower, Math.min(upper, x));
-    }
-
-    /**
-     * Determines whether the two inputs are approximately equal to each other
-     * within an epsilon of 1e-3
-     * @param a
-     * @param b
-     * @return Math.abs(a-b) <= 1e-3
-     */
-    private static boolean equal(double a, double b) {
-        return Math.abs(a-b) <= 1e-3;
     }
 
 }

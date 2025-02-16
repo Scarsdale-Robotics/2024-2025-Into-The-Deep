@@ -26,9 +26,6 @@ public class LocalizationSubsystem extends SubsystemBase {
     // KALMAN FILTER //
     ///////////////////
 
-    // Sensor toggles.
-    private boolean cameraEnabled = true;
-
     // Model covariance for translation
     private static final double Q_translation = 0.01849838438;
     // Model covariance for heading
@@ -78,7 +75,7 @@ public class LocalizationSubsystem extends SubsystemBase {
     private double deltaTime;
     private double averageDeltaTime;
 
-    private Telemetry telemetry = null;
+    private Telemetry telemetry;
 
 
 
@@ -116,30 +113,6 @@ public class LocalizationSubsystem extends SubsystemBase {
         this.vh = 0;
 
 
-        // Init pinpoint
-        this.pinpoint = pinpoint;
-        this.pinpoint.setOffsets(xOffset, yOffset);
-        this.pinpoint.setEncoderResolution(TICKS_PER_MM);
-        this.pinpoint.resetPosAndIMU();
-        while (this.pinpoint.getDeviceStatus() != GoBildaPinpointDriver.DeviceStatus.READY && opMode.opModeInInit()) {
-            this.pinpoint.update();
-            this.telemetry.addData("[L. SUB STATUS]", "init pinpoint");
-            this.telemetry.addData("[PP STATUS]", this.pinpoint.getDeviceStatus());
-            this.telemetry.update();
-        }
-        this.telemetry.addData("[L. SUB STATUS]", "finished pp");
-        Pose2D initialPose2D = new Pose2D(DistanceUnit.INCH, initialPose.getX(), initialPose.getY(), AngleUnit.RADIANS, initialPose.getHeading());
-        this.pinpoint.update();
-        this.pinpoint.setPosition(initialPose2D);
-        this.pinpoint.update();
-        this.telemetry.addData("initialPose2D.getH(AngleUnit.RADIANS)", initialPose2D.getHeading(AngleUnit.RADIANS));
-        this.telemetry.addData("this.pinpoint.getPosX()", this.pinpoint.getPosX());
-        this.telemetry.addData("this.pinpoint.getPosY()", this.pinpoint.getPosY());
-        this.telemetry.addData("this.pinpoint.getHeading()", this.pinpoint.getHeading());
-        this.telemetry.update();
-        this.lastOdometryPose = initialPose;
-
-
         // Init time
         this.runtime = new ElapsedTime();
         this.runtime.reset();
@@ -149,26 +122,54 @@ public class LocalizationSubsystem extends SubsystemBase {
         this.dtHistory.add(1d);
         this.averageDeltaTime = 1;
 
-    }
 
+        // Init pinpoint
+        this.pinpoint = pinpoint;
+        this.pinpoint.setOffsets(xOffset, yOffset);
+        this.pinpoint.setEncoderResolution(TICKS_PER_MM);
 
+        // wait for pinpoint to be ready
+        this.telemetry.addData("[LOCALIZATION]", "initializing pinpoint");
+        this.telemetry.update();
+        while ((opMode.opModeIsActive() || opMode.opModeInInit())
+                && this.pinpoint.getDeviceStatus() != GoBildaPinpointDriver.DeviceStatus.READY) {
+            this.telemetry.addData("[PP STATUS]", this.pinpoint.getDeviceStatus());
+            this.telemetry.update();
+        }
+        this.telemetry.addData("[PP STATUS]", this.pinpoint.getDeviceStatus());
+        this.telemetry.update();
+        this.pinpoint.update();
 
-    ////////////////////
-    // SENSOR TOGGLES //
-    ////////////////////
+        // set pinpoint initial position
+        this.telemetry.addData("[LOCALIZATION]", "setting pinpoint initial position");
+        this.telemetry.update();
+        Pose2D initialPose2D = new Pose2D(DistanceUnit.INCH, initialPose.getX(), initialPose.getY(), AngleUnit.RADIANS, initialPose.getHeading());
+        double initialX = initialPose.getX();
+        double initialY = initialPose.getY();
+        double initialH = initialPose.getHeading();
+        Pose2D ppPose = this.pinpoint.getPosition();
+        double ppX = ppPose.getX(DistanceUnit.INCH);
+        double ppY = ppPose.getY(DistanceUnit.INCH);
+        double ppH = ppPose.getHeading(AngleUnit.RADIANS);
+        while ((opMode.opModeIsActive() || opMode.opModeInInit())
+                && !(equal(ppX,initialX) && equal(ppY,initialY) && equal(ppH,initialH))) {
+            this.pinpoint.setPosition(initialPose2D);
+            this.pinpoint.update();
+            ppPose = this.pinpoint.getPosition();
+            ppX = ppPose.getX(DistanceUnit.INCH);
+            ppY = ppPose.getY(DistanceUnit.INCH);
+            ppH = ppPose.getHeading(AngleUnit.RADIANS);
 
-    /**
-     * Disables the camera/AprilTag sensor.
-     */
-    public void disableCamera() {
-        cameraEnabled = false;
-    }
+            // Telemetry
+            this.telemetry.addData("[LOCALIZATION] ppX", ppX);
+            this.telemetry.addData("[LOCALIZATION] ppY", ppY);
+            this.telemetry.addData("[LOCALIZATION] ppH", ppH);
+            this.telemetry.update();
+        }
+        this.telemetry.addData("[L. SUB STATUS]", "finished initializing pinpoint");
+        this.telemetry.update();
+        this.lastOdometryPose = initialPose;
 
-    /**
-     * Enables the camera/AprilTag sensor.
-     */
-    public void enableCamera() {
-        cameraEnabled = true;
     }
 
 
@@ -362,6 +363,17 @@ public class LocalizationSubsystem extends SubsystemBase {
         while (radians > Math.PI) radians -= 2*Math.PI;
         while (radians <= -Math.PI) radians += 2*Math.PI;
         return radians;
+    }
+
+    /**
+     * Determines whether the two inputs are approximately equal to each other
+     * within an epsilon of 1e-6
+     * @param a
+     * @param b
+     * @return Math.abs(a-b) <= 1e-6
+     */
+    private static boolean equal(double a, double b) {
+        return Math.abs(a-b) <= 1e-6;
     }
 
 }

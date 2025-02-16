@@ -270,8 +270,8 @@ public class RotationHIntakeExtendoCVSample extends LinearOpMode {
         double theta_sample_tangent = Math.atan2(y_sample_bot, x_sample_bot) + Math.acos(OverheadCameraSubsystem.CAMERA_OFFSET[1]/r_sample_bot_norm);
         double delta_heading = theta_sample_tangent + Math.PI/2;
         // Extendo prep calculations
-        double rcos = r_sample_bot_norm*Math.cos(theta_sample_tangent);
-        double rsin = r_sample_bot_norm*Math.sin(theta_sample_tangent);
+        double rcos = OverheadCameraSubsystem.CAMERA_OFFSET[1]*Math.cos(theta_sample_tangent);
+        double rsin = OverheadCameraSubsystem.CAMERA_OFFSET[1]*Math.sin(theta_sample_tangent);
         double d_sample_bot = Math.hypot(rcos-x_sample_bot, rsin-y_sample_bot);
 
         // Get subsystem setpoints
