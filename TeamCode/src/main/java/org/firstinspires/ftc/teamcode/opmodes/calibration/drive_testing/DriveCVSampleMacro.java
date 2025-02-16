@@ -49,6 +49,7 @@ import org.firstinspires.ftc.teamcode.synchropather.systems.translation.Translat
 import org.firstinspires.ftc.teamcode.synchropather.systems.translation.movements.LinearTranslation;
 
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 
 @Config
 @TeleOp(name="Drive CV Sample Macro", group = "Calibration")
@@ -66,12 +67,18 @@ public class DriveCVSampleMacro extends LinearOpMode {
     private DriveSubsystem drive;
 
     public static double timeClip = 1;
-    public static double timeBuffer = 0.11;
     public static double armDownPosition = 1.025;
-    private double[] lastBufferedExtendoPosition;  // {position, timestamp}
 
-    public static double searchSpeedDivisor = 6;
+    public static double timeBuffer = 0.045;
+    private ArrayList<double[]> bufferedExtendoPositions;  // [{position, timestamp}, ...]
+    private ArrayList<Pose2d> bufferedBotPoses;
+    private double lastBufferedExtendoPosition;
+    private Pose2d lastBufferedBotPose;
+
+    public static double searchSpeedDivisor = 2;
     public static double pickupSpeedDivisor = 8;
+
+    public static double driveSpeed = 0.5;
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -85,32 +92,46 @@ public class DriveCVSampleMacro extends LinearOpMode {
         telemetry.addData("[MAIN] TPS", 0);
         telemetry.update();
 
-        lastBufferedExtendoPosition = new double[] {
+        bufferedExtendoPositions = new ArrayList<>();
+        bufferedExtendoPositions.add(new double[] {
                 linearSlides.getExtendoPosition(),
                 runtime.seconds()
-        };
+        });
+        lastBufferedExtendoPosition = bufferedExtendoPositions.get(0)[0];
+        bufferedBotPoses = new ArrayList<>();
+        bufferedBotPoses.add(
+                localization.getPose()
+        );
+        lastBufferedBotPose = bufferedBotPoses.get(0);
 
         waitForStart();
 
-        ExtendoState position = null;
-        ExtendoState velocity = null;
+        ExtendoState extendoPosition = null;
+        ExtendoState extendoVelocity = null;
+        Pose2d botPose = null;
         double[] closestSample = null;
 
         boolean toggleTriangle = false;
         boolean sampleMacroRunning = false;
+        boolean clawGrabbed = false;
         while (opModeIsActive()) {
             updateTPS();
             boolean driverControlling = controlDrive();
 
             // Triangle is pick up sample macro
-            if (gamepad1.triangle && !toggleTriangle && !sampleMacroRunning) {
+            if (gamepad1.triangle && !toggleTriangle && !sampleMacroRunning && !clawGrabbed) {
                 sampleMacroRunning = true;
                 toggleTriangle = true;
                 // init search
                 search.start();
-                position = null;
-                velocity = null;
+                extendoPosition = null;
+                extendoVelocity = null;
+                botPose = null;
                 closestSample = null;
+            } else if (clawGrabbed){
+                horizontalIntake.setClawPosition(HClawConstants.RELEASE_POSITION);
+                clawGrabbed = false;
+                toggleTriangle = true;
             } else if (!gamepad1.triangle) {
                 toggleTriangle = false;
             }
@@ -118,7 +139,7 @@ public class DriveCVSampleMacro extends LinearOpMode {
             // Sample macro control
             if (sampleMacroRunning) {
                 // Search motion
-                if (position==null || velocity==null || closestSample==null) {
+                if (extendoPosition==null || extendoVelocity==null || closestSample==null) {
                     boolean searchRunning = search.update();
                     // Did not find sample
                     if (!searchRunning) {
@@ -128,8 +149,9 @@ public class DriveCVSampleMacro extends LinearOpMode {
                     // Try to detect sample
                     else {
                         closestSample = overheadCamera.getClosestSample(); // Can return null
-                        position = new ExtendoState(lastBufferedExtendoPosition[0]);
-                        velocity = (ExtendoState) search.getVelocity(MovementType.EXTENDO, search.getElapsedTime()-timeBuffer);
+                        extendoPosition = new ExtendoState(lastBufferedExtendoPosition);
+                        extendoVelocity = (ExtendoState) search.getVelocity(MovementType.EXTENDO);
+                        botPose = lastBufferedBotPose;
                     }
                 }
                 // Pickup motion
@@ -137,13 +159,14 @@ public class DriveCVSampleMacro extends LinearOpMode {
                     // Init pickup
                     if ((pickup==null || !pickup.getIsRunning()) || search.getIsRunning()) {
                         search.stop();
-                        initPickupMotion(closestSample, position, velocity, localization.getPose());
+                        initPickupMotion(closestSample, extendoPosition, extendoVelocity, botPose);
                         pickup.start();
                     }
                     // Stop macro if driver took over (or macro ended)
                     if (driverControlling || !pickup.update()) {
                         pickup.stop();
                         sampleMacroRunning = false;
+                        clawGrabbed = true;
                     }
                 }
             }
@@ -162,7 +185,11 @@ public class DriveCVSampleMacro extends LinearOpMode {
         double turn = gamepad1.right_stick_x;
         boolean driving = !(forward==0 && strafe==0 && turn ==0);
 //        drive.driveFieldCentricPowers(forward, strafe, turn, Math.toDegrees(localization.getH()));
-        drive.driveRobotCentricPowers(forward, strafe, turn);
+        drive.driveRobotCentricPowers(
+                driveSpeed * forward,
+                driveSpeed * strafe,
+                driveSpeed * turn
+        );
         return driving;
     }
 
@@ -318,20 +345,32 @@ public class DriveCVSampleMacro extends LinearOpMode {
         localization.update();
         telemetry.update();
 
-        if (currentTime - lastBufferedExtendoPosition[1] > timeBuffer) {
-            lastBufferedExtendoPosition = new double[] {
-                    linearSlides.getExtendoPosition(),
-                    runtime.seconds()
-            };
+        //// camera lag buffering
+        // extendo
+        double currentExtendoPosition = linearSlides.getExtendoPosition();
+        bufferedExtendoPositions.add(new double[]{
+                currentExtendoPosition,
+                runtime.seconds()
+        });
+        // botpose
+        Pose2d currentBotPose = localization.getPose();
+        bufferedBotPoses.add(
+                currentBotPose
+        );
+        while (currentTime - bufferedExtendoPositions.get(0)[1] > timeBuffer) {
+            bufferedExtendoPositions.remove(0);
+            bufferedBotPoses.remove(0);
         }
+        lastBufferedExtendoPosition = bufferedExtendoPositions.get(0)[0];
+        lastBufferedBotPose = bufferedBotPoses.get(0);
     }
 
     private void initSearch() {
         double currentExtendoPosition = linearSlides.getExtendoPosition();
-        double extendoTarget = 15;
+        double extendoTarget = 16;
 
-        double previousMaxVelocity = ExtendoConstants.MAX_VELOCITY;
-        ExtendoConstants.MAX_VELOCITY = previousMaxVelocity / searchSpeedDivisor;
+        double previousMaxVelocity = ExtendoConstants.MAX_PATHING_VELOCITY;
+        ExtendoConstants.MAX_PATHING_VELOCITY = previousMaxVelocity / searchSpeedDivisor;
         // Extend and retract
         LinearExtendo extendoOut = new LinearExtendo(0,
                 new ExtendoState(currentExtendoPosition),
@@ -339,9 +378,9 @@ public class DriveCVSampleMacro extends LinearOpMode {
         );
         LinearExtendo extendoIn = new LinearExtendo(extendoOut.getEndTime(),
                 new ExtendoState(extendoTarget),
-                new ExtendoState(0)
+                new ExtendoState(2)
         );
-        ExtendoConstants.MAX_VELOCITY = previousMaxVelocity;
+        ExtendoConstants.MAX_PATHING_VELOCITY = previousMaxVelocity;
 
         // Keep other subsystems still
         MoveHWrist h_wrist_reset = new MoveHWrist(0, 0);
@@ -375,68 +414,79 @@ public class DriveCVSampleMacro extends LinearOpMode {
         );
     }
 
-    private void initPickupMotion(double[] samplePosition, ExtendoState position, ExtendoState velocity, Pose2d currentPose) {
+    private void initPickupMotion(double[] samplePosition, ExtendoState position, ExtendoState velocity, Pose2d botPose) {
         // Calculating rotated sample position
-        double sampleX = samplePosition[0];
-        double sampleY = samplePosition[1];
-        double sampleAngle = samplePosition[2];
-        double currentExtendoPosition = position.getLength();
+        double x_sample_cam = samplePosition[0];
+        double y_sample_cam = samplePosition[1];
+        double theta_sample_cam = samplePosition[2];
+        double x_extendo = position.getLength();
 
         // Convert to robot frame
-        double robotSampleX = OverheadCameraSubsystem.CAMERA_OFFSET[0] + currentExtendoPosition + sampleX;
-        double robotSampleY = sampleY;
-        double deltaHeading = Math.atan2(robotSampleY, robotSampleX);
+        double x_sample_bot = OverheadCameraSubsystem.CAMERA_OFFSET[0] + x_extendo + x_sample_cam;
+        double y_sample_bot = OverheadCameraSubsystem.CAMERA_OFFSET[1] + y_sample_cam;
+        double r_sample_bot_norm = Math.hypot(x_sample_bot, y_sample_bot);
+        double theta_sample_tangent = Math.atan2(y_sample_bot, x_sample_bot) + Math.acos(OverheadCameraSubsystem.CAMERA_OFFSET[1]/r_sample_bot_norm);
+        double delta_heading = theta_sample_tangent + Math.PI/2;
+        // Extendo prep calculations
+        double rcos = r_sample_bot_norm*Math.cos(theta_sample_tangent);
+        double rsin = r_sample_bot_norm*Math.sin(theta_sample_tangent);
+        double d_sample_bot = Math.hypot(rcos-x_sample_bot, rsin-y_sample_bot);
 
-        // Get rotated sample coordinates
-        double rotatedSampleAngle = sampleAngle - deltaHeading;
-        double rotatedSampleDistance = Math.hypot(robotSampleX, robotSampleY);
+        // Get subsystem setpoints
+        TranslationState translationTarget = new TranslationState(
+                botPose
+        );
+        RotationState rotationTarget = new RotationState(
+                botPose.getHeading()+delta_heading
+        );
+        ExtendoState extendoTarget = new ExtendoState(
+                d_sample_bot - (OverheadCameraSubsystem.CAMERA_OFFSET[0] + OverheadCameraSubsystem.CLAW_OFFSET[0])
+        );
+        double hWristTarget = normalizeAngle(theta_sample_cam - delta_heading);
 
-        // Calculate subsystem setpoints
-        double extendoTarget = rotatedSampleDistance - OverheadCameraSubsystem.CAMERA_OFFSET[0] - OverheadCameraSubsystem.CLAW_OFFSET[0];
-        extendoTarget = bound(extendoTarget, 0, ExtendoConstants.MAX_EXTENSION);
 
-        double currentHeading = localization.getH();
-        double headingTarget = currentHeading + deltaHeading;
 
+
+        //// SYNCHRONIZER
         // Extendo
-        LinearTranslation translation = new LinearTranslation(new TimeSpan(0,1),
-                new TranslationState(currentPose),
-                new TranslationState(currentPose)
+        LinearTranslation translation = new LinearTranslation(0,
+                new TranslationState(botPose),
+                translationTarget
         );
 
         LinearRotation rotation = new LinearRotation(0,
-                new RotationState(currentHeading),
-                new RotationState(headingTarget)
+                new RotationState(botPose),
+                rotationTarget
         );
 
-        double previousMaxVelocity = ExtendoConstants.MAX_VELOCITY;
-        ExtendoConstants.MAX_VELOCITY = previousMaxVelocity / pickupSpeedDivisor;
+        double previousMaxVelocity = ExtendoConstants.MAX_PATHING_VELOCITY;
+        ExtendoConstants.MAX_PATHING_VELOCITY = previousMaxVelocity / 3;
         DynamicLinearExtendo extendoOut = new DynamicLinearExtendo(0,
                 position,
-                new ExtendoState(extendoTarget),
+                extendoTarget,
                 velocity
         );
-        ExtendoConstants.MAX_VELOCITY = previousMaxVelocity;
+        ExtendoConstants.MAX_PATHING_VELOCITY = previousMaxVelocity;
 
         // Move arm down
-        LinearHArm h_arm_down = new LinearHArm(Math.max(0,Math.max(extendoOut.getEndTime(), rotation.getEndTime())-timeClip),
+        LinearHArm h_arm_down = new LinearHArm(Math.max(Math.max(extendoOut.getEndTime(), rotation.getEndTime()), translation.getEndTime()),
                 new HArmState(0.9),
-                new HArmState(armDownPosition)
+                new HArmState(armDownPosition),
+                true
         );
-        MoveHWrist h_wrist_align = new MoveHWrist(extendoOut.getStartTime(), rotatedSampleAngle);
-        ReleaseHClaw h_claw_release = new ReleaseHClaw(h_arm_down.getStartTime());
+        MoveHWrist h_wrist_align = new MoveHWrist(extendoOut.getStartTime(), hWristTarget);
 
         // Pick up and move arm up
-        GrabHClaw h_claw_grab = new GrabHClaw(h_arm_down.getEndTime());
-        MoveHWrist h_wrist_reset = new MoveHWrist(h_claw_grab.getEndTime(), 0);
-        LinearHArm h_arm_up = new LinearHArm(h_wrist_reset.getEndTime(),
+        GrabHClaw h_claw_grab = new GrabHClaw(h_arm_down.getEndTime(), true);
+        LinearHArm h_arm_up = new LinearHArm(h_claw_grab.getEndTime(),
                 new HArmState(armDownPosition),
                 new HArmState(0.9)
         );
+        MoveHWrist h_wrist_reset = new MoveHWrist(h_arm_up.getEndTime(), 0, true);
 
         // Retract extendo
-        LinearExtendo extendoIn = new LinearExtendo(h_arm_up.getStartTime(),
-                new ExtendoState(extendoTarget),
+        LinearExtendo extendoIn = new LinearExtendo(h_wrist_reset.getStartTime(),
+                extendoTarget,
                 new ExtendoState(0)
         );
 
@@ -460,7 +510,6 @@ public class DriveCVSampleMacro extends LinearOpMode {
                 h_arm_up
         );
         HClawPlan h_claw_plan = new HClawPlan(horizontalIntake,
-                h_claw_release,
                 h_claw_grab
         );
 

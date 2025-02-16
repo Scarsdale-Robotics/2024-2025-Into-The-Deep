@@ -118,7 +118,7 @@ public class LinearExtendo extends Movement {
     private void init(boolean startTimeConstructor, double startTime) {
         distance = end.minus(start).abs();
 
-        double v_max = ExtendoConstants.MAX_VELOCITY;
+        double v_max = ExtendoConstants.MAX_PATHING_VELOCITY;
         double a_max = ExtendoConstants.MAX_ACCELERATION;
 
         if (startTimeConstructor) {

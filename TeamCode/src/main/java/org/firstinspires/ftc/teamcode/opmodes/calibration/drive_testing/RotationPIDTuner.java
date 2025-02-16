@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.opmodes.calibration.drive_testing;
 
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
+import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.arcrobotics.ftclib.geometry.Pose2d;
 import com.arcrobotics.ftclib.geometry.Rotation2d;
 import com.arcrobotics.ftclib.hardware.motors.Motor;
@@ -18,6 +19,7 @@ import org.firstinspires.ftc.teamcode.subsystems.DriveSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.GoBildaPinpointDriver;
 import org.firstinspires.ftc.teamcode.subsystems.LocalizationSubsystem;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.Synchronizer;
+import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.TimeSpan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.rotation.RotationConstants;
 import org.firstinspires.ftc.teamcode.synchropather.systems.rotation.RotationPlan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.rotation.RotationState;
@@ -58,12 +60,19 @@ public class RotationPIDTuner extends LinearOpMode {
         while (opModeIsActive()) {
             while (opModeIsActive() && !gamepad1.square) {
                 updateTPS();
+                if (synchronizer.getIsRunning()) {
+                    synchronizer.update();
+                }
             }
             synchronizer.start();
             while (opModeIsActive() && synchronizer.update()) {
                 updateTPS();
+                TelemetryPacket packet = new TelemetryPacket();
+                packet.fieldOverlay().setStroke("#3F51B5");
+                Drawing.drawRobot(packet.fieldOverlay(), localization.getPose());
+                Drawing.drawTargetPose(packet.fieldOverlay(), new Pose2d(drive.targetX, drive.targetY, new Rotation2d(drive.targetH)));
+                FtcDashboard.getInstance().sendTelemetryPacket(packet);
             }
-            synchronizer.stop();
             updateTPS();
         }
     }
@@ -178,24 +187,19 @@ public class RotationPIDTuner extends LinearOpMode {
 
 
     private void initSynchronizer() {
-        TranslationConstants.MAX_VELOCITY = 0.5*40d;
-        TranslationConstants.MAX_ACCELERATION = 0.5*54d;
-
-        RotationConstants.MAX_ANGULAR_VELOCITY = 3.6;
-        RotationConstants.MAX_ANGULAR_ACCELERATION = 7.2;
+//        TranslationConstants.MAX_VELOCITY = 0.5*40d;
+//        TranslationConstants.MAX_ACCELERATION = 0.5*54d;
+//
+//        RotationConstants.MAX_ANGULAR_VELOCITY = 3.6;
+//        RotationConstants.MAX_ANGULAR_ACCELERATION = 7.2;
 
         // Translation plan
-        LinearTranslation line1 = new LinearTranslation(0,
-                new TranslationState(0, 0),
-                new TranslationState(0, 0)
-        );
-        LinearTranslation line2 = new LinearTranslation(line1.getEndTime(),
+        LinearTranslation lineStill = new LinearTranslation(new TimeSpan(0,1),
                 new TranslationState(0, 0),
                 new TranslationState(0, 0)
         );
         TranslationPlan translationPlan = new TranslationPlan(drive, localization,
-                line1,
-                line2
+                lineStill
         );
 
         // Rotation plan

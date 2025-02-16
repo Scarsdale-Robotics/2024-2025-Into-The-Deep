@@ -9,6 +9,8 @@ import com.arcrobotics.ftclib.hardware.motors.MotorEx;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.ServoImplEx;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
@@ -17,6 +19,8 @@ import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 import org.firstinspires.ftc.teamcode.subsystems.DriveSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.GoBildaPinpointDriver;
 import org.firstinspires.ftc.teamcode.subsystems.LocalizationSubsystem;
+import org.firstinspires.ftc.teamcode.synchropather.subsystemclasses.HorizontalIntakeSubsystem;
+import org.firstinspires.ftc.teamcode.synchropather.systems.hClaw.HClawConstants;
 
 import java.util.ArrayList;
 
@@ -62,6 +66,7 @@ public class DriveMaxVelocityTuner extends LinearOpMode {
 
         while (opModeIsActive()) {
             controlDrive();
+            localization.update();
             Pose2d velocity = localization.getVelocity();
             translationVeloHistory.add(new double[]{velocity.getX(), velocity.getY()});
             if (translationVeloHistory.size() > 6) translationVeloHistory.remove(0);
@@ -76,7 +81,7 @@ public class DriveMaxVelocityTuner extends LinearOpMode {
 
             // Get delta time
             double deltaTime;
-            if (runtime==null || runtime.seconds()>0.1) {
+            if (runtime==null) {
                 runtime = new ElapsedTime(0);
             } else {
                 deltaTime = runtime.seconds();
@@ -238,6 +243,22 @@ public class DriveMaxVelocityTuner extends LinearOpMode {
         telemetry.addData("status", "finished init");
         telemetry.update();
 
+
+
+        // init horizontal intake
+        Servo leftHorizontalArm = hardwareMap.get(ServoImplEx.class, "leftHorizontalArm");
+        Servo rightHorizontalArm = hardwareMap.get(ServoImplEx.class, "rightHorizontalArm");
+        Servo horizontalWrist = hardwareMap.get(ServoImplEx.class, "horizontalWrist");
+        Servo horizontalClaw = hardwareMap.get(ServoImplEx.class, "horizontalClaw");
+        HorizontalIntakeSubsystem horizontalIntake = new HorizontalIntakeSubsystem(
+                leftHorizontalArm,
+                rightHorizontalArm,
+                horizontalWrist,
+                horizontalClaw
+        );
+        horizontalIntake.setClawPosition(HClawConstants.RELEASE_POSITION);
+        horizontalIntake.setWristAngle(0);
+        horizontalIntake.setArmPosition(0.5);
     }
 
     /**

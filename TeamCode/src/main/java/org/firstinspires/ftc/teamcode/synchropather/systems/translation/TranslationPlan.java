@@ -23,13 +23,13 @@ public class TranslationPlan extends Plan<TranslationState> {
 	//TODO: TUNE
 	public static double kS = 0;
 	public static double kV = 1;
-	public static double kA = 0;
+	public static double kA = 0.175;
 
 	// Positional SQUID constants
 	//TODO: TUNE
-	public static double kSQU = 0;
-	public static double kI = 0;
-	public static double kD = 0;
+	public static double kSQU = 6;
+	public static double kI = 4;
+	public static double kD = 0.125;
 
 	// Integrator variables
 	private double intexdt = 0;
@@ -113,7 +113,7 @@ public class TranslationPlan extends Plan<TranslationState> {
 		// Get delta time
 		double deltaTime;
 		boolean runtimeWasNull = false;
-		if (runtime==null || runtime.seconds()>0.1) {
+		if (runtime==null) {
 			runtime = new ElapsedTime(0);
 			deltaTime = 0;
 			runtimeWasNull = true;

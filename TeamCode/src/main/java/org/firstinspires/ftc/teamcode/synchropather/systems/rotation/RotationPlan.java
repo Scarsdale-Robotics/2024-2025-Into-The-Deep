@@ -23,12 +23,12 @@ public class RotationPlan extends Plan<RotationState> {
 	//TODO: TUNE
 	public static double kS = 0;
 	public static double kV = 1;
-	public static double kA = 0;
+	public static double kA = 0.1;
 
 	// SQUID constants
 	//TODO: TUNE
-	public static double kSQU = 0;
-	public static double kI = 0;
+	public static double kSQU = 1;
+	public static double kI = 4;
 	public static double kD = 0;
 
 	// Integrator variable
@@ -102,7 +102,7 @@ public class RotationPlan extends Plan<RotationState> {
 		// Get delta time
 		double deltaTime;
 		boolean runtimeWasNull = false;
-		if (runtime==null || runtime.seconds()>0.1) {
+		if (runtime==null) {
 			runtime = new ElapsedTime(0);
 			deltaTime = 0;
 			runtimeWasNull = true;

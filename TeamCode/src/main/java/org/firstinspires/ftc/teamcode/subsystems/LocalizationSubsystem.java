@@ -59,7 +59,7 @@ public class LocalizationSubsystem extends SubsystemBase {
     // PINPOINT //
     //////////////
 
-    private static final double xOffset = 144.0, yOffset = -120.0;
+    private static final double xOffset = 92.0, yOffset = 48.0;
     private static final double ENCODER_CPR = 4096; // Optii v1
     private static final double ODOM_DIAMETER = 35.0; // mm
     private static final double TICKS_PER_MM = ENCODER_CPR / (Math.PI * ODOM_DIAMETER);

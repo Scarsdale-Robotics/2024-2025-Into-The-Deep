@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.synchropather.subsystemclasses;
 
+import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.teamcode.synchropather.systems.hArm.HArmConstants;

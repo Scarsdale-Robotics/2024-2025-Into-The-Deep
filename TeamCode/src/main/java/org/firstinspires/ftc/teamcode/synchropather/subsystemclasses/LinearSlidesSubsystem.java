@@ -1,11 +1,13 @@
 package org.firstinspires.ftc.teamcode.synchropather.subsystemclasses;
 
+import com.acmerobotics.dashboard.config.Config;
 import com.arcrobotics.ftclib.hardware.motors.Motor;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.synchropather.systems.extendo.ExtendoConstants;
 import org.firstinspires.ftc.teamcode.synchropather.systems.lift.LiftConstants;
 
+@Config
 public class LinearSlidesSubsystem {
 
     private final Motor extendo;
@@ -13,6 +15,8 @@ public class LinearSlidesSubsystem {
     private final Motor rightLift;
 
     public final Telemetry telemetry;
+
+    public static double extendoOffset = 2;
 
     public LinearSlidesSubsystem(Motor extendo, Motor leftLift, Motor rightLift, Telemetry telemetry) {
         this.extendo = extendo;
@@ -90,7 +94,7 @@ public class LinearSlidesSubsystem {
      * @return the current distance from the claw (at pickup position) to the robot's center of rotation.
      */
     public double getExtendoClawPosition() {
-        return ExtendoConstants.CLAW_OFFSET_DISTANCE + getExtendoPosition();
+        return extendoOffset + ExtendoConstants.CLAW_OFFSET_DISTANCE + getExtendoPosition();
     }
 
     /**

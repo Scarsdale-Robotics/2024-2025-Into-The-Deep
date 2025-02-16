@@ -77,7 +77,7 @@ public class LiftPlan extends Plan<LiftState> {
         // Get delta time
         double deltaTime;
         boolean runtimeWasNull = false;
-        if (runtime==null || runtime.seconds()>0.1) {
+        if (runtime==null) {
             runtime = new ElapsedTime(0);
             deltaTime = 0;
             runtimeWasNull = true;

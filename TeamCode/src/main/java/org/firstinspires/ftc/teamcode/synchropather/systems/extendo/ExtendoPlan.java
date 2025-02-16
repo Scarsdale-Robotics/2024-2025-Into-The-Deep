@@ -16,15 +16,15 @@ public class ExtendoPlan extends Plan<ExtendoState> {
 
     // Feedforward constants
     //TODO: TUNE
-    public static double kS = 6;
+    public static double kS = 0.05*ExtendoConstants.MAX_MOTOR_VELOCITY;
     public static double kV = 1;
     public static double kA = 0.2;
 
     // Positional SQUID constants
     //TODO: TUNE
-    public static double kSQU = 16;
+    public static double kSQU = 20;
     public static double kI = 0;
-    public static double kD = 1;
+    public static double kD = 0;
 
     private double intedt = 0;
 
@@ -66,7 +66,7 @@ public class ExtendoPlan extends Plan<ExtendoState> {
         // Get delta time
         double deltaTime;
         boolean runtimeWasNull = false;
-        if (runtime==null || runtime.seconds()>0.1) {
+        if (runtime==null) {
             runtime = new ElapsedTime(0);
             deltaTime = 0;
             runtimeWasNull = true;
@@ -90,7 +90,7 @@ public class ExtendoPlan extends Plan<ExtendoState> {
         if (kI != 0) {
             // Limit integrator to prevent windup
             double integralPowerThreshold = 0.25;
-            double integralThresholdBound = Math.abs(integralPowerThreshold * ExtendoConstants.MAX_VELOCITY / kI);
+            double integralThresholdBound = Math.abs(integralPowerThreshold * ExtendoConstants.MAX_MOTOR_VELOCITY / kI);
             intedt = bound(intedt, -integralThresholdBound, integralThresholdBound);
         }
 
@@ -107,10 +107,10 @@ public class ExtendoPlan extends Plan<ExtendoState> {
 
         // Extendo SQUID
         double squ = Math.signum(e)*Math.sqrt(Math.abs(e));
-        u += (kSQU*squ + kI*intedt + kD*dedt) / ExtendoConstants.MAX_VELOCITY;
+        u += (kSQU*squ + kI*intedt + kD*dedt) / ExtendoConstants.MAX_MOTOR_VELOCITY;
 
         // Feedforward
-        double fu = (kS*Math.signum(dv) + kV*dv + kA*da) / ExtendoConstants.MAX_VELOCITY;
+        double fu = (kS*Math.signum(dv) + kV*dv + kA*da) / ExtendoConstants.MAX_MOTOR_VELOCITY;
         u += fu;
 
         // Set drive powers
@@ -121,6 +121,8 @@ public class ExtendoPlan extends Plan<ExtendoState> {
         telemetry.addData("[SYNCHROPATHER] ExtendoPlan desiredState.getLength()", desiredState.getLength());
         telemetry.addData("[SYNCHROPATHER] ExtendoPlan dedt", dedt);
         telemetry.addData("[SYNCHROPATHER] ExtendoPlan intedt", intedt);
+        telemetry.addData("[SYNCHROPATHER] ExtendoPlan desiredVelocity", desiredVelocity);
+        telemetry.addData("[SYNCHROPATHER] ExtendoPlan desiredAcceleration", desiredAcceleration);
         telemetry.update();
 
     }

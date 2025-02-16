@@ -34,6 +34,7 @@ import org.firstinspires.ftc.teamcode.synchropather.systems.hWrist.HWristPlan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.hWrist.movements.MoveHWrist;
 
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 
 @Config
 @Autonomous(name="Blind Search For Sample Using Horizontal Intake, Extendo, and CV (no drivetrain)", group = "Calibration")
@@ -48,9 +49,10 @@ public class BlindHIntakeExtendoCVSample extends LinearOpMode {
     private OverheadCameraSubsystem overheadCamera;
     private LinearSlidesSubsystem linearSlides;
 
-    public static double timeBuffer = 0.11;
     public static double armDownPosition = 1.025;
-    private double[] lastBufferedExtendoPosition;  // {position, timestamp}
+    public static double timeBuffer = 0.045;
+    private ArrayList<double[]> bufferedExtendoPositions;  // [{position, timestamp}, ...]
+    private double lastBufferedExtendoPosition;
 
     public static double searchSpeedDivisor = 6;
     public static double pickupSpeedDivisor = 8;
@@ -68,10 +70,12 @@ public class BlindHIntakeExtendoCVSample extends LinearOpMode {
         telemetry.addData("[MAIN] TPS", 0);
         telemetry.update();
 
-        lastBufferedExtendoPosition = new double[] {
+        bufferedExtendoPositions = new ArrayList<>();
+        bufferedExtendoPositions.add(new double[] {
                 linearSlides.getExtendoPosition(),
                 runtime.seconds()
-        };
+        });
+        lastBufferedExtendoPosition = bufferedExtendoPositions.get(0)[0];
 
         waitForStart();
         overheadCamera.correctExposure();
@@ -90,7 +94,7 @@ public class BlindHIntakeExtendoCVSample extends LinearOpMode {
                 updateTPS();
                 closestSample = overheadCamera.getClosestSample();
                 if (closestSample != null) {
-                    position = new ExtendoState(lastBufferedExtendoPosition[0]);
+                    position = new ExtendoState(lastBufferedExtendoPosition);
                     velocity = (ExtendoState) search.getVelocity(MovementType.EXTENDO);
                     break;
                 }
@@ -134,7 +138,7 @@ public class BlindHIntakeExtendoCVSample extends LinearOpMode {
         );
         horizontalIntake.setClawPosition(HClawConstants.RELEASE_POSITION);
         horizontalIntake.setWristAngle(0);
-        horizontalIntake.setArmPosition(0.5);
+        horizontalIntake.setArmPosition(0.9);
 
         // init overhead camera
         WebcamName cameraName = hardwareMap.get(WebcamName.class, "Webcam 1");
@@ -177,20 +181,21 @@ public class BlindHIntakeExtendoCVSample extends LinearOpMode {
         telemetry.addData("[MAIN] TPS", loopTicks.size());
         telemetry.update();
 
-        if (currentTime - lastBufferedExtendoPosition[1] > timeBuffer) {
-            lastBufferedExtendoPosition = new double[] {
-                    linearSlides.getExtendoPosition(),
-                    runtime.seconds()
-            };
-        }
+        double currentExtendoPosition = linearSlides.getExtendoPosition();
+        bufferedExtendoPositions.add(new double[]{
+                currentExtendoPosition,
+                runtime.seconds()
+        });
+        while (currentTime - bufferedExtendoPositions.get(0)[1] > timeBuffer) bufferedExtendoPositions.remove(0);
+        lastBufferedExtendoPosition = bufferedExtendoPositions.get(0)[0];
     }
 
     private void initSearch() {
         double currentExtendoPosition = linearSlides.getExtendoPosition();
         double extendoTarget = 15;
 
-        double previousMaxVelocity = ExtendoConstants.MAX_VELOCITY;
-        ExtendoConstants.MAX_VELOCITY = previousMaxVelocity / searchSpeedDivisor;
+        double previousMaxVelocity = ExtendoConstants.MAX_PATHING_VELOCITY;
+        ExtendoConstants.MAX_PATHING_VELOCITY = previousMaxVelocity / searchSpeedDivisor;
         // Extend and retract
         LinearExtendo extendoOut = new LinearExtendo(0,
                 new ExtendoState(currentExtendoPosition),
@@ -200,14 +205,14 @@ public class BlindHIntakeExtendoCVSample extends LinearOpMode {
                 new ExtendoState(extendoTarget),
                 new ExtendoState(0)
         );
-        ExtendoConstants.MAX_VELOCITY = previousMaxVelocity;
+        ExtendoConstants.MAX_PATHING_VELOCITY = previousMaxVelocity;
 
         // Keep other subsystems still
         MoveHWrist h_wrist_reset = new MoveHWrist(0, 0);
         ReleaseHClaw h_claw_release = new ReleaseHClaw(0);
         LinearHArm h_arm_up = new LinearHArm(0,
-                new HArmState(0.5),
-                new HArmState(0.5)
+                new HArmState(0.9),
+                new HArmState(0.9)
         );
 
         // Create Plans
@@ -244,29 +249,28 @@ public class BlindHIntakeExtendoCVSample extends LinearOpMode {
         extendoTarget = Math.max(0, extendoTarget);
 
         // Extendo
-        double previousMaxVelocity = ExtendoConstants.MAX_VELOCITY;
-        ExtendoConstants.MAX_VELOCITY = previousMaxVelocity / pickupSpeedDivisor;
+        double previousMaxVelocity = ExtendoConstants.MAX_PATHING_VELOCITY;
+        ExtendoConstants.MAX_PATHING_VELOCITY = previousMaxVelocity / pickupSpeedDivisor;
         DynamicLinearExtendo extendoOut = new DynamicLinearExtendo(0,
                 new ExtendoState(currentExtendoPosition),
                 new ExtendoState(extendoTarget),
                 velocity
         );
-        ExtendoConstants.MAX_VELOCITY = previousMaxVelocity;
+        ExtendoConstants.MAX_PATHING_VELOCITY = previousMaxVelocity;
 
         // Move arm down
         LinearHArm h_arm_down = new LinearHArm(extendoOut.getEndTime(),
-                new HArmState(0.5),
+                new HArmState(0.9),
                 new HArmState(armDownPosition)
         );
         MoveHWrist h_wrist_align = new MoveHWrist(h_arm_down.getStartTime(), angle);
-        ReleaseHClaw h_claw_release = new ReleaseHClaw(h_arm_down.getStartTime());
 
         // Pick up and move arm up
         GrabHClaw h_claw_grab = new GrabHClaw(h_arm_down.getEndTime()-clawGrabClipTime);
         MoveHWrist h_wrist_reset = new MoveHWrist(h_claw_grab.getEndTime()+clawGrabClipTime, 0);
         LinearHArm h_arm_up = new LinearHArm(h_wrist_reset.getEndTime(),
                 new HArmState(armDownPosition),
-                new HArmState(0.5)
+                new HArmState(0.9)
         );
 
         // Retract extendo
@@ -289,7 +293,6 @@ public class BlindHIntakeExtendoCVSample extends LinearOpMode {
                 h_arm_up
         );
         HClawPlan h_claw_plan = new HClawPlan(horizontalIntake,
-                h_claw_release,
                 h_claw_grab
         );
 

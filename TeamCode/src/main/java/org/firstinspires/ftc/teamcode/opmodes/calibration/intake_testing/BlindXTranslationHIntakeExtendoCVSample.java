@@ -24,10 +24,12 @@ import org.firstinspires.ftc.teamcode.subsystems.LocalizationSubsystem;
 import org.firstinspires.ftc.teamcode.synchropather.subsystemclasses.HorizontalIntakeSubsystem;
 import org.firstinspires.ftc.teamcode.synchropather.subsystemclasses.LinearSlidesSubsystem;
 import org.firstinspires.ftc.teamcode.synchropather.subsystemclasses.OverheadCameraSubsystem;
+import org.firstinspires.ftc.teamcode.synchropather.systems.MovementType;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.Synchronizer;
 import org.firstinspires.ftc.teamcode.synchropather.systems.extendo.ExtendoConstants;
 import org.firstinspires.ftc.teamcode.synchropather.systems.extendo.ExtendoPlan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.extendo.ExtendoState;
+import org.firstinspires.ftc.teamcode.synchropather.systems.extendo.movements.DynamicLinearExtendo;
 import org.firstinspires.ftc.teamcode.synchropather.systems.extendo.movements.LinearExtendo;
 import org.firstinspires.ftc.teamcode.synchropather.systems.hArm.HArmPlan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.hArm.HArmState;
@@ -35,6 +37,7 @@ import org.firstinspires.ftc.teamcode.synchropather.systems.hArm.movements.Linea
 import org.firstinspires.ftc.teamcode.synchropather.systems.hClaw.HClawConstants;
 import org.firstinspires.ftc.teamcode.synchropather.systems.hClaw.HClawPlan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.hClaw.movements.GrabHClaw;
+import org.firstinspires.ftc.teamcode.synchropather.systems.hClaw.movements.ReleaseHClaw;
 import org.firstinspires.ftc.teamcode.synchropather.systems.hWrist.HWristPlan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.hWrist.movements.MoveHWrist;
 import org.firstinspires.ftc.teamcode.synchropather.systems.rotation.RotationPlan;
@@ -45,12 +48,13 @@ import org.firstinspires.ftc.teamcode.synchropather.systems.translation.Translat
 import org.firstinspires.ftc.teamcode.synchropather.systems.translation.movements.LinearTranslation;
 
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 
 @Config
-@Autonomous(name="Pick Up Sample Using Horizontal Intake, Extendo, and Drivebase Translation along the X", group = "Calibration")
-public class XTranslationHIntakeExtendoCVSample extends LinearOpMode {
+@Autonomous(name="Blind Pick Up Sample Using Horizontal Intake, Extendo, and Drivebase Translation along the X", group = "Calibration")
+public class BlindXTranslationHIntakeExtendoCVSample extends LinearOpMode {
 
-    private Synchronizer synchronizer;
+    private Synchronizer search, pickup;
 
     private ArrayDeque<Double> loopTicks;
     private ElapsedTime runtime;
@@ -61,11 +65,19 @@ public class XTranslationHIntakeExtendoCVSample extends LinearOpMode {
     private LocalizationSubsystem localization;
     private DriveSubsystem drive;
 
+    public static double timeBuffer = 0.045;
+    private ArrayList<double[]> bufferedExtendoPositions;  // [{position, timestamp}, ...]
+    private ArrayList<Pose2d> bufferedBotPoses;
+    private double lastBufferedExtendoPosition;
+    private Pose2d lastBufferedBotPose;
+
     public static double armDownPosition = 1.025;
+    public static double searchSpeedDivisor = 2;
 
     @Override
     public void runOpMode() throws InterruptedException {
         initSubsystems(new Pose2d(0,0,new Rotation2d(Math.toRadians(90))));
+        initSearch();
 
         loopTicks = new ArrayDeque<>();
         runtime = new ElapsedTime(0);
@@ -73,6 +85,18 @@ public class XTranslationHIntakeExtendoCVSample extends LinearOpMode {
 
         telemetry.addData("[MAIN] TPS", 0);
         telemetry.update();
+
+        bufferedExtendoPositions = new ArrayList<>();
+        bufferedExtendoPositions.add(new double[] {
+                linearSlides.getExtendoPosition(),
+                runtime.seconds()
+        });
+        lastBufferedExtendoPosition = bufferedExtendoPositions.get(0)[0];
+        bufferedBotPoses = new ArrayList<>();
+        bufferedBotPoses.add(
+                localization.getPose()
+        );
+        lastBufferedBotPose = bufferedBotPoses.get(0);
 
         waitForStart();
         overheadCamera.correctExposure();
@@ -82,20 +106,43 @@ public class XTranslationHIntakeExtendoCVSample extends LinearOpMode {
             horizontalIntake.setClawPosition(HClawConstants.RELEASE_POSITION);
             while (opModeIsActive() && gamepad1.square) updateTPS();
             while (opModeIsActive() && !gamepad1.square) updateTPS();
-            double[] closestSample = overheadCamera.getClosestSample();
-            if (closestSample == null) continue;
-            initSynchronizer(closestSample, localization.getPose(), linearSlides.getExtendoPosition());
+
+            // Search motion
+            search.start();
+            ExtendoState extendoPosition = null;
+            ExtendoState extendoVelocity = null;
+            Pose2d botPose = null;
+            double[] closestSample = null;
+            while (opModeIsActive() && search.update()) {
+                updateTPS();
+                closestSample = overheadCamera.getClosestSample();
+                if (closestSample != null) {
+                    extendoPosition = new ExtendoState(lastBufferedExtendoPosition);
+                    extendoVelocity = (ExtendoState) search.getVelocity(MovementType.EXTENDO);
+                    botPose = lastBufferedBotPose;
+                    break;
+                }
+            }
+            if (extendoVelocity == null) {
+                // no samples found
+                search.stop();
+                continue;
+            }
+
+            // do not stop the synchronizer, we're going to use a dynamic movement
+            initPickup(closestSample, botPose, extendoPosition, extendoVelocity);
 
             // Run synchronizer
-            synchronizer.start();
-            while (opModeIsActive() && synchronizer.update()) {
+            pickup.start();
+            while (opModeIsActive() && pickup.update()) {
                 updateTPS();
             }
             while (opModeIsActive() && !gamepad1.square) {
-                synchronizer.update();
+                pickup.update();
                 updateTPS();
             }
-            synchronizer.stop();
+            pickup.stop();
+            search.stop();
         }
     }
 
@@ -250,16 +297,84 @@ public class XTranslationHIntakeExtendoCVSample extends LinearOpMode {
         telemetry.addData("[MAIN] TPS", loopTicks.size());
         localization.update();
         telemetry.update();
+
+        //// camera lag buffering
+        // extendo
+        double currentExtendoPosition = linearSlides.getExtendoPosition();
+        bufferedExtendoPositions.add(new double[]{
+                currentExtendoPosition,
+                runtime.seconds()
+        });
+        // botpose
+        Pose2d currentBotPose = localization.getPose();
+        bufferedBotPoses.add(
+                currentBotPose
+        );
+        while (currentTime - bufferedExtendoPositions.get(0)[1] > timeBuffer) {
+            bufferedExtendoPositions.remove(0);
+            bufferedBotPoses.remove(0);
+        }
+        lastBufferedExtendoPosition = bufferedExtendoPositions.get(0)[0];
+        lastBufferedBotPose = bufferedBotPoses.get(0);
     }
 
-    private void initSynchronizer(double[] samplePosition, Pose2d botPose, double extendoPosition) {
+    private void initSearch() {
+        double currentExtendoPosition = linearSlides.getExtendoPosition();
+        double extendoTarget = 16;
+
+        double previousMaxVelocity = ExtendoConstants.MAX_PATHING_VELOCITY;
+        ExtendoConstants.MAX_PATHING_VELOCITY = previousMaxVelocity / searchSpeedDivisor;
+        // Extend and retract
+        LinearExtendo extendoOut = new LinearExtendo(0,
+                new ExtendoState(currentExtendoPosition),
+                new ExtendoState(extendoTarget)
+        );
+        LinearExtendo extendoIn = new LinearExtendo(extendoOut.getEndTime(),
+                new ExtendoState(extendoTarget),
+                new ExtendoState(0)
+        );
+        ExtendoConstants.MAX_PATHING_VELOCITY = previousMaxVelocity;
+
+        // Keep other subsystems still
+        MoveHWrist h_wrist_reset = new MoveHWrist(0, 0);
+        ReleaseHClaw h_claw_release = new ReleaseHClaw(0);
+        LinearHArm h_arm_up = new LinearHArm(0,
+                new HArmState(0.9),
+                new HArmState(0.9)
+        );
+
+        // Create Plans
+        ExtendoPlan extendo_plan = new ExtendoPlan(linearSlides,
+                extendoOut,
+                extendoIn
+        );
+        HWristPlan h_wrist_plan = new HWristPlan(horizontalIntake,
+                h_wrist_reset
+        );
+        HArmPlan h_arm_plan = new HArmPlan(horizontalIntake,
+                h_arm_up
+        );
+        HClawPlan h_claw_plan = new HClawPlan(horizontalIntake,
+                h_claw_release
+        );
+
+        // Synchronizer
+        this.search = new Synchronizer(
+                extendo_plan,
+                h_arm_plan,
+                h_wrist_plan,
+                h_claw_plan
+        );
+    }
+
+    private void initPickup(double[] samplePosition, Pose2d botPose, ExtendoState extendoPosition, ExtendoState extendoVelocity) {
         //// Calculating real sample position
 
         // unpack bot pose & extendo state
         double x_bot = botPose.getX();
         double y_bot = botPose.getY();
         double heading_bot = botPose.getHeading();
-        double x_extendo = extendoPosition;
+        double x_extendo = extendoPosition.getLength();
 
         // get cv readings
         double x_sample_cam = samplePosition[0];
@@ -309,14 +424,15 @@ public class XTranslationHIntakeExtendoCVSample extends LinearOpMode {
 
         double previousMaxVelocity = ExtendoConstants.MAX_PATHING_VELOCITY;
         ExtendoConstants.MAX_PATHING_VELOCITY = previousMaxVelocity / 3;
-        LinearExtendo extendoOut = new LinearExtendo(0,
-                new ExtendoState(extendoPosition),
-                extendoTarget
+        DynamicLinearExtendo extendoOut = new DynamicLinearExtendo(0,
+                extendoPosition,
+                extendoTarget,
+                extendoVelocity
         );
         ExtendoConstants.MAX_PATHING_VELOCITY = previousMaxVelocity;
 
         // Move arm down
-        LinearHArm h_arm_down = new LinearHArm(Math.max(extendoOut.getEndTime(), rotation.getEndTime()),
+        LinearHArm h_arm_down = new LinearHArm(Math.max(Math.max(extendoOut.getEndTime(), rotation.getEndTime()), translation.getEndTime()),
                 new HArmState(0.9),
                 new HArmState(armDownPosition),
                 true
@@ -361,7 +477,7 @@ public class XTranslationHIntakeExtendoCVSample extends LinearOpMode {
         );
 
         // Synchronizer
-        this.synchronizer = new Synchronizer(
+        this.pickup = new Synchronizer(
                 translationPlan,
                 rotationPlan,
                 extendo_plan,

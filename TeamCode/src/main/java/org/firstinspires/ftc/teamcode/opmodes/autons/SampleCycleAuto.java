@@ -347,7 +347,7 @@ public class SampleCycleAuto extends LinearOpMode {
         RotationConstants.MAX_ANGULAR_VELOCITY = 0.8*3.6;
         RotationConstants.MAX_ANGULAR_ACCELERATION = 0.8*4;
 
-        ExtendoConstants.MAX_VELOCITY = 105/8d;
+        ExtendoConstants.MAX_PATHING_VELOCITY = 105/8d;
 
         // Calculating rotated sample position
         double x_sample_cam = samplePosition[0];
@@ -447,7 +447,7 @@ public class SampleCycleAuto extends LinearOpMode {
         RotationConstants.MAX_ANGULAR_VELOCITY = 0.8*3.6;
         RotationConstants.MAX_ANGULAR_ACCELERATION = 0.8*4;
 
-        ExtendoConstants.MAX_VELOCITY = 105;
+        ExtendoConstants.MAX_PATHING_VELOCITY = 105;
 
         double extendoLengthModifier = OverheadCameraSubsystem.CAMERA_OFFSET[0] + OverheadCameraSubsystem.CLAW_OFFSET[0];
         double extendoLength = ExtendoConstants.MAX_EXTENSION + extendoLengthModifier;
@@ -559,7 +559,7 @@ public class SampleCycleAuto extends LinearOpMode {
         RotationConstants.MAX_ANGULAR_VELOCITY = 0.8*3.6;
         RotationConstants.MAX_ANGULAR_ACCELERATION = 0.8*4;
 
-        ExtendoConstants.MAX_VELOCITY = 105/6d;
+        ExtendoConstants.MAX_PATHING_VELOCITY = 105/6d;
 
         // Move to target
 

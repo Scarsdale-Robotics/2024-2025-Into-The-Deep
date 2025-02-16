@@ -104,7 +104,7 @@ public class DynamicLinearExtendo extends Movement {
         distance = end.minus(start).abs();
 
         double v0 = this.v0.getLength();
-        double v_max = ExtendoConstants.MAX_VELOCITY;
+        double v_max = ExtendoConstants.MAX_PATHING_VELOCITY;
         double a_max = ExtendoConstants.MAX_ACCELERATION;
 
         if (startTimeConstructor) {

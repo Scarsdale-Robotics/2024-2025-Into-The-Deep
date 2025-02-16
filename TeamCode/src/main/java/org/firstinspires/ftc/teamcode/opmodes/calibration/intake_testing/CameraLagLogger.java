@@ -1,12 +1,14 @@
 package org.firstinspires.ftc.teamcode.opmodes.calibration.intake_testing;
 
 import com.acmerobotics.dashboard.FtcDashboard;
+import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.arcrobotics.ftclib.geometry.Pose2d;
 import com.arcrobotics.ftclib.geometry.Rotation2d;
 import com.arcrobotics.ftclib.hardware.motors.Motor;
 import com.arcrobotics.ftclib.hardware.motors.MotorEx;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.ServoImplEx;
@@ -25,7 +27,10 @@ import org.firstinspires.ftc.teamcode.synchropather.subsystemclasses.OverheadCam
 import org.firstinspires.ftc.teamcode.synchropather.systems.hClaw.HClawConstants;
 
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 
+@Config
+@TeleOp(name="Camera Lag Logger", group="Calibration")
 public class CameraLagLogger extends LinearOpMode {
 
     private ArrayDeque<Double> loopTicks;
@@ -37,8 +42,9 @@ public class CameraLagLogger extends LinearOpMode {
     private LocalizationSubsystem localization;
     private DriveSubsystem drive;
 
-    public static double timeBuffer = 0;
-    private double[] lastBufferedExtendoPosition;  // {position, timestamp}
+    public static double timeBuffer = 0.045;
+    private ArrayList<double[]> bufferedExtendoPositions;  // [{position, timestamp}, ...]
+    private double lastBufferedExtendoPosition;
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -51,10 +57,12 @@ public class CameraLagLogger extends LinearOpMode {
         telemetry.addData("[MAIN] TPS", 0);
         telemetry.update();
 
-        lastBufferedExtendoPosition = new double[] {
+        bufferedExtendoPositions = new ArrayList<>();
+        bufferedExtendoPositions.add(new double[] {
                 linearSlides.getExtendoPosition(),
                 runtime.seconds()
-        };
+        });
+        lastBufferedExtendoPosition = bufferedExtendoPositions.get(0)[0];
 
         waitForStart();
         overheadCamera.correctExposure();
@@ -67,7 +75,7 @@ public class CameraLagLogger extends LinearOpMode {
                 telemetry.update();
                 continue;
             }
-            double extendoPosition = lastBufferedExtendoPosition[0];
+            double extendoPosition = lastBufferedExtendoPosition;
             double x_sample_bot = OverheadCameraSubsystem.CAMERA_OFFSET[0] + extendoPosition + closestSample[0];
             telemetry.addData("sample pos", x_sample_bot);
             telemetry.update();
@@ -224,14 +232,18 @@ public class CameraLagLogger extends LinearOpMode {
         while (!loopTicks.isEmpty() && currentTime - loopTicks.getFirst() > 1d) loopTicks.removeFirst();
         telemetry.addData("[MAIN] TPS", loopTicks.size());
         localization.update();
-        telemetry.update();
 
-        if (currentTime - lastBufferedExtendoPosition[1] > timeBuffer) {
-            lastBufferedExtendoPosition = new double[] {
-                    linearSlides.getExtendoPosition(),
-                    runtime.seconds()
-            };
-        }
+        double currentExtendoPosition = linearSlides.getExtendoPosition();
+        bufferedExtendoPositions.add(new double[]{
+                currentExtendoPosition,
+                runtime.seconds()
+        });
+        while (currentTime - bufferedExtendoPositions.get(0)[1] > timeBuffer) bufferedExtendoPositions.remove(0);
+        lastBufferedExtendoPosition = bufferedExtendoPositions.get(0)[0];
+
+        telemetry.addData("currentExtendoPosition", currentExtendoPosition);
+        telemetry.addData("lastBufferedExtendoPosition", lastBufferedExtendoPosition);
+        telemetry.update();
     }
 
     /**
