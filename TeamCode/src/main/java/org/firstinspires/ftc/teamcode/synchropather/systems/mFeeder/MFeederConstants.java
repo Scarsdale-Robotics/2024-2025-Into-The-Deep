@@ -33,8 +33,13 @@ public class MFeederConstants {
     public static double ZERO_HOME = 0;
 
     /**
-     *  Max magazine feeder position in inches.
+     *  Max capacity of magazine in clips.
      */
-    public static double MAX_POSITION = 7; //TODO: TUNE
+    public static int MAX_CAPACITY = 7; //TODO: TUNE
+
+    /**
+     * Width of one clip
+     */
+    public static double INCHES_PER_CLIP = 1; // TODO: TUNE
 
 }

@@ -32,6 +32,6 @@ public class MFeederState extends RobotState {
     }
     @Override
     public String getDisplayName() {
-        return "MFeeder";
+        return "MFeederState";
     }
 }

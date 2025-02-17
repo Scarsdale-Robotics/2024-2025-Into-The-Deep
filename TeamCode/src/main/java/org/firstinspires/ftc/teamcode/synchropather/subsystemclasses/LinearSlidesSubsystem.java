@@ -27,9 +27,7 @@ public class LinearSlidesSubsystem {
         this.leftLift = leftLift;
         this.rightLift = rightLift;
         this.telemetry = telemetry;
-        extendoPosition = this.extendo.getCurrentPosition();
-        leftLiftPosition = this.leftLift.getCurrentPosition();
-        rightLiftPosition = this.rightLift.getCurrentPosition();
+        update();
     }
 
     /**

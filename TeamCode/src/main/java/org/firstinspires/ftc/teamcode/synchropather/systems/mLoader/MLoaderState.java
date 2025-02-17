@@ -1,14 +1,14 @@
-package org.firstinspires.ftc.teamcode.synchropather.systems.hClaw;
+package org.firstinspires.ftc.teamcode.synchropather.systems.mLoader;
 
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.superclasses.RobotState;
 
 /**
- * Contains a horizontal claw position.
+ * Contains a magazine loader position.
  */
-public class HClawState extends RobotState {
+public class MLoaderState extends RobotState {
     private final double servoPosition;
 
-    public HClawState(double servoPosition) {
+    public MLoaderState(double servoPosition) {
         this.servoPosition = servoPosition;
     }
     public double getPosition() {
@@ -20,14 +20,14 @@ public class HClawState extends RobotState {
     public double abs() {
         return Math.abs(servoPosition);
     }
-    public HClawState plus(HClawState addend) {
-        return new HClawState(servoPosition + addend.getPosition());
+    public MLoaderState plus(MLoaderState addend) {
+        return new MLoaderState(servoPosition + addend.getPosition());
     }
-    public HClawState minus(HClawState addend) {
-        return new HClawState(servoPosition - addend.getPosition());
+    public MLoaderState minus(MLoaderState addend) {
+        return new MLoaderState(servoPosition - addend.getPosition());
     }
-    public HClawState times(double factor) {
-        return new HClawState(servoPosition * factor);
+    public MLoaderState times(double factor) {
+        return new MLoaderState(servoPosition * factor);
     }
     @Override
     public String toString() {
@@ -35,6 +35,6 @@ public class HClawState extends RobotState {
     }
     @Override
     public String getDisplayName() {
-        return "HClawState";
+        return "MLoaderState";
     }
 }

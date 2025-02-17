@@ -31,7 +31,7 @@ public class HWristState extends RobotState {
     }
     @Override
     public String toString() {
-        return String.format("%s ticks", servoPosition);
+        return String.format("%s servo position", servoPosition);
     }
     @Override
     public String getDisplayName() {

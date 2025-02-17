@@ -17,6 +17,9 @@ public class ClipbotSubsystem {
     private final Motor magazineFeeder;
     private final PhotonDcMotor magazineFeederCurrentSensor;
 
+    private double magazineFeederPosition;
+    private double magazineFeederCurrent;
+
 
     public ClipbotSubsystem(
             Servo magazineIntake,
@@ -33,7 +36,16 @@ public class ClipbotSubsystem {
         // Motor that controls the lead screw position
         this.magazineFeeder = magazineFeeder;
         this.magazineFeederCurrentSensor = (PhotonDcMotor) magazineFeeder.motor;
+        update();
 
+    }
+
+    /**
+     * Performs a bulk hardware call and gets feeder motor position and current.
+     */
+    public void update() {
+        magazineFeederPosition = magazineFeeder.getCurrentPosition();
+        magazineFeederCurrent = magazineFeederCurrentSensor.getCorrectedCurrent(CurrentUnit.MILLIAMPS);
     }
 
     public void setMagazineIntakePosition(double servoPosition) {
@@ -62,28 +74,32 @@ public class ClipbotSubsystem {
         }
         magazineFeeder.motor.setPower(0);
         MFeederConstants.ZERO_HOME = magazineFeeder.getCurrentPosition();
+        update();
     }
 
     /**
      * @return the magazine feeder motor's current in milliamps
      */
     public double getMagazineFeederCurrent() {
-        return magazineFeederCurrentSensor.getCorrectedCurrent(CurrentUnit.MILLIAMPS);
+        return magazineFeederCurrent;
     }
 
     /**
      * @return the magazine feeder's position in inches
      */
     public double getMagazineFeederPosition() {
-        return MFeederConstants.ticksToInches(magazineFeeder.getCurrentPosition()) - MFeederConstants.ZERO_HOME;
+        return MFeederConstants.ticksToInches(magazineFeederPosition) - MFeederConstants.ZERO_HOME;
     }
 
     public void setMagazineFeederPower(double power) {
         magazineFeeder.motor.setPower(power);
     }
 
+    /**
+     * Sets the magazine feeder motor's power to zero.
+     */
     public void stopMagazineFeeder() {
-        magazineFeeder.motor.setPower(0);
+        setMagazineFeederPower(0);
     }
 
 }
