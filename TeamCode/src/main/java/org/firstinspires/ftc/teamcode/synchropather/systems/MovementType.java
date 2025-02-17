@@ -35,9 +35,9 @@ public enum MovementType {
 	 */
 	HORIZONTAL_CLAW(),
 	/**
-	 * A Movement involving the clipbot's magazine
+	 * A Movement involving the magazine's feeder
 	 */
-	CLIPBOT_MAGAZINE();
+	MAGAZINE_FEEDER();
 
 	MovementType() {};
 }

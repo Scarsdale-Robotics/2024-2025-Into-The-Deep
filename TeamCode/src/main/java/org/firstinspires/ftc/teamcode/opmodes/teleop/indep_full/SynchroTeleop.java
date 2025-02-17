@@ -8,10 +8,6 @@ import com.arcrobotics.ftclib.hardware.motors.Motor;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-import org.firstinspires.ftc.robotcore.external.hardware.camera.CameraName;
-import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
-import org.firstinspires.ftc.teamcode.HardwareRobot;
-import org.firstinspires.ftc.teamcode.subsystems.indep.MagazineSubsystem;
 import org.firstinspires.ftc.teamcode.synchropather.subsystemclasses.ClipbotSubsystem;
 import org.firstinspires.ftc.teamcode.synchropather.subsystemclasses.HorizontalIntakeSubsystem;
 import org.firstinspires.ftc.teamcode.synchropather.subsystemclasses.LinearSlidesSubsystem;
@@ -29,7 +25,6 @@ import org.firstinspires.ftc.teamcode.synchropather.systems.hClaw.movements.Grab
 import org.firstinspires.ftc.teamcode.synchropather.systems.hClaw.movements.ReleaseHClaw;
 import org.firstinspires.ftc.teamcode.synchropather.systems.hWrist.HWristPlan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.hWrist.movements.MoveHWrist;
-import org.firstinspires.ftc.teamcode.synchropather.systems.magazine.movements.LinearMagazine;
 
 import java.util.function.Supplier;
 
@@ -93,9 +88,9 @@ public class SynchroTeleop extends LinearOpMode {
         );
 
         clipbot = new ClipbotSubsystem(
-                initMotor(hardwareMap, "magazine", Motor.GoBILDA.RPM_312),
-                initServo(hardwareMap, "clipper"),
-                telemetry
+                initServo(hardwareMap, "magazineIntake"),
+                initServo(hardwareMap, "magazineLoader"),
+                initMotor(hardwareMap, "magazineFeeder", Motor.GoBILDA.RPM_312)
         );
 
         overheadCamera = new OverheadCameraSubsystem(
@@ -121,7 +116,7 @@ public class SynchroTeleop extends LinearOpMode {
         horizontalIntake.setWristAngle(0);
         horizontalIntake.setArmPosition(0.5);
 
-        clipbot.homeMagazine(this, telemetry);  // TODO: TEST IF HOMING HERE IS HELPFUL
+        clipbot.homeMagazineFeeder(this, telemetry);  // TODO: TEST IF HOMING HERE IS HELPFUL
 
         boolean autoIntakeRunning = false;
         boolean manualIntakeRunning = false;

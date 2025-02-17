@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.synchropather.systems.magazine;
+package org.firstinspires.ftc.teamcode.synchropather.systems.mFeeder;
 
 import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -12,7 +12,7 @@ import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.superclasse
 import java.util.ArrayList;
 
 @Config
-public class MagazinePlan extends Plan<MagazineState> {
+public class MFeederPlan extends Plan<MFeederState> {
 
     // Feedforward constants
     //TODO: TUNE
@@ -35,31 +35,31 @@ public class MagazinePlan extends Plan<MagazineState> {
     private ElapsedTime runtime;
     private final Telemetry telemetry;
 
-    public MagazinePlan(ClipbotSubsystem clipbot, Movement... movements) {
-        super(MovementType.CLIPBOT_MAGAZINE, movements);
+    public MFeederPlan(ClipbotSubsystem clipbot, Movement... movements) {
+        super(MovementType.MAGAZINE_FEEDER, movements);
         this.clipbot = clipbot;
         this.eHistory = new ArrayList<>();
         this.dtHistory = new ArrayList<>();
         this.telemetry = clipbot.telemetry;
-//        robot.telemetry.addData("[SYNCHROPATHER] MagazinePlan leftHeight", 0);
-//        robot.telemetry.addData("[SYNCHROPATHER] MagazinePlan rightHeight", 0);
-//        robot.telemetry.addData("[SYNCHROPATHER] MagazinePlan desiredState.getHeight()", 0);
+//        robot.telemetry.addData("[SYNCHROPATHER] MFeederPlan leftHeight", 0);
+//        robot.telemetry.addData("[SYNCHROPATHER] MFeederPlan rightHeight", 0);
+//        robot.telemetry.addData("[SYNCHROPATHER] MFeederPlan desiredState.getHeight()", 0);
 //        robot.telemetry.update();
     }
 
     public void loop() {
         // Desired states
-        MagazineState desiredState = getCurrentState();
-        MagazineState desiredVelocity = getCurrentVelocity();
-        MagazineState desiredAcceleration = getCurrentAcceleration();
-        double dv = desiredVelocity.getLength();
-        double da = desiredAcceleration.getLength();
+        MFeederState desiredState = getCurrentState();
+        MFeederState desiredVelocity = getCurrentVelocity();
+        MFeederState desiredAcceleration = getCurrentAcceleration();
+        double dv = desiredVelocity.getPosition();
+        double da = desiredAcceleration.getPosition();
 
         // Current state
-        double magazinePosition = clipbot.getMagazinePosition();
+        double feederPosition = clipbot.getMagazineFeederPosition();
 
         // State error
-        double e = desiredState.getLength() - magazinePosition;
+        double e = desiredState.getPosition() - feederPosition;
         eHistory.add(e);
         if (eHistory.size() > 5) eHistory.remove(0);
 
@@ -90,7 +90,7 @@ public class MagazinePlan extends Plan<MagazineState> {
         if (kI != 0) {
             // Limit integrator to prevent windup
             double integralPowerThreshold = 0.25;
-            double integralThresholdBound = Math.abs(integralPowerThreshold * MagazineConstants.MAX_VELOCITY / kI);
+            double integralThresholdBound = Math.abs(integralPowerThreshold * MFeederConstants.MAX_VELOCITY / kI);
             intedt = bound(intedt, -integralThresholdBound, integralThresholdBound);
         }
 
@@ -105,29 +105,29 @@ public class MagazinePlan extends Plan<MagazineState> {
         // Control output
         double u = 0;
 
-        // Magazine SQUID
+        // Magazine feeder SQUID
         double squ = Math.signum(e)*Math.sqrt(Math.abs(e));
-        u += (kSQU*squ + kI*intedt + kD*dedt) / MagazineConstants.MAX_VELOCITY;
+        u += (kSQU*squ + kI*intedt + kD*dedt) / MFeederConstants.MAX_VELOCITY;
 
         // Feedforward
-        double fu = (kS*Math.signum(dv) + kV*dv + kA*da) / MagazineConstants.MAX_VELOCITY;
+        double fu = (kS*Math.signum(dv) + kV*dv + kA*da) / MFeederConstants.MAX_VELOCITY;
         u += fu;
 
-        // Set drive powers
-        clipbot.setMagazinePower(u);
+        // Set motor power
+        clipbot.setMagazineFeederPower(u);
 
-        telemetry.addData("[SYNCHROPATHER] MagazinePlan magazinePosition", magazinePosition);
-        telemetry.addData("[SYNCHROPATHER] MagazinePlan error", e);
-        telemetry.addData("[SYNCHROPATHER] MagazinePlan desiredState.getLength()", desiredState.getLength());
-        telemetry.addData("[SYNCHROPATHER] MagazinePlan dedt", dedt);
-        telemetry.addData("[SYNCHROPATHER] MagazinePlan intedt", intedt);
+        telemetry.addData("[SYNCHROPATHER] MFeederPlan feederPosition", feederPosition);
+        telemetry.addData("[SYNCHROPATHER] MFeederPlan error", e);
+        telemetry.addData("[SYNCHROPATHER] MFeederPlan desiredState.getLength()", desiredState.getPosition());
+        telemetry.addData("[SYNCHROPATHER] MFeederPlan dedt", dedt);
+        telemetry.addData("[SYNCHROPATHER] MFeederPlan intedt", intedt);
         telemetry.update();
 
     }
 
     @Override
     public void stop() {
-        clipbot.stopMagazine();
+        clipbot.stopMagazineFeeder();
     }
 
     /**

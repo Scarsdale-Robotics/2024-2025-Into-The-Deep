@@ -1,46 +1,46 @@
-package org.firstinspires.ftc.teamcode.synchropather.systems.magazine.movements;
+package org.firstinspires.ftc.teamcode.synchropather.systems.mFeeder.movements;
 
 import org.firstinspires.ftc.teamcode.synchropather.systems.MovementType;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.TimeSpan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.motion_profiles.SymmetricMotionProfile1D;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.superclasses.Movement;
-import org.firstinspires.ftc.teamcode.synchropather.systems.magazine.MagazineConstants;
-import org.firstinspires.ftc.teamcode.synchropather.systems.magazine.MagazineState;
+import org.firstinspires.ftc.teamcode.synchropather.systems.mFeeder.MFeederConstants;
+import org.firstinspires.ftc.teamcode.synchropather.systems.mFeeder.MFeederState;
 
-public class LinearMagazine extends Movement {
+public class LinearMFeeder extends Movement {
     private double distance, minDuration;
-    private MagazineState start, end;
+    private MFeederState start, end;
     private SymmetricMotionProfile1D motionProfile;
 
-    public LinearMagazine(TimeSpan timeSpan, MagazineState start, MagazineState end) {
-        super(timeSpan, MovementType.CLIPBOT_MAGAZINE);
+    public LinearMFeeder(TimeSpan timeSpan, MFeederState start, MFeederState end) {
+        super(timeSpan, MovementType.MAGAZINE_FEEDER);
         this.start = start;
         this.end = end;
         init(false, 0);
     }
 
     /**
-     * Creates a new LinearMagazine object with a given start and end MagazineState at the given startTime.
+     * Creates a new LinearMFeeder object with a given start and end MFeederState at the given startTime.
      * @param startTime
      * @param start
      * @param end
      */
-    public LinearMagazine(double startTime, MagazineState start, MagazineState end) {
-        super(MovementType.CLIPBOT_MAGAZINE);
+    public LinearMFeeder(double startTime, MFeederState start, MFeederState end) {
+        super(MovementType.MAGAZINE_FEEDER);
         this.start = start;
         this.end = end;
         init(true, startTime);
     }
 
     /**
-     * Creates a new LinearMagazine object with a given start and end MagazineState at the given startTime.
+     * Creates a new LinearMFeeder object with a given start and end MFeederState at the given startTime.
      * @param endTime
      * @param start
      * @param end
      * @param alignToEndTime if this Movement should end at the given time
      */
-    public LinearMagazine(double endTime, MagazineState start, MagazineState end, boolean alignToEndTime) {
-        super(MovementType.CLIPBOT_MAGAZINE);
+    public LinearMFeeder(double endTime, MFeederState start, MFeederState end, boolean alignToEndTime) {
+        super(MovementType.MAGAZINE_FEEDER);
         this.start = start;
         this.end = end;
         init(true, endTime);
@@ -55,10 +55,10 @@ public class LinearMagazine extends Movement {
         return minDuration;
     }
     /**
-     * @return the indicated MagazineState.
+     * @return the indicated MFeederState.
      */
     @Override
-    public MagazineState getState(double elapsedTime) {
+    public MFeederState getState(double elapsedTime) {
         double t = distance!=0 ? motionProfile.getDisplacement(elapsedTime) / distance : 0;
 
         double q0 = 1 - t;
@@ -68,48 +68,48 @@ public class LinearMagazine extends Movement {
         return start.times(q0).plus(end.times(q1));
     }
     /**
-     * @return the indicated velocity MagazineState.
+     * @return the indicated velocity MFeederState.
      */
     @Override
-    public MagazineState getVelocity(double elapsedTime) {
+    public MFeederState getVelocity(double elapsedTime) {
         double sign = end.minus(start).sign();
         double speed = motionProfile.getVelocity(elapsedTime);
 
         // scaled velocity vector
-        return new MagazineState(sign * speed);
+        return new MFeederState(sign * speed);
     }
     /**
-     * @return the indicated acceleration MagazineState.
+     * @return the indicated acceleration MFeederState.
      */
     @Override
-    public MagazineState getAcceleration(double elapsedTime) {
+    public MFeederState getAcceleration(double elapsedTime) {
         double sign = end.minus(start).sign();
         double speed = motionProfile.getAcceleration(elapsedTime);
 
         // scaled acceleration vector
-        return new MagazineState(sign * speed);
+        return new MFeederState(sign * speed);
     }
     /**
-     * @return the MagazineState of this Movement at the start time.
+     * @return the MFeederState of this Movement at the start time.
      */
     @Override
-    public MagazineState getStartState() {
+    public MFeederState getStartState() {
         return start;
     }
     /**
-     * @return the MagazineState of this Movement at the end time.
+     * @return the MFeederState of this Movement at the end time.
      */
     @Override
-    public MagazineState getEndState() {
+    public MFeederState getEndState() {
         return end;
     }
 
     /**
-     * @return "LinearMagazine"
+     * @return "LinearMFeeder"
      */
     @Override
     public String getDisplayName() {
-        return "LinearMagazine";
+        return "LinearMFeeder";
     }
 
     /**
@@ -118,8 +118,8 @@ public class LinearMagazine extends Movement {
     private void init(boolean startTimeConstructor, double startTime) {
         distance = end.minus(start).abs();
 
-        double v_max = MagazineConstants.MAX_VELOCITY;
-        double a_max = MagazineConstants.MAX_ACCELERATION;
+        double v_max = MFeederConstants.MAX_VELOCITY;
+        double a_max = MFeederConstants.MAX_ACCELERATION;
 
         if (startTimeConstructor) {
             motionProfile = new SymmetricMotionProfile1D(distance, startTime, v_max, a_max);

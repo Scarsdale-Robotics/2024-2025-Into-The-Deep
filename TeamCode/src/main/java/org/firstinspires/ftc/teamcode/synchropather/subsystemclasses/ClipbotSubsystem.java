@@ -1,78 +1,89 @@
 package org.firstinspires.ftc.teamcode.synchropather.subsystemclasses;
 
 import com.arcrobotics.ftclib.hardware.motors.Motor;
-import com.outoftheboxrobotics.photoncore.Photon;
 import com.outoftheboxrobotics.photoncore.hardware.motor.PhotonDcMotor;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
-import org.firstinspires.ftc.teamcode.synchropather.systems.magazine.MagazineConstants;
+import org.firstinspires.ftc.teamcode.synchropather.systems.mFeeder.MFeederConstants;
 
-@Photon
 public class ClipbotSubsystem {
 
-    private final Motor magazine;
-    private final PhotonDcMotor magazineCurrentSensor;
+    private final Servo magazineIntake;
+    private final Servo magazineLoader;
 
-    private final Servo clipper;
-
-    public final Telemetry telemetry;
+    private final Motor magazineFeeder;
+    private final PhotonDcMotor magazineFeederCurrentSensor;
 
 
     public ClipbotSubsystem(
-            Motor magazine,
-            Servo clipper,
-            Telemetry telemetry
+            Servo magazineIntake,
+            Servo magazineLoader,
+            Motor magazineFeeder
     ) {
-        this.magazine = magazine;
-        this.magazineCurrentSensor = (PhotonDcMotor) magazine.motor;
 
-        this.clipper = clipper;
-        this.telemetry = telemetry;
+        // Servo that takes clips off the wall
+        this.magazineIntake = magazineIntake;
+
+        // Servo that snaps the clips from the intake onto the lead screw rail
+        this.magazineLoader = magazineLoader;
+
+        // Motor that controls the lead screw position
+        this.magazineFeeder = magazineFeeder;
+        this.magazineFeederCurrentSensor = (PhotonDcMotor) magazineFeeder.motor;
+
+    }
+
+    public void setMagazineIntakePosition(double servoPosition) {
+        magazineIntake.setPosition(servoPosition);
+    }
+
+    public void setMagazineLoaderPosition(double servoPosition) {
+        magazineLoader.setPosition(servoPosition);
     }
 
     /**
-     * Runs a magazine homing sequence to detect the end of the magazine.
+     * Runs a magazine feeder homing sequence to detect the end of the magazine.
      */
-    public void homeMagazine(LinearOpMode opMode, Telemetry telemetry) {
+    public void homeMagazineFeeder(LinearOpMode opMode, Telemetry telemetry) {
         // threshold to detect an end stop, in milliamps
         double currentThreshold = 1000;
         double motorCurrent;
 
         // home and set zero position
-        magazine.motor.setPower(0.5);
+        magazineFeeder.motor.setPower(0.5);
         motorCurrent = 0;
         while (opMode.opModeIsActive() && motorCurrent < currentThreshold) {
-            motorCurrent = Math.abs(getMagazineCurrent());
+            motorCurrent = Math.abs(getMagazineFeederCurrent());
             telemetry.addData("motorCurrent", motorCurrent);
             telemetry.update();
         }
-        magazine.motor.setPower(0);
-        MagazineConstants.ZERO_HOME = getMagazinePosition() + MagazineConstants.ZERO_HOME;
+        magazineFeeder.motor.setPower(0);
+        MFeederConstants.ZERO_HOME = magazineFeeder.getCurrentPosition();
     }
 
     /**
-     * @return the magazine motor's current in milliamps
+     * @return the magazine feeder motor's current in milliamps
      */
-    public double getMagazineCurrent() {
-        return magazineCurrentSensor.getCorrectedCurrent(CurrentUnit.MILLIAMPS);
+    public double getMagazineFeederCurrent() {
+        return magazineFeederCurrentSensor.getCorrectedCurrent(CurrentUnit.MILLIAMPS);
     }
 
     /**
-     * @return the magazine motor's position in inches
+     * @return the magazine feeder's position in inches
      */
-    public double getMagazinePosition() {
-        return MagazineConstants.ticksToInches(magazine.getCurrentPosition()) - MagazineConstants.ZERO_HOME;
+    public double getMagazineFeederPosition() {
+        return MFeederConstants.ticksToInches(magazineFeeder.getCurrentPosition()) - MFeederConstants.ZERO_HOME;
     }
 
-    public void setMagazinePower(double power) {
-        magazine.motor.setPower(power);
+    public void setMagazineFeederPower(double power) {
+        magazineFeeder.motor.setPower(power);
     }
 
-    public void stopMagazine() {
-        magazine.motor.setPower(0);
+    public void stopMagazineFeeder() {
+        magazineFeeder.motor.setPower(0);
     }
 
 }

@@ -1,12 +1,12 @@
-package org.firstinspires.ftc.teamcode.synchropather.systems.magazine;
+package org.firstinspires.ftc.teamcode.synchropather.systems.mFeeder;
 
 import com.acmerobotics.dashboard.config.Config;
 
 /**
- * A static class used by Magazine Movements to reference important kinematic and algorithmic tuning values.
+ * A static class used by Magazine Feeder Movements to reference important kinematic and algorithmic tuning values.
  */
 @Config
-public class MagazineConstants {
+public class MFeederConstants {
 
     /**
      *  Conversion factor
@@ -18,23 +18,23 @@ public class MagazineConstants {
     }
 
     /**
-     *  Max magazine velocity in inches/s.
+     *  Max magazine feeder velocity in inches/s.
      */
     public static double MAX_VELOCITY = ticksToInches(2500);
 
     /**
-     *  Max magazine acceleration in inches/s^2.
+     *  Max magazine feeder acceleration in inches/s^2.
      */
     public static double MAX_ACCELERATION = ticksToInches(8000);
 
     /**
-     *  The magazine's reference position for zero in inches
+     *  The magazine feeder's reference position for zero in inches
      */
     public static double ZERO_HOME = 0;
 
     /**
-     *  Max magazine position in inches.
+     *  Max magazine feeder position in inches.
      */
-    public static double MAX_POSITION = 9; //TODO: TUNE
+    public static double MAX_POSITION = 7; //TODO: TUNE
 
 }
