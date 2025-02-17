@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.opmodes.calibration.clipbot_testing;
 
+import static org.firstinspires.ftc.teamcode.Auxiliary.initMotor;
+
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.arcrobotics.ftclib.hardware.motors.Motor;
@@ -32,7 +34,8 @@ public class ClipIntakeMotion extends LinearOpMode {
     private ElapsedTime runtime;
 
     private Servo magazineIntake;
-    private Servo magazineLoader;
+    private Servo magazineLoader1;
+    private Servo magazineLoader2;
     private Motor magazineFeeder;
 
     private ClipbotSubsystem clipbot;
@@ -74,7 +77,8 @@ public class ClipIntakeMotion extends LinearOpMode {
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
 
         magazineIntake = hardwareMap.get(ServoImplEx.class, "magazineIntake");
-        magazineLoader = hardwareMap.get(ServoImplEx.class, "magazineLoader");
+        magazineLoader1 = hardwareMap.get(ServoImplEx.class, "magazineLoader1");
+        magazineLoader2 = hardwareMap.get(ServoImplEx.class, "magazineLoader2");
 
         magazineFeeder = new MotorEx(hardwareMap, "magazineFeeder", Motor.GoBILDA.RPM_1620);
         magazineFeeder.motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -86,8 +90,10 @@ public class ClipIntakeMotion extends LinearOpMode {
 
         this.clipbot = new ClipbotSubsystem(
                 magazineIntake,
-                magazineLoader,
-                magazineFeeder
+                magazineLoader1,
+                magazineLoader2,
+                initMotor(hardwareMap, "magazineFeeder", Motor.GoBILDA.RPM_312),
+                hardwareMap.dcMotor.get("magazineFeeder")
         );
     }
 

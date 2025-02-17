@@ -1,18 +1,22 @@
 package org.firstinspires.ftc.teamcode.synchropather.subsystemclasses;
 
 import com.arcrobotics.ftclib.hardware.motors.Motor;
+import com.outoftheboxrobotics.photoncore.Photon;
 import com.outoftheboxrobotics.photoncore.hardware.motor.PhotonDcMotor;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.teamcode.synchropather.systems.mFeeder.MFeederConstants;
 
+@Photon
 public class ClipbotSubsystem {
 
     private final Servo magazineIntake;
-    private final Servo magazineLoader;
+    private final Servo magazineLoader1;
+    private final Servo magazineLoader2;
 
     private final Motor magazineFeeder;
     private final PhotonDcMotor magazineFeederCurrentSensor;
@@ -23,20 +27,24 @@ public class ClipbotSubsystem {
 
     public ClipbotSubsystem(
             Servo magazineIntake,
-            Servo magazineLoader,
-            Motor magazineFeeder
+            Servo magazineLoader1,
+            Servo magazineLoader2,
+            Motor magazineFeeder,
+            DcMotor magazineFeederDC
     ) {
 
         // Servo that takes clips off the wall
         this.magazineIntake = magazineIntake;
 
         // Servo that snaps the clips from the intake onto the lead screw rail
-        this.magazineLoader = magazineLoader;
+        this.magazineLoader1 = magazineLoader1;
+        this.magazineLoader2 = magazineLoader2;
 
         // Motor that controls the lead screw position
         this.magazineFeeder = magazineFeeder;
-        this.magazineFeederCurrentSensor = (PhotonDcMotor) magazineFeeder.motor;
-        update();
+//        this.magazineFeederCurrentSensor = (PhotonDcMotor) magazineFeederDC;
+        this.magazineFeederCurrentSensor = null;
+//        update();
 
     }
 
@@ -53,7 +61,8 @@ public class ClipbotSubsystem {
     }
 
     public void setMagazineLoaderPosition(double servoPosition) {
-        magazineLoader.setPosition(servoPosition);
+        magazineLoader1.setPosition(servoPosition);
+        magazineLoader2.setPosition(1-servoPosition);
     }
 
     /**
