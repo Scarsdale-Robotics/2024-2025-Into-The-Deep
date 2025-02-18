@@ -39,6 +39,11 @@ public class Synchronizer {
 		this.running = false;
 	}
 
+	protected void setPlans(Plan... plans) {
+		if (running) throw new RuntimeException("Synchronizer: tried calling setPlans() while synchronizer was running!");
+		this.plans = plans;
+	}
+
 	/**
 	 * Resets the elapsed time to zero and starts the timer.
 	 */

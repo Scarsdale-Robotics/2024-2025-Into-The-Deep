@@ -332,7 +332,7 @@ public class SampleOrientationProcessor implements VisionProcessor {
             Imgproc.line(filteredContourImage, pt1, pt2, new Scalar(0, 0, 0), 2);
 //                Imgproc.line(rgbImage, pt1, pt2, new Scalar(0, 0, 255), 2);
         }
-        Core.add(filteredContourImage, sureForeground, filteredContourImage);
+        Core.bitwise_or(filteredContourImage, sureForeground, filteredContourImage);
 
         // Apply morphological opening to remove noise
         kernel = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(5, 5));

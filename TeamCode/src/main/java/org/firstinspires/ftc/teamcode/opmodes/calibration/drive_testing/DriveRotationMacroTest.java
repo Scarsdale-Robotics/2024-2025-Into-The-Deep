@@ -2,25 +2,19 @@ package org.firstinspires.ftc.teamcode.opmodes.calibration.drive_testing;
 
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
-import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.arcrobotics.ftclib.geometry.Pose2d;
 import com.arcrobotics.ftclib.geometry.Rotation2d;
-import com.arcrobotics.ftclib.hardware.motors.Motor;
-import com.arcrobotics.ftclib.hardware.motors.MotorEx;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.Servo;
-import com.qualcomm.robotcore.hardware.ServoImplEx;
-import com.qualcomm.robotcore.util.ElapsedTime;
 
-import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.teamcode.cvprocessors.SampleOrientationProcessor;
 import org.firstinspires.ftc.teamcode.opmodes.algorithms.SampleDataBufferFilter;
 import org.firstinspires.ftc.teamcode.subsystems.DriveSubsystem;
-import org.firstinspires.ftc.teamcode.subsystems.GoBildaPinpointDriver;
 import org.firstinspires.ftc.teamcode.subsystems.LocalizationSubsystem;
+import org.firstinspires.ftc.teamcode.synchropather.AutonomousRobot;
+import org.firstinspires.ftc.teamcode.synchropather.macros.ExtendoRetractMacro;
+import org.firstinspires.ftc.teamcode.synchropather.macros.SearchMacro;
 import org.firstinspires.ftc.teamcode.synchropather.subsystemclasses.HorizontalIntakeSubsystem;
 import org.firstinspires.ftc.teamcode.synchropather.subsystemclasses.LinearSlidesSubsystem;
 import org.firstinspires.ftc.teamcode.synchropather.subsystemclasses.OverheadCameraSubsystem;
@@ -37,7 +31,6 @@ import org.firstinspires.ftc.teamcode.synchropather.systems.hArm.movements.Linea
 import org.firstinspires.ftc.teamcode.synchropather.systems.hClaw.HClawConstants;
 import org.firstinspires.ftc.teamcode.synchropather.systems.hClaw.HClawPlan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.hClaw.movements.GrabHClaw;
-import org.firstinspires.ftc.teamcode.synchropather.systems.hClaw.movements.ReleaseHClaw;
 import org.firstinspires.ftc.teamcode.synchropather.systems.hWrist.HWristPlan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.hWrist.movements.MoveHWrist;
 import org.firstinspires.ftc.teamcode.synchropather.systems.rotation.RotationPlan;
@@ -47,14 +40,14 @@ import org.firstinspires.ftc.teamcode.synchropather.systems.translation.Translat
 import org.firstinspires.ftc.teamcode.synchropather.systems.translation.TranslationState;
 import org.firstinspires.ftc.teamcode.synchropather.systems.translation.movements.LinearTranslation;
 
-import java.util.ArrayDeque;
-
 @Config
-@TeleOp(name="Drive CV Sample Macro", group = "Calibration")
-public class DriveCVSampleMacro extends LinearOpMode {
+@TeleOp(name="Drive Rotation Macro Test", group = "Calibration")
+public class DriveRotationMacroTest extends LinearOpMode {
 
     private Synchronizer search, pickup;
-    private Synchronizer stillExtendoRetracted;
+    private Synchronizer extendoRetract;
+
+    private AutonomousRobot robot;
 
     private HorizontalIntakeSubsystem horizontalIntake;
     private OverheadCameraSubsystem overheadCamera;
@@ -66,7 +59,10 @@ public class DriveCVSampleMacro extends LinearOpMode {
 
     public static double armDownPosition = 1.025;
 
-    public static double searchSpeedDivisor = 1.5;
+    /**
+     * Between 0 and 1 (please).
+     */
+    public static double searchSpeedFactor = 0.67;
 
     public static double driveSpeed = 0.5;
 
@@ -74,64 +70,48 @@ public class DriveCVSampleMacro extends LinearOpMode {
 
     @Override
     public void runOpMode() throws InterruptedException {
-        initSubsystems(new Pose2d(1,1,new Rotation2d(0)));
-        initSearch();
-
-        LinearExtendo stillExtendo = new LinearExtendo(0,
-                new ExtendoState(LinearSlidesSubsystem.extendoOffset),
-                new ExtendoState(LinearSlidesSubsystem.extendoOffset)
-        );
-        ExtendoPlan extendoPlan = new ExtendoPlan(linearSlides, stillExtendo);
-        stillExtendoRetracted = new Synchronizer(extendoPlan);
-        stillExtendoRetracted.start();
+        initialize();
 
         waitForStart();
-
-        OverheadCameraSubsystem.CLAW_OFFSET[0] = -3.2;
-
-        sampleData = new SampleDataBufferFilter(
-                linearSlides,
-                localization,
-                0.045,
-                5
-        );
 
         boolean toggleTriangle = false;
         boolean sampleMacroRunning = false;
         boolean clawGrabbed = false;
         ExtendoState extendoVelocity = null;
         while (opModeIsActive()) {
-            localization.update();
-            linearSlides.update();
-            sampleData.updateBufferData();
+            robot.update();
+            handleGamepadColor();
             boolean driverControlling = controlDrive(sampleMacroRunning);
 
-            if (driverControlling) sampleMacroRunning = false;
 
-            // Triangle is pick up sample macro
+            //// Triangle button
+            // Case: Init search macro
             if (gamepad1.triangle && !toggleTriangle && !sampleMacroRunning && !clawGrabbed) {
-                sampleMacroRunning = true;
-                toggleTriangle = true;
                 drive.stopController();
                 // init search
+                search = new SearchMacro(
+                        16,
+                        searchSpeedFactor,
+                        linearSlides,
+                        horizontalIntake
+                );
                 search.start();
                 sampleData.clearFilterData();
-            } else if (gamepad1.triangle && !toggleTriangle && !sampleMacroRunning && clawGrabbed) {
+                sampleMacroRunning = true;
+            }
+            // Case: Drop off sample
+            else if (gamepad1.triangle && !toggleTriangle && !sampleMacroRunning && clawGrabbed) {
                 horizontalIntake.setClawPosition(HClawConstants.RELEASE_POSITION);
                 clawGrabbed = false;
-                toggleTriangle = true;
-            } else if (gamepad1.triangle && !toggleTriangle && sampleMacroRunning) {
-                sampleMacroRunning = false;
-                toggleTriangle = true;
-            } else if (!gamepad1.triangle) {
-                toggleTriangle = false;
             }
+            // Case: Cancel search macro
+            else if (gamepad1.triangle && !toggleTriangle && sampleMacroRunning) {
+                sampleMacroRunning = false;
+            }
+            toggleTriangle = gamepad1.triangle;
 
-            TelemetryPacket packet = new TelemetryPacket();
-            packet.fieldOverlay().setStroke("#3F51B5");
-            Drawing.drawRobot(packet.fieldOverlay(), localization.getPose());
 
-            // Sample macro control
+            //// Sample macro control
             if (sampleMacroRunning) {
                 // Search motion
                 if (!sampleData.isFilterFull()) {
@@ -160,62 +140,46 @@ public class DriveCVSampleMacro extends LinearOpMode {
                         pickup.stop();
                         sampleMacroRunning = false;
                         clawGrabbed = true;
+                        // init extendo retract macro
+                        extendoRetract = new ExtendoRetractMacro(linearSlides);
+                        extendoRetract.start();
                     }
                 }
             }
-
-            if (!sampleMacroRunning) {
-                stillExtendoRetracted.update();
+            else {
+                extendoRetract.update();
             }
 
 
+            //// Draw detected sample position
+            TelemetryPacket packet = new TelemetryPacket();
+            packet.fieldOverlay().setStroke("#3F51B5");
+            Drawing.drawRobot(packet.fieldOverlay(), localization.getPose());
             Pose2d samplePosition = sampleData.getFilteredSamplePosition(telemetry);
             if (samplePosition!=null) {
                 telemetry.addData("samplePosition", samplePosition.toString());
                 Drawing.drawTargetPose(packet.fieldOverlay(), samplePosition);
             }
-
-
             FtcDashboard.getInstance().sendTelemetryPacket(packet);
-
-            if (gamepad1.dpad_up) {
-                SampleOrientationProcessor.colorType = SampleOrientationProcessor.SampleColor.YELLOW;
-            }
-            if (gamepad1.dpad_left) {
-                SampleOrientationProcessor.colorType = SampleOrientationProcessor.SampleColor.BLUE;
-            }
-            if (gamepad1.dpad_right) {
-                SampleOrientationProcessor.colorType = SampleOrientationProcessor.SampleColor.RED;
-            }
-
-            switch (SampleOrientationProcessor.colorType) {
-                case YELLOW:
-                    gamepad1.setLedColor(1,1,0,1000);
-                    break;
-                case BLUE:
-                    gamepad1.setLedColor(0,0,1,1000);
-                    break;
-                case RED:
-                    gamepad1.setLedColor(1,0,0,1000);
-                    break;
-                default:
-                    break;
-            }
 
         }
     }
 
+
     /**
      * Field centric drive (based on driver POV)
-     * @return whether or not the driver is controlling the drivetrain
+     * @return whether or not the driver is giving joystick inputs
      */
     private boolean controlDrive(boolean macroRunning) {
         double forward = -gamepad1.left_stick_y;
         double strafe = -gamepad1.left_stick_x;
         double turn = gamepad1.right_stick_x;
-        boolean driving = !(forward==0 && strafe==0 && turn ==0);
-//        drive.driveFieldCentricPowers(forward, strafe, turn, Math.toDegrees(localization.getH()));
-        if (driving || !macroRunning) {
+        boolean driving = !(forward==0 && strafe==0 && turn==0);
+
+        if (driving ||
+                !macroRunning || // [!driving] braking allowed when macro is deactivated
+                !sampleData.isFilterFull() // [!driving && macroRunning] braking allowed during search
+        ) {
             drive.driveFieldCentricPowers(
                     driveSpeed * forward,
                     driveSpeed * strafe,
@@ -223,164 +187,63 @@ public class DriveCVSampleMacro extends LinearOpMode {
                     Math.toDegrees(localization.getH())
             );
         }
+
         return driving;
     }
 
-    private void initSubsystems(Pose2d initialPose) {
-        telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
 
-        // init horizontal intake
-        Servo leftHorizontalArm = hardwareMap.get(ServoImplEx.class, "leftHorizontalArm");
-        Servo rightHorizontalArm = hardwareMap.get(ServoImplEx.class, "rightHorizontalArm");
-        Servo horizontalWrist = hardwareMap.get(ServoImplEx.class, "horizontalWrist");
-        Servo horizontalClaw = hardwareMap.get(ServoImplEx.class, "horizontalClaw");
-        this.horizontalIntake = new HorizontalIntakeSubsystem(
-                leftHorizontalArm,
-                rightHorizontalArm,
-                horizontalWrist,
-                horizontalClaw
-        );
-        horizontalIntake.setClawPosition(HClawConstants.RELEASE_POSITION);
-        horizontalIntake.setWristAngle(0);
-        horizontalIntake.setArmPosition(0.9);
+    /**
+     * Sets the gamepad led color to the cv sample color
+     */
+    private void handleGamepadColor() {
+        if (gamepad1.dpad_up) {
+            SampleOrientationProcessor.colorType = SampleOrientationProcessor.SampleColor.YELLOW;
+        }
+        if (gamepad1.dpad_left) {
+            SampleOrientationProcessor.colorType = SampleOrientationProcessor.SampleColor.BLUE;
+        }
+        if (gamepad1.dpad_right) {
+            SampleOrientationProcessor.colorType = SampleOrientationProcessor.SampleColor.RED;
+        }
 
-        // init overhead camera
-        WebcamName cameraName = hardwareMap.get(WebcamName.class, "Webcam 1");
-        this.overheadCamera = new OverheadCameraSubsystem(cameraName, telemetry);
-        overheadCamera.correctExposure(this, telemetry);
-
-        // init linear slides
-        Motor extendo = new MotorEx(hardwareMap, "extendo", Motor.GoBILDA.RPM_1620);
-        Motor leftLift = new MotorEx(hardwareMap, "leftLift", Motor.GoBILDA.RPM_312);
-        Motor rightLift = new MotorEx(hardwareMap, "rightLift", Motor.GoBILDA.RPM_312);
-
-        extendo.motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        extendo.motor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        extendo.setRunMode(Motor.RunMode.RawPower);
-        extendo.motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        extendo.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
-        extendo.setInverted(true);
-
-        leftLift.motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        leftLift.motor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        leftLift.setRunMode(Motor.RunMode.RawPower);
-        leftLift.motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        leftLift.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
-        leftLift.setInverted(false);
-
-        rightLift.motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        rightLift.motor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        rightLift.setRunMode(Motor.RunMode.RawPower);
-        rightLift.motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        rightLift.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
-        rightLift.setInverted(true);
-
-        this.linearSlides = new LinearSlidesSubsystem(extendo, leftLift, rightLift, telemetry);
-
-        // init drive
-        MotorEx leftFront = new MotorEx(hardwareMap, "leftFront", Motor.GoBILDA.RPM_312);
-        MotorEx rightFront = new MotorEx(hardwareMap, "rightFront", Motor.GoBILDA.RPM_312);
-        MotorEx leftBack = new MotorEx(hardwareMap, "leftBack", Motor.GoBILDA.RPM_312);
-        MotorEx rightBack = new MotorEx(hardwareMap, "rightBack", Motor.GoBILDA.RPM_312);
-
-        leftFront.motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        rightFront.motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        leftBack.motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        rightBack.motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-
-        leftFront.motor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        rightFront.motor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        leftBack.motor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        rightBack.motor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-
-        leftFront.setRunMode(Motor.RunMode.RawPower);
-        rightFront.setRunMode(Motor.RunMode.RawPower);
-        leftBack.setRunMode(Motor.RunMode.RawPower);
-        rightBack.setRunMode(Motor.RunMode.RawPower);
-
-        leftFront.setInverted(true);
-        rightFront.setInverted(true);
-        leftBack.setInverted(true);
-        rightBack.setInverted(true);
-
-        leftFront.motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        rightFront.motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        leftBack.motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        rightBack.motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-
-        leftFront.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
-        rightFront.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
-        leftBack.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
-        rightBack.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
-
-        this.drive = new DriveSubsystem(
-                leftFront,
-                rightFront,
-                leftBack,
-                rightBack
-        );
-
-        // init localization
-        GoBildaPinpointDriver pinpoint = hardwareMap.get(GoBildaPinpointDriver.class,"pinpoint");
-        pinpoint.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.FORWARD, GoBildaPinpointDriver.EncoderDirection.FORWARD);
-
-        this.localization = new LocalizationSubsystem(
-                initialPose,
-                pinpoint,
-                this,
-                telemetry
-        );
-
+        switch (SampleOrientationProcessor.colorType) {
+            case YELLOW:
+                gamepad1.setLedColor(1,1,0,1000);
+                break;
+            case BLUE:
+                gamepad1.setLedColor(0,0,1,1000);
+                break;
+            case RED:
+                gamepad1.setLedColor(1,0,0,1000);
+                break;
+            default:
+                break;
+        }
     }
 
-    private void initSearch() {
-        double currentExtendoPosition = linearSlides.getExtendoPosition();
-        double extendoTarget = 16;
 
-        double previousMaxVelocity = ExtendoConstants.MAX_PATHING_VELOCITY;
-        ExtendoConstants.MAX_PATHING_VELOCITY = previousMaxVelocity / searchSpeedDivisor;
-        // Extend and retract
-        LinearExtendo extendoOut = new LinearExtendo(0,
-                new ExtendoState(currentExtendoPosition),
-                new ExtendoState(extendoTarget)
+    private void initialize() {
+        // init subsystems
+        this.robot = new AutonomousRobot(
+                hardwareMap,
+                new Pose2d(1,1,new Rotation2d(0)),
+                AutonomousRobot.TeamColor.BLUE,
+                this
         );
-        LinearExtendo extendoIn = new LinearExtendo(extendoOut.getEndTime(),
-                new ExtendoState(extendoTarget),
-                new ExtendoState(2)
-        );
-        ExtendoConstants.MAX_PATHING_VELOCITY = previousMaxVelocity;
+        this.telemetry = robot.telemetry;
+        this.horizontalIntake = robot.horizontalIntake;
+        this.overheadCamera = robot.overheadCamera;
+        this.linearSlides = robot.linearSlides;
+        this.localization = robot.localization;
+        this.drive = robot.drive;
+        this.sampleData = robot.sampleData;
+        OverheadCameraSubsystem.CLAW_OFFSET[0] = -3.2;
 
-        // Keep other subsystems still
-        MoveHWrist h_wrist_reset = new MoveHWrist(0, 0);
-        ReleaseHClaw h_claw_release = new ReleaseHClaw(0);
-        LinearHArm h_arm_up = new LinearHArm(0,
-                new HArmState(0.9),
-                new HArmState(0.9)
-        );
-
-        // Create Plans
-        ExtendoPlan extendo_plan = new ExtendoPlan(linearSlides,
-                extendoOut,
-                extendoIn
-        );
-        HWristPlan h_wrist_plan = new HWristPlan(horizontalIntake,
-                h_wrist_reset
-        );
-        HArmPlan h_arm_plan = new HArmPlan(horizontalIntake,
-                h_arm_up
-        );
-        HClawPlan h_claw_plan = new HClawPlan(horizontalIntake,
-                h_claw_release
-        );
-
-        // Synchronizer
-        this.search = new Synchronizer(
-                extendo_plan,
-                h_arm_plan,
-                h_wrist_plan,
-                h_claw_plan
-        );
+        // init extendo retract macro
+        extendoRetract = new ExtendoRetractMacro(linearSlides);
+        extendoRetract.start();
     }
+
 
     private void initPickupMotion(ExtendoState extendoVelocity) {
         // Unpack bot pose
@@ -523,6 +386,7 @@ public class DriveCVSampleMacro extends LinearOpMode {
         );
     }
 
+
     /**
      * Normalizes a given angle to (-pi,pi] radians.
      * @param radians the given angle in radians.
@@ -532,17 +396,6 @@ public class DriveCVSampleMacro extends LinearOpMode {
         while (radians >= Math.PI) radians -= 2*Math.PI;
         while (radians < -Math.PI) radians += 2*Math.PI;
         return radians;
-    }
-
-    /**
-     * Clips the input x between a given lower and upper bound.
-     * @param x
-     * @param lower
-     * @param upper
-     * @return the clipped value of x.
-     */
-    private static double bound(double x, double lower, double upper) {
-        return Math.max(lower, Math.min(upper, x));
     }
 
 }

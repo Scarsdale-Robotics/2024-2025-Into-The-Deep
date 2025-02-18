@@ -87,12 +87,12 @@ public class RectDrawer extends OpenCvPipeline {
         Scalar upperBound = new Scalar(mu+k*sigma);
         Mat mask = new Mat();
         Core.inRange(gray, lowerBound, upperBound, mask);
+
         Scalar maskedMean = Core.mean(gray, mask);
         double averageBrightness = maskedMean.val[0];
         telemetry.addData("averageBrightness", averageBrightness);
         double targetAverageInRange = 120;
         frame.convertTo(frame, -1, targetAverageInRange/ averageBrightness, 0);
-
 
         // Color threshold
         Mat hsv = new Mat(); // convert to hsv
