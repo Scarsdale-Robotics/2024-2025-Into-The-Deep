@@ -33,14 +33,14 @@ public class MFeederPlan extends Plan<MFeederState> {
     private final ClipbotSubsystem clipbot;
 
     private ElapsedTime runtime;
-    private final Telemetry telemetry;
+//    private final Telemetry telemetry;
 
     public MFeederPlan(ClipbotSubsystem clipbot, Movement... movements) {
         super(MovementType.MAGAZINE_FEEDER, movements);
         this.clipbot = clipbot;
         this.eHistory = new ArrayList<>();
         this.dtHistory = new ArrayList<>();
-        this.telemetry = clipbot.telemetry;
+//        this.telemetry = clipbot.telemetry;
 //        robot.telemetry.addData("[SYNCHROPATHER] MFeederPlan leftHeight", 0);
 //        robot.telemetry.addData("[SYNCHROPATHER] MFeederPlan rightHeight", 0);
 //        robot.telemetry.addData("[SYNCHROPATHER] MFeederPlan desiredState.getHeight()", 0);
@@ -116,12 +116,12 @@ public class MFeederPlan extends Plan<MFeederState> {
         // Set motor power
         clipbot.setMagazineFeederPower(u);
 
-        telemetry.addData("[SYNCHROPATHER] MFeederPlan feederPosition", feederPosition);
-        telemetry.addData("[SYNCHROPATHER] MFeederPlan error", e);
-        telemetry.addData("[SYNCHROPATHER] MFeederPlan desiredState.getLength()", desiredState.getPosition());
-        telemetry.addData("[SYNCHROPATHER] MFeederPlan dedt", dedt);
-        telemetry.addData("[SYNCHROPATHER] MFeederPlan intedt", intedt);
-        telemetry.update();
+//        telemetry.addData("[SYNCHROPATHER] MFeederPlan feederPosition", feederPosition);
+//        telemetry.addData("[SYNCHROPATHER] MFeederPlan error", e);
+//        telemetry.addData("[SYNCHROPATHER] MFeederPlan desiredState.getLength()", desiredState.getPosition());
+//        telemetry.addData("[SYNCHROPATHER] MFeederPlan dedt", dedt);
+//        telemetry.addData("[SYNCHROPATHER] MFeederPlan intedt", intedt);
+//        telemetry.update();
 
     }
 

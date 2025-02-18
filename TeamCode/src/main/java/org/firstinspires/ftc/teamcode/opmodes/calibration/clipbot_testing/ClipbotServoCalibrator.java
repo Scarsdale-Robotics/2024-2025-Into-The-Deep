@@ -16,10 +16,11 @@ import com.qualcomm.robotcore.hardware.ServoImplEx;
 public class ClipbotServoCalibrator extends LinearOpMode {
 
     private Servo magazineIntake;
-    private Servo magazineLoader;
+    private Servo magazineLoader1;
+    private Servo magazineLoader2;
 
-    public static double intakeOutPosition = 0;
-    public static double intakeInPosition = 0;
+    public static double intakeOutPosition = 0.5;
+    public static double intakeInPosition = 0.5;
 
     public static double loaderUpPosition = 0;
     public static double loaderDownPosition = 0;
@@ -45,7 +46,7 @@ public class ClipbotServoCalibrator extends LinearOpMode {
                 toggleTriangle = true;
             } else if (!gamepad1.triangle) {
                 toggleTriangle = false;
-            }
+            } // out is open, in is closed
 
             if (gamepad1.square && !toggleSquare) {
                 loaderIsDown = !loaderIsDown;
@@ -65,11 +66,15 @@ public class ClipbotServoCalibrator extends LinearOpMode {
             }
 
             if (loaderIsDown) {
-                magazineLoader.setPosition(loaderDownPosition);
+                magazineLoader1.setPosition(loaderDownPosition);
+                magazineLoader2.setPosition(1-loaderDownPosition);
                 telemetry.addData("loader position", "DOWN");
             } else {
-                magazineLoader.setPosition(loaderUpPosition);
+//                magazineLoader1.setPosition(loaderUpPosition);
+//                magazineLoader2.setPosition(1-loaderUpPosition);
                 telemetry.addData("loader position", "UP");
+                telemetry.addData("loader 1 position", magazineLoader1.getPosition());
+                telemetry.addData("loader 2 position", magazineLoader2.getPosition());
             }
 
             telemetry.update();
@@ -81,6 +86,7 @@ public class ClipbotServoCalibrator extends LinearOpMode {
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
 
         magazineIntake = hardwareMap.get(ServoImplEx.class, "magazineIntake");
-        magazineLoader = hardwareMap.get(ServoImplEx.class, "magazineLoader");
+        magazineLoader1 = hardwareMap.get(ServoImplEx.class, "magazineLoader1");
+        magazineLoader2 = hardwareMap.get(ServoImplEx.class, "magazineLoader2");
     }
 }
