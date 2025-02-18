@@ -31,7 +31,7 @@ public class OverheadCameraSubsystem {
 
     // How far forward and to the left the camera is from the robot's center of rotation
     // when the extendo is fully retracted, in inches.
-    public static double[] CAMERA_OFFSET = new double[]{8.30511811, -0.57047244};
+    public static double[] CAMERA_OFFSET = new double[]{8.30511811, 0};//-0.57047244};
 
 
     public OverheadCameraSubsystem(WebcamName cameraName, Telemetry telemetry) {
@@ -130,9 +130,15 @@ public class OverheadCameraSubsystem {
     /**
      * Automatically adjusts camera exposure based on image brightness
      */
-    public void correctExposure() {
+    public void correctExposure(Telemetry telemetry) {
         if (!processorEnabled) return;
+        while (visionPortal.getCameraState() != VisionPortal.CameraState.STREAMING) {
+            telemetry.addData("[LOGI CAM] status", "waiting to start");
+            telemetry.update();
+        }
         updateExposure(visionPortal, getCorrectedExposure(processor.getAverageBrightness()));
+        telemetry.addData("[LOGI CAM] status", "corrected exposure!");
+        telemetry.update();
     }
 
     private void updateExposure(VisionPortal visionPortal, long ms) {

@@ -65,7 +65,7 @@ public class CameraLagLogger extends LinearOpMode {
         lastBufferedExtendoPosition = bufferedExtendoPositions.get(0)[0];
 
         waitForStart();
-        overheadCamera.correctExposure();
+        overheadCamera.correctExposure(telemetry);
 
         while (opModeIsActive()) {
             updateTPS();

@@ -67,7 +67,8 @@ public class MagazineHomingTester extends LinearOpMode {
                 null,
                 null,
                 initMotor(hardwareMap, "magazineFeeder", Motor.GoBILDA.RPM_312),
-                hardwareMap.dcMotor.get("magazineFeeder")
+                hardwareMap.dcMotor.get("magazineFeeder"),
+                telemetry
         );
     }
 }

@@ -78,7 +78,7 @@ public class BlindHIntakeExtendoCVSample extends LinearOpMode {
         lastBufferedExtendoPosition = bufferedExtendoPositions.get(0)[0];
 
         waitForStart();
-        overheadCamera.correctExposure();
+        overheadCamera.correctExposure(telemetry);
 
         while (opModeIsActive()) {
             // Wait for button press

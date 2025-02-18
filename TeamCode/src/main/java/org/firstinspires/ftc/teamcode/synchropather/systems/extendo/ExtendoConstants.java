@@ -25,12 +25,12 @@ public class ExtendoConstants {
     /**
      *  Max extendo velocity in inches/s.
      */
-    public static double MAX_MOTOR_VELOCITY = 70;
+    public static double MAX_MOTOR_VELOCITY = 80;
 
     /**
      *  Max extendo acceleration in inches/s^2.
      */
-    public static double MAX_ACCELERATION = 250;
+    public static double MAX_ACCELERATION = 100;
 
     /**
      *  The distance from the center of the claw to the robot's center of rotation when the extendo is fully retracted and the claw is at pickup position.
