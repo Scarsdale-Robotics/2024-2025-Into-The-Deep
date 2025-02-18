@@ -48,7 +48,7 @@ public class SampleOrientationProcessor implements VisionProcessor {
 
     private volatile boolean sampleDetected = false;
     private volatile double sampleAngle = 0;
-    private volatile double averageBrightness = 0;
+    private volatile double averageBrightness = -1;
     private volatile ArrayList<double[]> realPositions = new ArrayList<>();
     private volatile ArrayList<Double> sampleAngles = new ArrayList<>();
 

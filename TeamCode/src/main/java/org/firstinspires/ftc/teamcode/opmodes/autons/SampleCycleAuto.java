@@ -93,7 +93,7 @@ public class SampleCycleAuto extends LinearOpMode {
         };
 
         waitForStart();
-        overheadCamera.correctExposure(telemetry);
+        overheadCamera.correctExposure(this, telemetry);
 
         // Score preloaded sample
         Pose2d currentPose = localization.getPose();

@@ -98,7 +98,6 @@ public class ClipFeedMotion extends LinearOpMode {
                 magazineLoader1,
                 magazineLoader2,
                 initMotor(hardwareMap, "magazineFeeder", Motor.GoBILDA.RPM_312),
-                hardwareMap.dcMotor.get("magazineFeeder"),
                 telemetry
         );
     }

@@ -99,7 +99,7 @@ public class BlindXTranslationHIntakeExtendoCVSample extends LinearOpMode {
         lastBufferedBotPose = bufferedBotPoses.get(0);
 
         waitForStart();
-        overheadCamera.correctExposure(telemetry);
+        overheadCamera.correctExposure(this, telemetry);
 
         while (opModeIsActive()) {
             // Create synchronizer on button press

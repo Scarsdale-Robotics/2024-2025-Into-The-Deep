@@ -31,7 +31,6 @@ public class ClipbotSubsystem {
             Servo magazineLoader1,
             Servo magazineLoader2,
             Motor magazineFeeder,
-            DcMotor magazineFeederDC,
             Telemetry telemetry
     ) {
         this.telemetry = telemetry;

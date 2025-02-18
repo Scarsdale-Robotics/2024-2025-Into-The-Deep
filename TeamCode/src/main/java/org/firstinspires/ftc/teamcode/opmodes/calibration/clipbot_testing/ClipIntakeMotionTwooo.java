@@ -96,7 +96,7 @@ public class ClipIntakeMotionTwooo extends LinearOpMode {
                 initServo(hardwareMap, "magazineLoader1"),
                 initServo(hardwareMap, "magazineLoader2"),
                 initMotor(hardwareMap, "magazineFeeder", Motor.GoBILDA.RPM_312),
-                hardwareMap.dcMotor.get("magazineFeeder")
+                telemetry
         );
 
         waitForStart();

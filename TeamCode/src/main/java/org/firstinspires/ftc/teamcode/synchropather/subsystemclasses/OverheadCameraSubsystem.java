@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.synchropather.subsystemclasses;
 import android.util.Size;
 
 import com.acmerobotics.dashboard.config.Config;
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
@@ -130,9 +131,11 @@ public class OverheadCameraSubsystem {
     /**
      * Automatically adjusts camera exposure based on image brightness
      */
-    public void correctExposure(Telemetry telemetry) {
+    public void correctExposure(LinearOpMode opMode, Telemetry telemetry) {
         if (!processorEnabled) return;
-        while (visionPortal.getCameraState() != VisionPortal.CameraState.STREAMING) {
+        while ((opMode.opModeInInit() || opMode.opModeIsActive()) &&
+                (visionPortal.getCameraState() != VisionPortal.CameraState.STREAMING ||
+                processor.getAverageBrightness() == -1)) {
             telemetry.addData("[LOGI CAM] status", "waiting to start");
             telemetry.update();
         }
