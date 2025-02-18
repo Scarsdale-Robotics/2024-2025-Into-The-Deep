@@ -87,7 +87,8 @@ public class ClipIntakeMotion extends LinearOpMode {
         this.clipbot = new ClipbotSubsystem(
                 magazineIntake,
                 magazineLoader,
-                magazineFeeder
+                magazineFeeder,
+                telemetry
         );
     }
 

@@ -63,7 +63,8 @@ public class MagazineHomingTester extends LinearOpMode {
         clipbot = new ClipbotSubsystem(
                 null,
                 null,
-                magazineFeeder
+                magazineFeeder,
+                telemetry
         );
     }
 }

@@ -5,6 +5,7 @@ import com.arcrobotics.ftclib.geometry.Pose2d;
 import com.arcrobotics.ftclib.geometry.Rotation2d;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.subsystems.LocalizationSubsystem;
 import org.firstinspires.ftc.teamcode.synchropather.subsystemclasses.LinearSlidesSubsystem;
 import org.firstinspires.ftc.teamcode.synchropather.subsystemclasses.OverheadCameraSubsystem;
@@ -58,12 +59,53 @@ public class SampleDataBufferFilter {
 
     /**
      * Updates the filter with most recent sample data
-     * @param samplePosition
+     * @param closestSamplePosition
      */
-    public void updateFilterData(double[] samplePosition) {
-        if (samplePosition==null || lastBufferedExtendoPosition==null || lastBufferedBotPose==null) return;
+    public void updateFilterData(ArrayList<double[]> sampleTranslations, ArrayList<Double> sampleAngles, double[] closestSamplePosition) {
+        if (closestSamplePosition==null || lastBufferedExtendoPosition==null || lastBufferedBotPose==null) return;
+
+        Pose2d sampleToAppend;
+
+        if (samplePoses.isEmpty()) {
+            sampleToAppend = getSampleFieldPosition(closestSamplePosition);
+        }
+        // get sample closest to current samples in filter
+        else {
+            double closestSampleDistance = Double.MAX_VALUE;
+            Pose2d closestSamplePose = new Pose2d();
+
+            for (int i = 0; i < sampleTranslations.size(); i++) {
+                double[] sampleCameraPosition = new double[]{
+                        sampleTranslations.get(i)[0],
+                        sampleTranslations.get(i)[1],
+                        sampleAngles.get(i)
+                };
+
+                // calculate sample position
+                Pose2d sampleFieldPosition = getSampleFieldPosition(sampleCameraPosition);
+
+                double dx = samplePoses.get(0).getX() - sampleFieldPosition.getX();
+                double dy = samplePoses.get(0).getY() - sampleFieldPosition.getY();
+                double distance = Math.hypot(dx, dy);
+
+                if (distance < closestSampleDistance) {
+                    closestSamplePose = sampleFieldPosition;
+                    closestSampleDistance = distance;
+                }
+            }
+            sampleToAppend = closestSamplePose;
+        }
 
         //// Append current data to end of filter
+        samplePoses.add(sampleToAppend);
+
+
+        //// Remove data outside filter
+        while (samplePoses.size()>filterLength) samplePoses.remove(0);
+
+    }
+    
+    private Pose2d getSampleFieldPosition(double[] samplePosition) {
         // calculate sample position
         ExtendoState extendoPosition = lastBufferedExtendoPosition;
         Pose2d botPose = lastBufferedBotPose;
@@ -89,18 +131,13 @@ public class SampleDataBufferFilter {
         // find real sample coordinates
         double x_sample = x_bot + distance_sample_bot * Math.cos(bearing);
         double y_sample = y_bot + distance_sample_bot * Math.sin(bearing);
-        double theta_sample = (theta_sample_cam + heading_bot) - Math.PI/2;
-
-        samplePoses.add(new Pose2d(
+        double theta_sample = (theta_sample_cam + heading_bot) - Math.PI / 2;
+        
+        return new Pose2d(
                 x_sample,
                 y_sample,
                 new Rotation2d(theta_sample)
-        ));
-
-
-        //// Remove data outside filter
-        while (samplePoses.size()>filterLength) samplePoses.remove(0);
-
+        );
     }
 
     public void clearFilterData() {
@@ -117,20 +154,27 @@ public class SampleDataBufferFilter {
     /**
      * @return the average sample position (relative to the field).
      */
-    public Pose2d getFilteredSamplePosition() {
+    public Pose2d getFilteredSamplePosition(Telemetry telemetry) {
         if (!isFilterFull()) return null;
 
         ArrayList<Double> x_sample_sorted = new ArrayList<>();
         ArrayList<Double> y_sample_sorted = new ArrayList<>();
+        ArrayList<Double> theta_sample_list = new ArrayList<>();
         double[] theta_sample_vector_sum = new double[]{0,0};
         for (Pose2d samplePose : samplePoses) {
             x_sample_sorted.add(samplePose.getX());
             y_sample_sorted.add(samplePose.getY());
+            theta_sample_list.add(samplePose.getHeading());
             theta_sample_vector_sum[0] += Math.cos(samplePose.getHeading());
             theta_sample_vector_sum[1] += Math.sin(samplePose.getHeading());
         }
         Collections.sort(x_sample_sorted);
         Collections.sort(y_sample_sorted);
+
+        telemetry.addData("x_sample_sorted", x_sample_sorted);
+        telemetry.addData("y_sample_sorted", y_sample_sorted);
+        telemetry.addData("theta_sample_list", theta_sample_list);
+        telemetry.update();
 
         // Use median for x and y
         // Use mean for angle because median would be very difficult due to wrapping

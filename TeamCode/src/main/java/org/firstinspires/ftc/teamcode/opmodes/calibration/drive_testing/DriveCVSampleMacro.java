@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.opmodes.calibration.drive_testing;
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
+import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.arcrobotics.ftclib.geometry.Pose2d;
 import com.arcrobotics.ftclib.geometry.Rotation2d;
 import com.arcrobotics.ftclib.hardware.motors.Motor;
@@ -15,6 +16,7 @@ import com.qualcomm.robotcore.hardware.ServoImplEx;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
+import org.firstinspires.ftc.teamcode.cvprocessors.SampleOrientationProcessor;
 import org.firstinspires.ftc.teamcode.opmodes.algorithms.SampleDataBufferFilter;
 import org.firstinspires.ftc.teamcode.subsystems.DriveSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.GoBildaPinpointDriver;
@@ -46,16 +48,13 @@ import org.firstinspires.ftc.teamcode.synchropather.systems.translation.Translat
 import org.firstinspires.ftc.teamcode.synchropather.systems.translation.movements.LinearTranslation;
 
 import java.util.ArrayDeque;
-import java.util.ArrayList;
 
 @Config
 @TeleOp(name="Drive CV Sample Macro", group = "Calibration")
 public class DriveCVSampleMacro extends LinearOpMode {
 
     private Synchronizer search, pickup;
-
-    private ArrayDeque<Double> loopTicks;
-    private ElapsedTime runtime;
+    private Synchronizer stillExtendoRetracted;
 
     private HorizontalIntakeSubsystem horizontalIntake;
     private OverheadCameraSubsystem overheadCamera;
@@ -67,16 +66,28 @@ public class DriveCVSampleMacro extends LinearOpMode {
 
     public static double armDownPosition = 1.025;
 
-    public static double searchSpeedDivisor = 2;
+    public static double searchSpeedDivisor = 1.5;
 
     public static double driveSpeed = 0.5;
 
+    public static double intakeDelay = 0.2;
+
     @Override
     public void runOpMode() throws InterruptedException {
-        initSubsystems(new Pose2d(0,0,new Rotation2d(0)));
+        initSubsystems(new Pose2d(1,1,new Rotation2d(0)));
         initSearch();
 
+        LinearExtendo stillExtendo = new LinearExtendo(0,
+                new ExtendoState(LinearSlidesSubsystem.extendoOffset),
+                new ExtendoState(LinearSlidesSubsystem.extendoOffset)
+        );
+        ExtendoPlan extendoPlan = new ExtendoPlan(linearSlides, stillExtendo);
+        stillExtendoRetracted = new Synchronizer(extendoPlan);
+        stillExtendoRetracted.start();
+
         waitForStart();
+
+        OverheadCameraSubsystem.CLAW_OFFSET[0] = -3.2;
 
         sampleData = new SampleDataBufferFilter(
                 linearSlides,
@@ -95,10 +106,13 @@ public class DriveCVSampleMacro extends LinearOpMode {
             sampleData.updateBufferData();
             boolean driverControlling = controlDrive(sampleMacroRunning);
 
+            if (driverControlling) sampleMacroRunning = false;
+
             // Triangle is pick up sample macro
             if (gamepad1.triangle && !toggleTriangle && !sampleMacroRunning && !clawGrabbed) {
                 sampleMacroRunning = true;
                 toggleTriangle = true;
+                drive.stopController();
                 // init search
                 search.start();
                 sampleData.clearFilterData();
@@ -113,6 +127,10 @@ public class DriveCVSampleMacro extends LinearOpMode {
                 toggleTriangle = false;
             }
 
+            TelemetryPacket packet = new TelemetryPacket();
+            packet.fieldOverlay().setStroke("#3F51B5");
+            Drawing.drawRobot(packet.fieldOverlay(), localization.getPose());
+
             // Sample macro control
             if (sampleMacroRunning) {
                 // Search motion
@@ -125,7 +143,7 @@ public class DriveCVSampleMacro extends LinearOpMode {
                     }
                     // Try to detect sample
                     else {
-                        sampleData.updateFilterData(overheadCamera.getClosestSample()); // Can return null
+                        sampleData.updateFilterData(overheadCamera.getSamplePositions(), overheadCamera.getSampleAngles(), overheadCamera.getClosestSample()); // Can return null
                         extendoVelocity = (ExtendoState) search.getVelocity(MovementType.EXTENDO);
                     }
                 }
@@ -138,7 +156,7 @@ public class DriveCVSampleMacro extends LinearOpMode {
                         pickup.start();
                     }
                     // Stop macro if driver took over (or macro ended)
-                    if (driverControlling || !pickup.update()) {
+                    if (driverControlling || (pickup.getIsRunning() && !pickup.update())) {
                         pickup.stop();
                         sampleMacroRunning = false;
                         clawGrabbed = true;
@@ -146,6 +164,43 @@ public class DriveCVSampleMacro extends LinearOpMode {
                 }
             }
 
+            if (!sampleMacroRunning) {
+                stillExtendoRetracted.update();
+            }
+
+
+            Pose2d samplePosition = sampleData.getFilteredSamplePosition(telemetry);
+            if (samplePosition!=null) {
+                telemetry.addData("samplePosition", samplePosition.toString());
+                Drawing.drawTargetPose(packet.fieldOverlay(), samplePosition);
+            }
+
+
+            FtcDashboard.getInstance().sendTelemetryPacket(packet);
+
+            if (gamepad1.dpad_up) {
+                SampleOrientationProcessor.colorType = SampleOrientationProcessor.SampleColor.YELLOW;
+            }
+            if (gamepad1.dpad_left) {
+                SampleOrientationProcessor.colorType = SampleOrientationProcessor.SampleColor.BLUE;
+            }
+            if (gamepad1.dpad_right) {
+                SampleOrientationProcessor.colorType = SampleOrientationProcessor.SampleColor.RED;
+            }
+
+            switch (SampleOrientationProcessor.colorType) {
+                case YELLOW:
+                    gamepad1.setLedColor(1,1,0,1000);
+                    break;
+                case BLUE:
+                    gamepad1.setLedColor(0,0,1,1000);
+                    break;
+                case RED:
+                    gamepad1.setLedColor(1,0,0,1000);
+                    break;
+                default:
+                    break;
+            }
 
         }
     }
@@ -161,10 +216,11 @@ public class DriveCVSampleMacro extends LinearOpMode {
         boolean driving = !(forward==0 && strafe==0 && turn ==0);
 //        drive.driveFieldCentricPowers(forward, strafe, turn, Math.toDegrees(localization.getH()));
         if (driving || !macroRunning) {
-            drive.driveRobotCentricPowers(
+            drive.driveFieldCentricPowers(
                     driveSpeed * forward,
                     driveSpeed * strafe,
-                    driveSpeed * turn
+                    Math.min(1,driveSpeed+0.5) * turn,
+                    Math.toDegrees(localization.getH())
             );
         }
         return driving;
@@ -191,6 +247,7 @@ public class DriveCVSampleMacro extends LinearOpMode {
         // init overhead camera
         WebcamName cameraName = hardwareMap.get(WebcamName.class, "Webcam 1");
         this.overheadCamera = new OverheadCameraSubsystem(cameraName, telemetry);
+        overheadCamera.correctExposure(telemetry);
 
         // init linear slides
         // TODO: FIGURE OUT WHAT RPM EXTENDO MOTOR IS
@@ -338,7 +395,7 @@ public class DriveCVSampleMacro extends LinearOpMode {
         ExtendoState extendoPosition = new ExtendoState(x_extendo);
 
         // Unpack sample pose
-        Pose2d samplePose = sampleData.getFilteredSamplePosition();
+        Pose2d samplePose = sampleData.getFilteredSamplePosition(telemetry);
         double x_sample = samplePose.getX();
         double y_sample = samplePose.getY();
         double theta_sample = samplePose.getHeading();
@@ -352,15 +409,23 @@ public class DriveCVSampleMacro extends LinearOpMode {
         double y_sample_bot = dx*sin + dy*cos;
         double theta_sample_bot = theta_sample - heading_bot + Math.PI/2.0;
 
+        telemetry.addData("[DEBUG] x_sample_bot", x_sample_bot);
+        telemetry.addData("[DEBUG] y_sample_bot", y_sample_bot);
+        telemetry.addData("[DEBUG] theta_sample_bot", theta_sample_bot);
+
         // Calculate heading difference given horizontal claw offset
         double r_sample_bot_norm = Math.hypot(x_sample_bot, y_sample_bot);
-        double theta_sample_tangent = Math.atan2(y_sample_bot, x_sample_bot) + Math.acos(OverheadCameraSubsystem.CAMERA_OFFSET[1]/r_sample_bot_norm);
+        double theta_sample_tangent = Math.atan2(y_sample_bot, x_sample_bot) - Math.acos(OverheadCameraSubsystem.CAMERA_OFFSET[1]/r_sample_bot_norm);
         double delta_heading = theta_sample_tangent + Math.PI/2;
 
         // Extendo prep calculations
         double rcos = OverheadCameraSubsystem.CAMERA_OFFSET[1]*Math.cos(theta_sample_tangent);
         double rsin = OverheadCameraSubsystem.CAMERA_OFFSET[1]*Math.sin(theta_sample_tangent);
         double d_sample_bot = Math.hypot(rcos-x_sample_bot, rsin-y_sample_bot);
+
+        telemetry.addData("[DEBUG] r_sample_bot_norm", r_sample_bot_norm);
+        telemetry.addData("[DEBUG] theta_sample_tangent", theta_sample_tangent);
+        telemetry.addData("[DEBUG] delta_heading", delta_heading);
 
         // Get subsystem setpoints
         TranslationState translationTarget = new TranslationState(
@@ -374,6 +439,13 @@ public class DriveCVSampleMacro extends LinearOpMode {
         );
         double hWristTarget = normalizeAngle(theta_sample_bot - delta_heading);
 
+
+        telemetry.addData("[DEBUG] botPose.getHeading()", botPose.getHeading());
+        telemetry.addData("[DEBUG] rotationTarget.getHeading()", rotationTarget.getHeading());
+        telemetry.addData("[DEBUG] extendoTarget.getLength()", extendoTarget.getLength());
+        telemetry.addData("[DEBUG] hWristTarget", hWristTarget);
+
+        telemetry.update();
 
         //// SYNCHRONIZER
         // Extendo
@@ -397,7 +469,7 @@ public class DriveCVSampleMacro extends LinearOpMode {
         ExtendoConstants.MAX_PATHING_VELOCITY = previousMaxVelocity;
 
         // Move arm down
-        LinearHArm h_arm_down = new LinearHArm(Math.max(Math.max(extendoOut.getEndTime(), rotation.getEndTime()), translation.getEndTime()),
+        LinearHArm h_arm_down = new LinearHArm(intakeDelay+Math.max(Math.max(extendoOut.getEndTime(), rotation.getEndTime()), translation.getEndTime()),
                 new HArmState(0.9),
                 new HArmState(armDownPosition),
                 true

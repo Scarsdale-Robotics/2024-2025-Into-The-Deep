@@ -133,6 +133,7 @@ public class LocalizationSubsystem extends SubsystemBase {
         this.telemetry.update();
         while ((opMode.opModeIsActive() || opMode.opModeInInit())
                 && this.pinpoint.getDeviceStatus() != GoBildaPinpointDriver.DeviceStatus.READY) {
+            this.pinpoint.update();
             this.telemetry.addData("[PP STATUS]", this.pinpoint.getDeviceStatus());
             this.telemetry.update();
         }

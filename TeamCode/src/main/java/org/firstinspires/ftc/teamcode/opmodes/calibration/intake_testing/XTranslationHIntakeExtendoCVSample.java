@@ -75,7 +75,7 @@ public class XTranslationHIntakeExtendoCVSample extends LinearOpMode {
         telemetry.update();
 
         waitForStart();
-        overheadCamera.correctExposure();
+        overheadCamera.correctExposure(telemetry);
 
         while (opModeIsActive()) {
             // Create synchronizer on button press

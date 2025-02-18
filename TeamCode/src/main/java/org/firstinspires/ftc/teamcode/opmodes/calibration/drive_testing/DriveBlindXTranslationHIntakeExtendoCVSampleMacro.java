@@ -102,7 +102,7 @@ public class DriveBlindXTranslationHIntakeExtendoCVSampleMacro extends LinearOpM
         lastBufferedBotPose = bufferedBotPoses.get(0);
 
         waitForStart();
-        overheadCamera.correctExposure();
+        overheadCamera.correctExposure(telemetry);
 
         ExtendoState extendoPosition = null;
         ExtendoState extendoVelocity = null;

@@ -90,7 +90,8 @@ public class SynchroTeleop extends LinearOpMode {
         clipbot = new ClipbotSubsystem(
                 initServo(hardwareMap, "magazineIntake"),
                 initServo(hardwareMap, "magazineLoader"),
-                initMotor(hardwareMap, "magazineFeeder", Motor.GoBILDA.RPM_312)
+                initMotor(hardwareMap, "magazineFeeder", Motor.GoBILDA.RPM_312),
+                telemetry
         );
 
         overheadCamera = new OverheadCameraSubsystem(

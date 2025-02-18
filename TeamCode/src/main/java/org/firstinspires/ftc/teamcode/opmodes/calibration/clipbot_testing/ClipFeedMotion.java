@@ -92,7 +92,8 @@ public class ClipFeedMotion extends LinearOpMode {
         this.clipbot = new ClipbotSubsystem(
                 magazineIntake,
                 magazineLoader,
-                magazineFeeder
+                magazineFeeder,
+                telemetry
         );
     }
 

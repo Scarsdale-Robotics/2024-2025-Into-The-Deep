@@ -20,12 +20,15 @@ public class ClipbotSubsystem {
     private double magazineFeederPosition;
     private double magazineFeederCurrent;
 
+    public final Telemetry telemetry;
 
     public ClipbotSubsystem(
             Servo magazineIntake,
             Servo magazineLoader,
-            Motor magazineFeeder
+            Motor magazineFeeder,
+            Telemetry telemetry
     ) {
+        this.telemetry = telemetry;
 
         // Servo that takes clips off the wall
         this.magazineIntake = magazineIntake;
