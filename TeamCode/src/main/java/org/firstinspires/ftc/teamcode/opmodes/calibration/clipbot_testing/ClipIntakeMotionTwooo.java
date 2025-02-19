@@ -62,10 +62,10 @@ public class ClipIntakeMotionTwooo extends LinearOpMode {
     private static final int TRANSFER_EXTENDO = 200;
 
     public static double M_INTAKE_OPEN = 0.5;
-    public static double M_INTAKE_UP = 0.8;
+    public static double M_INTAKE_UP = 0.7;
     public static double M_INTAKE_CLOSED = 0.21;
     public static double M_LOADER_OPEN = 0.86;
-    public static double M_LOADER_CLOSED = 0.1;
+    public static double M_LOADER_CLOSED = 0.3;
     public static int M_FEEDER_MAX = 10000;
     public static int M_FEEDER_MIN = 0;
 
@@ -93,8 +93,8 @@ public class ClipIntakeMotionTwooo extends LinearOpMode {
 
         clipbot = new ClipbotSubsystem(
                 initServo(hardwareMap, "magazineIntake"),
-                initServo(hardwareMap, "magazineLoader1"),
-                initServo(hardwareMap, "magazineLoader2"),
+                initServo(hardwareMap, "magazineLoaderClose"),
+                initServo(hardwareMap, "magazineLoaderFar"),
                 initMotor(hardwareMap, "magazineFeeder", Motor.GoBILDA.RPM_312),
                 telemetry
         );

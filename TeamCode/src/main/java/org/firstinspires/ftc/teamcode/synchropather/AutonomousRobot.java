@@ -67,7 +67,7 @@ public class AutonomousRobot {
         this.opMode = opMode;
         this.telemetry = new MultipleTelemetry(opMode.telemetry, FtcDashboard.getInstance().getTelemetry());
         this.teamColor = teamColor;
-        HardwareRobot hardwareRobot = new HardwareRobot(hardwareMap); // TODO refer above
+//        HardwareRobot hardwareRobot = new HardwareRobot(hardwareMap); // TODO refer above
 
 
         // init horizontal intake
@@ -181,8 +181,8 @@ public class AutonomousRobot {
         sampleData = new SampleDataBufferFilter(
                 linearSlides,
                 localization,
-                0.045,
-                5
+                0.03,
+                3
         );
     }
 

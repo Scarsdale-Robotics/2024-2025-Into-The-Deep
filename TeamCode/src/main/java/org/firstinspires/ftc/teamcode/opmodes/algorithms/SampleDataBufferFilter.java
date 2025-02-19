@@ -74,7 +74,7 @@ public class SampleDataBufferFilter {
             double closestSampleDistance = Double.MAX_VALUE;
             Pose2d closestSamplePose = new Pose2d();
 
-            for (int i = 0; i < sampleTranslations.size(); i++) {
+            for (int i = 0; i < Math.min(sampleTranslations.size(), sampleAngles.size()); i++) {
                 double[] sampleCameraPosition = new double[]{
                         sampleTranslations.get(i)[0],
                         sampleTranslations.get(i)[1],

@@ -3,11 +3,8 @@ package org.firstinspires.ftc.teamcode.opmodes.calibration.clipbot_testing;
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
-import com.arcrobotics.ftclib.hardware.motors.Motor;
-import com.arcrobotics.ftclib.hardware.motors.MotorEx;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.ServoImplEx;
 
@@ -16,8 +13,8 @@ import com.qualcomm.robotcore.hardware.ServoImplEx;
 public class ClipbotServoCalibrator extends LinearOpMode {
 
     private Servo magazineIntake;
-    private Servo magazineLoader1;
-    private Servo magazineLoader2;
+    private Servo magazineLoaderClose;
+    private Servo magazineLoaderFar;
 
     public static double intakeOutPosition = 0.5;
     public static double intakeInPosition = 0.5;
@@ -66,15 +63,15 @@ public class ClipbotServoCalibrator extends LinearOpMode {
             }
 
             if (loaderIsDown) {
-                magazineLoader1.setPosition(loaderDownPosition);
-                magazineLoader2.setPosition(1-loaderDownPosition);
+                magazineLoaderClose.setPosition(loaderDownPosition);
+                magazineLoaderFar.setPosition(1-loaderDownPosition);
                 telemetry.addData("loader position", "DOWN");
             } else {
 //                magazineLoader1.setPosition(loaderUpPosition);
 //                magazineLoader2.setPosition(1-loaderUpPosition);
                 telemetry.addData("loader position", "UP");
-                telemetry.addData("loader 1 position", magazineLoader1.getPosition());
-                telemetry.addData("loader 2 position", magazineLoader2.getPosition());
+                telemetry.addData("loader 1 position", magazineLoaderClose.getPosition());
+                telemetry.addData("loader 2 position", magazineLoaderFar.getPosition());
             }
 
             telemetry.update();
@@ -86,7 +83,7 @@ public class ClipbotServoCalibrator extends LinearOpMode {
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
 
         magazineIntake = hardwareMap.get(ServoImplEx.class, "magazineIntake");
-        magazineLoader1 = hardwareMap.get(ServoImplEx.class, "magazineLoader1");
-        magazineLoader2 = hardwareMap.get(ServoImplEx.class, "magazineLoader2");
+        magazineLoaderClose = hardwareMap.get(ServoImplEx.class, "magazineLoaderClose");
+        magazineLoaderFar = hardwareMap.get(ServoImplEx.class, "magazineLoaderFar");
     }
 }

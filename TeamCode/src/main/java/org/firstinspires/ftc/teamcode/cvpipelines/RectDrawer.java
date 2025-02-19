@@ -45,13 +45,13 @@ public class RectDrawer extends OpenCvPipeline {
 
     public static Telemetry telemetry;
 
-    public static Scalar lowerYellow = new Scalar(15.0, 190.0, 130.1); // hsv
+    public static Scalar lowerYellow = new Scalar(15.0, 100.0, 100.1); // hsv
     public static Scalar upperYellow = new Scalar(30.0, 255.0, 255.0); // hsv
-    public static Scalar lowerBlue = new Scalar(90.0, 150.0, 60.0); // hsv
+    public static Scalar lowerBlue = new Scalar(90.0, 140.0, 100.0); // hsv
     public static Scalar upperBlue = new Scalar(140.0, 255.0, 255.0); // hsv
     public static Scalar lowerRedH = new Scalar(10.0, 0.0, 0.0); // hsv
     public static Scalar upperRedH = new Scalar(160.0, 255.0, 255.0); // hsv
-    public static Scalar lowerRedSV = new Scalar(0.0, 190.0, 120.0); // hsv
+    public static Scalar lowerRedSV = new Scalar(0.0, 100.0, 100.0); // hsv
     public static Scalar upperRedSV = new Scalar(255.0, 255.0, 255.0); // hsv
 
     private double sampleAngle = 0;
@@ -111,10 +111,12 @@ public class RectDrawer extends OpenCvPipeline {
             Core.inRange(hsv, lowerYellow, upperYellow, inRange);
         }
 
+
+
         // Morphology
-        int kernelSize = (int)Math.round(1 / Math.sqrt(scalingFactor));
-        Mat kernel = Imgproc.getStructuringElement(Imgproc.CV_SHAPE_RECT, new Size(kernelSize, kernelSize));
+        Mat kernel = Imgproc.getStructuringElement(Imgproc.CV_SHAPE_RECT, new Size(3/Math.sqrt(scalingFactor), 3/scalingFactor));
         Imgproc.erode(inRange, inRange, kernel);
+
 
         // Find all contours
         List<MatOfPoint> unfilteredContours = new ArrayList<>();
@@ -122,18 +124,74 @@ public class RectDrawer extends OpenCvPipeline {
         Imgproc.findContours(inRange, unfilteredContours, hierarchy, Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_SIMPLE);
 
         // Filter contours by size and get rotated rects
-        int minArea = (int)(5000/(scalingFactor*scalingFactor));
+        int minArea = 2500;
         ArrayList<RotatedRect> rotatedRects = new ArrayList<>();
         List<MatOfPoint> filteredContours = new ArrayList<>();
         for (MatOfPoint contour : unfilteredContours) {
             RotatedRect minAreaRect = Imgproc.minAreaRect(new MatOfPoint2f(contour.toArray()));
             double area = minAreaRect.size.area();
-            if (area > minArea) {
+            Point[] corners = new Point[4];
+            minAreaRect.points(corners);
+
+            // Valid rectangle doesn't touch the frame's borders and is larger than minArea
+            boolean validRect = true;
+            double frameMargin = 5;
+            for (Point corner : corners) {
+                double cornerX = corner.x;
+                double cornerY = corner.y;
+                if (cornerX <= frameMargin || cornerX >= frame.width() - frameMargin || cornerY <= frameMargin || cornerY >= frame.height() - frameMargin) {
+                    validRect = false;
+                }
+            }
+            if (area < minArea) {
+                validRect = false;
+            }
+            if (validRect) {
                 filteredContours.add(contour);
                 rotatedRects.add(minAreaRect);
             }
         }
-        Imgproc.drawContours(frame, filteredContours, -1, new Scalar(0, 255, 0), 2);
+        Imgproc.drawContours(input, filteredContours, -1, new Scalar(0, 255, 0), 2);
+
+
+//        // Create a blank binary image (all zeros initially)
+//        Mat filteredContourImage = Mat.zeros(inRange.size(), CvType.CV_8UC1);  // 500x500 binary image
+//
+//        // Draw the contours onto the blank image, filled with white color (255)
+//        Imgproc.drawContours(filteredContourImage, filteredContours, -1, new Scalar(255), Imgproc.FILLED);
+//
+//        // Compute distance transform
+//        Mat distTransform = new Mat();
+//        Imgproc.distanceTransform(filteredContourImage, distTransform, Imgproc.DIST_L2, 5);
+//        Core.normalize(distTransform, distTransform, 0, 255, Core.NORM_MINMAX);
+//
+//        // Threshold to get sure foreground
+//        Mat sureForeground = new Mat();
+//        Imgproc.threshold(distTransform, sureForeground, 0.4 * 255, 255, Imgproc.THRESH_BINARY);
+//        sureForeground.convertTo(sureForeground, CvType.CV_8U);  // Ensure correct type
+//        kernel = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(10, 10));
+//        Imgproc.dilate(sureForeground, sureForeground, kernel);
+//
+//        distTransform.convertTo(distTransform, CvType.CV_8U);  // Ensure correct type
+//
+//        // Find all contours
+//        unfilteredContours = new ArrayList<>();
+//        hierarchy = new Mat();
+//        Imgproc.findContours(sureForeground, unfilteredContours, hierarchy, Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_SIMPLE);
+//
+//        // Filter contours by size and get rotated rects
+//        minArea = 1500;
+//        rotatedRects = new ArrayList<>();
+//        filteredContours = new ArrayList<>();
+//        for (MatOfPoint contour : unfilteredContours) {
+//            RotatedRect minAreaRect = Imgproc.minAreaRect(new MatOfPoint2f(contour.toArray()));
+//            double area = minAreaRect.size.area();
+//            if (area > minArea) {
+//                filteredContours.add(contour);
+//                rotatedRects.add(minAreaRect);
+//            }
+//        }
+//        Imgproc.drawContours(frame, filteredContours, -1, new Scalar(0, 255, 0), 2);
 
         // Get overlapping rotated rect groups
         double overlapThreshold = 0.2; // % of smaller box covered

@@ -4,6 +4,7 @@ import android.util.Size;
 
 import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
@@ -32,7 +33,7 @@ public class OverheadCameraSubsystem {
 
     // How far forward and to the left the camera is from the robot's center of rotation
     // when the extendo is fully retracted, in inches.
-    public static double[] CAMERA_OFFSET = new double[]{8.30511811, 0};//-0.57047244};
+    public static double[] CAMERA_OFFSET = new double[]{7.321, 0};//-0.57047244};
 
 
     public OverheadCameraSubsystem(WebcamName cameraName, Telemetry telemetry) {
@@ -139,6 +140,14 @@ public class OverheadCameraSubsystem {
             telemetry.addData("[LOGI CAM] status", "waiting to start");
             telemetry.update();
         }
+
+        // wait a bit
+        ElapsedTime runtime = new ElapsedTime(0);
+        runtime.reset();
+        double delay = 0.25; // seconds
+        while ((opMode.opModeInInit() || opMode.opModeIsActive()) && runtime.seconds() < delay);
+
+        // finally update exposure
         updateExposure(visionPortal, getCorrectedExposure(processor.getAverageBrightness()));
         telemetry.addData("[LOGI CAM] status", "corrected exposure!");
         telemetry.update();

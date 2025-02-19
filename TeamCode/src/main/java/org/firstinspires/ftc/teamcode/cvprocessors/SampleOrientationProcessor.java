@@ -36,15 +36,15 @@ public class SampleOrientationProcessor implements VisionProcessor {
 
     private Telemetry telemetry;
 
-    public static double cameraHeight = 9; // inches (-1.5 because of sample height)
+    public static double cameraHeight = 8.409; // inches (-1.5 because of sample height)
 
-    public static Scalar lowerYellow = new Scalar(19.0, 102.0, 130.1); // hsv
+    public static Scalar lowerYellow = new Scalar(15.0, 100.0, 100.1); // hsv
     public static Scalar upperYellow = new Scalar(30.0, 255.0, 255.0); // hsv
-    public static Scalar lowerBlue = new Scalar(90.0, 90.0, 90.0); // hsv
-    public static Scalar upperBlue = new Scalar(120.0, 255.0, 255.0); // hsv
+    public static Scalar lowerBlue = new Scalar(90.0, 140.0, 100.0); // hsv
+    public static Scalar upperBlue = new Scalar(140.0, 255.0, 255.0); // hsv
     public static Scalar lowerRedH = new Scalar(10.0, 0.0, 0.0); // hsv
-    public static Scalar upperRedH = new Scalar(170.0, 255.0, 255.0); // hsv
-    public static Scalar lowerRedSV = new Scalar(0.0, 130.0, 100.0); // hsv
+    public static Scalar upperRedH = new Scalar(160.0, 255.0, 255.0); // hsv
+    public static Scalar lowerRedSV = new Scalar(0.0, 100.0, 100.0); // hsv
     public static Scalar upperRedSV = new Scalar(255.0, 255.0, 255.0); // hsv
 
     private volatile boolean sampleDetected = false;
@@ -109,6 +109,7 @@ public class SampleOrientationProcessor implements VisionProcessor {
         }
 
 
+
         // Morphology
         Mat kernel = Imgproc.getStructuringElement(Imgproc.CV_SHAPE_RECT, new Size(3/Math.sqrt(scalingFactor), 3/scalingFactor));
         Imgproc.erode(inRange, inRange, kernel);
@@ -119,10 +120,8 @@ public class SampleOrientationProcessor implements VisionProcessor {
         Mat hierarchy = new Mat();
         Imgproc.findContours(inRange, unfilteredContours, hierarchy, Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_SIMPLE);
 
-
         // Filter contours by size and get rotated rects
-        int minArea = 2400;
-        int maxArea = 7500;
+        int minArea = 2500;
         ArrayList<RotatedRect> rotatedRects = new ArrayList<>();
         List<MatOfPoint> filteredContours = new ArrayList<>();
         for (MatOfPoint contour : unfilteredContours) {
@@ -132,36 +131,64 @@ public class SampleOrientationProcessor implements VisionProcessor {
             minAreaRect.points(corners);
 
             // Valid rectangle doesn't touch the frame's borders and is larger than minArea
-            boolean onMargin = false;
+            boolean validRect = true;
             double frameMargin = 5;
             for (Point corner : corners) {
                 double cornerX = corner.x;
                 double cornerY = corner.y;
                 if (cornerX <= frameMargin || cornerX >= frame.width() - frameMargin || cornerY <= frameMargin || cornerY >= frame.height() - frameMargin) {
-                    onMargin = true;
+                    validRect = false;
                 }
             }
-            boolean validRect = !onMargin;
-            if (area < minArea || area > maxArea) {
+            if (area < minArea) {
                 validRect = false;
             }
             if (validRect) {
                 filteredContours.add(contour);
                 rotatedRects.add(minAreaRect);
-            } else if (!onMargin && area >= maxArea) {
-                // handle large contour
-                List<MatOfPoint> brokenContours = breakLargeContour(inRange, contour);
-                for (MatOfPoint brokenContour : brokenContours) {
-                    RotatedRect minAreaRect_broken = Imgproc.minAreaRect(new MatOfPoint2f(brokenContour.toArray()));
-                    double area_broken = minAreaRect_broken.size.area();
-                    if (area_broken > minArea) {
-                        filteredContours.add(brokenContour);
-                        rotatedRects.add(minAreaRect_broken);
-                    }
-                }
             }
         }
-        Imgproc.drawContours(frame, filteredContours, -1, new Scalar(0, 255, 0), 2);
+        Imgproc.drawContours(input, filteredContours, -1, new Scalar(0, 255, 0), 2);
+
+//
+//        // Create a blank binary image (all zeros initially)
+//        Mat filteredContourImage = Mat.zeros(inRange.size(), CvType.CV_8UC1);  // 500x500 binary image
+//
+//        // Draw the contours onto the blank image, filled with white color (255)
+//        Imgproc.drawContours(filteredContourImage, filteredContours, -1, new Scalar(255), Imgproc.FILLED);
+//
+//        // Compute distance transform
+//        Mat distTransform = new Mat();
+//        Imgproc.distanceTransform(filteredContourImage, distTransform, Imgproc.DIST_L2, 5);
+//        Core.normalize(distTransform, distTransform, 0, 255, Core.NORM_MINMAX);
+//
+//        // Threshold to get sure foreground
+//        Mat sureForeground = new Mat();
+//        Imgproc.threshold(distTransform, sureForeground, 0.4 * 255, 255, Imgproc.THRESH_BINARY);
+//        sureForeground.convertTo(sureForeground, CvType.CV_8U);  // Ensure correct type
+//        kernel = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(10, 10));
+//        Imgproc.dilate(sureForeground, sureForeground, kernel);
+//
+//        distTransform.convertTo(distTransform, CvType.CV_8U);  // Ensure correct type
+//
+//        // Find all contours
+//        unfilteredContours = new ArrayList<>();
+//        hierarchy = new Mat();
+//        Imgproc.findContours(sureForeground, unfilteredContours, hierarchy, Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_SIMPLE);
+//
+//        // Filter contours by size and get rotated rects
+//        minArea = 1500;
+//        rotatedRects = new ArrayList<>();
+//        filteredContours = new ArrayList<>();
+//        for (MatOfPoint contour : unfilteredContours) {
+//            RotatedRect minAreaRect = Imgproc.minAreaRect(new MatOfPoint2f(contour.toArray()));
+//            double area = minAreaRect.size.area();
+//            if (area > minArea) {
+//                filteredContours.add(contour);
+//                rotatedRects.add(minAreaRect);
+//            }
+//        }
+//        Imgproc.drawContours(frame, filteredContours, -1, new Scalar(0, 255, 0), 2);
 
 
         // Get overlapping rotated rect groups
@@ -213,9 +240,9 @@ public class SampleOrientationProcessor implements VisionProcessor {
             Point[] vertices = new Point[4];
             rotatedRect.points(vertices);
             for (int j = 0; j < 4; j++) {
-                Imgproc.line(frame, vertices[j], vertices[(j + 1) % 4], new Scalar(0, 255, 0), 2);
+                Imgproc.line(input, vertices[j], vertices[(j + 1) % 4], new Scalar(0, 255, 0), 2);
             }
-            Imgproc.circle(frame, rotatedRect.center, 5, new Scalar(255, 255, 0));
+            Imgproc.circle(input, rotatedRect.center, 5, new Scalar(255, 255, 0));
         }
 
 
@@ -234,14 +261,115 @@ public class SampleOrientationProcessor implements VisionProcessor {
         sampleAngles = tempSampleAngles;
 
 
+
+
+        // Draw filtered rects as green and their corresponding data
+        ArrayList<Point> real;
+//        ArrayList<Point> real = getOffsets(filteredRects, scalingFactor);
+        for (int i = 0; i < filteredRects.size(); i++) {
+            RotatedRect rotatedRect = filteredRects.get(i);
+            Point[] vertices = new Point[4];
+            rotatedRect.points(vertices);
+            for (int j = 0; j < 4; j++) {
+                Imgproc.line(input, vertices[j], vertices[(j + 1) % 4], new Scalar(0, 255, 0), 2);
+            }
+            Point center = rotatedRect.center;
+
+
+
+            double procAngle = rotatedRect.angle;
+            if (filteredRects.get(0).size.width > filteredRects.get(0).size.height)
+                procAngle *= -1;
+            else
+                procAngle = 90-procAngle;
+
+            double length = 200/scalingFactor;
+            double dX = length*Math.cos(Math.toRadians(procAngle));
+            double dY = length*Math.sin(Math.toRadians(procAngle));
+            double vecX = center.x+dX;
+            double vecY = center.y-dY;
+//            telemetry.addData("vecX", vecX);
+//            telemetry.addData("vecY", vecY);
+            double scaled640 = 640/scalingFactor;
+            double scaled480 = 480/scalingFactor;
+            if (vecX < 0) {
+                vecY = center.y - (1+vecX/dX)*dY;
+                vecX = 0;
+            } if (vecY < 0) {
+                vecX = center.x + (1+vecY/dY)*dX;
+                vecY = 0;
+            } if (vecX > scaled640) {
+                vecY = center.y - (1-(vecX-scaled640)/dX)*dY;
+                vecX = scaled640;
+            } if (vecY > scaled480) {
+                vecX = center.x + (1+(vecY-scaled480)/dY)*dX;
+                vecY = scaled480;
+            }
+            dX = vecX-center.x;
+            dY = vecY-center.y;
+            Imgproc.line(input, center, new Point(vecX,vecY), new Scalar(0, 255, 255), 1);
+            Imgproc.line(input, center, new Point(center.x+dY/3, center.y-dX/3), new Scalar(255, 0, 255), 1);
+            Imgproc.line(input, new Point(center.x+dY/10, center.y-dX/10), new Point(center.x+dY/10+dX/10, center.y-dX/10+dY/10), new Scalar(255, 0, 255), 1);
+            Imgproc.line(input, new Point(center.x+dY/10+dX/10, center.y-dX/10+dY/10), new Point(center.x+dX/10, center.y+dY/10), new Scalar(255, 0, 255), 1);
+            Imgproc.line(input, center, new Point(center.x+length/2,center.y), new Scalar(0, 255, 255), 1);
+            // Define arc parameters
+            int radius = (int)(20/scalingFactor);
+            double endAngle = -procAngle;
+            Scalar color = new Scalar(0, 255, 255);
+            int thickness = 1;
+
+            // Generate points on the arc
+            MatOfPoint points = new MatOfPoint();
+            Imgproc.ellipse2Poly(center, new Size(radius, radius), 0, 0, (int) endAngle, 1, points);
+
+            // Draw the arc
+            List<MatOfPoint> listThing = new ArrayList<>();
+            listThing.add(points);
+            Imgproc.polylines(input, listThing, false, color, thickness);
+            Imgproc.putText(input, (Math.round(10*procAngle)/10d)+" deg", new Point(center.x+30/scalingFactor, center.y-10/scalingFactor+(procAngle<0 ? 30 : 0)/scalingFactor), 0, 0.5/scalingFactor, new Scalar(0, 255, 255));
+
+
+            // get real sample coords
+            double area = rotatedRect.size.area()*scalingFactor*scalingFactor; //*2.091295825;
+            double sampleHeight = 1435.0/Math.sqrt(area)-0.308; // calculate height of camer based on area of sample
+//            telemetry.addData("sampleHeight", sampleHeight);
+
+
+            // TODO: remove
+            real = getOffsets(filteredRects, sampleHeight, scalingFactor);
+
+
+
+
+
+
+            double real_x = real.get(i).x; // in inches
+            double real_y = real.get(i).y;
+            double scaled320 = 320/scalingFactor;
+            double scaled240 = 240/scalingFactor;
+//            telemetry.addData("real_x", real_x);
+//            telemetry.addData("real_y", real_y);
+            Imgproc.line(input, center, new Point(scaled320, center.y), new Scalar(255, 255, 0), 1);
+            Imgproc.putText(input, (Math.round(10*real_x)/10d)+(Math.abs(real_x)>1?" in":""), new Point(scaled320+(center.x-scaled320)*0.5-20/scalingFactor, center.y+15/scalingFactor), 0, 0.5/scalingFactor, new Scalar(255, 255, 0));
+            Imgproc.line(input, new Point(scaled320, center.y), new Point(scaled320,scaled240), new Scalar(255, 255, 0), 1);
+            Imgproc.putText(input, (Math.round(10*real_y)/10d)+(Math.abs(real_y)>1?" in":""), new Point(scaled320-5/scalingFactor-10*Double.toString(Math.round(10*real_y)/10d).length()/scalingFactor-(Math.abs(real_y)>1?22:0)/scalingFactor, scaled240+(center.y-scaled240)*0.5+10/scalingFactor), 0, 0.5/scalingFactor, new Scalar(255, 255, 0));
+
+
+
+
+            Imgproc.circle(input, rotatedRect.center, 1, new Scalar(255, 255, 0), 3);
+        }
+        Imgproc.circle(input, new Point(320, 240), 1, new Scalar(255, 255, 0), 3);
+
+
         // telemetry
         if (!filteredRects.isEmpty()) {
 //            telemetry.addData("width ", filteredRects.get(0).size.width);
 //            telemetry.addData("height ", filteredRects.get(0).size.height);
 //            telemetry.addData("angle ", filteredRects.get(0).angle);
 //            telemetry.addData("center ", filteredRects.get(0).center);
-            telemetry.addData("[S.O.P] area ", filteredRects.get(0).size.area());
-            telemetry.update();
+//            telemetry.addData("[S.O.P] area ", filteredRects.get(0).size.area());
+//            telemetry.update();
             double procAngle = filteredRects.get(0).angle;
             if (filteredRects.get(0).size.width > filteredRects.get(0).size.height)
                 procAngle *= -1;
@@ -258,7 +386,7 @@ public class SampleOrientationProcessor implements VisionProcessor {
 
 
 //        telemetry.update();
-        return frame;
+        return input;
     }
 
     public synchronized boolean getSampleDetected() {
@@ -309,39 +437,39 @@ public class SampleOrientationProcessor implements VisionProcessor {
         Mat kernel = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(10, 10));
         Imgproc.dilate(sureForeground, sureForeground, kernel);
 
-        // Step 1: Apply Canny Edge Detection
-        Mat edges = new Mat();
-        Imgproc.Canny(filteredContourImage, edges, 50, 150);
-
-        // Step 2: Detect lines using Hough Line Transform
-        Mat lines = new Mat();
-        Imgproc.HoughLinesP(edges, lines, 1, Math.PI / 180, 5, 0, 50);
-
-//            Mat rgbImage = new Mat();
+//        // Step 1: Apply Canny Edge Detection
+//        Mat edges = new Mat();
+//        Imgproc.Canny(filteredContourImage, edges, 50, 150);
 //
-//            // Convert single-channel binary image to 3-channel RGB
-//            Imgproc.cvtColor(edges, rgbImage, Imgproc.COLOR_GRAY2BGR);
-
-        // Step 3: Draw detected lines and analyze them
-        for (int i = 0; i < lines.rows(); i++) {
-            double[] line = lines.get(i, 0);
-            Point pt1 = new Point(line[0], line[1]);
-            Point pt2 = new Point(line[2], line[3]);
-
-            // Draw the detected lines
-            Imgproc.line(filteredContourImage, pt1, pt2, new Scalar(0, 0, 0), 2);
-//                Imgproc.line(rgbImage, pt1, pt2, new Scalar(0, 0, 255), 2);
-        }
-        Core.bitwise_or(filteredContourImage, sureForeground, filteredContourImage);
-
-        // Apply morphological opening to remove noise
-        kernel = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(5, 5));
-        Imgproc.morphologyEx(filteredContourImage, filteredContourImage, Imgproc.MORPH_OPEN, kernel);
+//        // Step 2: Detect lines using Hough Line Transform
+//        Mat lines = new Mat();
+//        Imgproc.HoughLinesP(edges, lines, 1, Math.PI / 180, 5, 0, 50);
+//
+////            Mat rgbImage = new Mat();
+////
+////            // Convert single-channel binary image to 3-channel RGB
+////            Imgproc.cvtColor(edges, rgbImage, Imgproc.COLOR_GRAY2BGR);
+//
+//        // Step 3: Draw detected lines and analyze them
+//        for (int i = 0; i < lines.rows(); i++) {
+//            double[] line = lines.get(i, 0);
+//            Point pt1 = new Point(line[0], line[1]);
+//            Point pt2 = new Point(line[2], line[3]);
+//
+//            // Draw the detected lines
+//            Imgproc.line(filteredContourImage, pt1, pt2, new Scalar(0, 0, 0), 2);
+////                Imgproc.line(rgbImage, pt1, pt2, new Scalar(0, 0, 255), 2);
+//        }
+//        Core.bitwise_or(filteredContourImage, sureForeground, filteredContourImage);
+//
+//        // Apply morphological opening to remove noise
+//        kernel = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(5, 5));
+//        Imgproc.morphologyEx(filteredContourImage, filteredContourImage, Imgproc.MORPH_OPEN, kernel);
 
         // Find all contours
         List<MatOfPoint> contours = new ArrayList<>();
         Mat hierarchy = new Mat();
-        Imgproc.findContours(filteredContourImage, contours, hierarchy, Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_SIMPLE);
+        Imgproc.findContours(sureForeground, contours, hierarchy, Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_SIMPLE);
 
         return contours;
     }
@@ -396,6 +524,33 @@ public class SampleOrientationProcessor implements VisionProcessor {
             // 8 : 3
             // horizontal: 8 / 4
         }
+
+        return output;
+    }
+
+    public ArrayList<Point> getOffsets(ArrayList<RotatedRect> input, double height, double scalingFactor) {
+        // Note: This method only works when the camera is directly above the samples, looking straight down
+
+        ArrayList<Point> output = new ArrayList<Point>();
+
+        double canvasVertical = 1.1 * height*3.0/8.0; // inches
+        double canvasHorizontal = 1.1 * height / 2;
+
+        double scaled320 = 320/scalingFactor;
+        double scaled240 = 240/scalingFactor;
+        for (RotatedRect i : input) {
+            // real center is (320, 480), positive direction is right and down
+//            output.add(new Point(i.center.x - 320, -(i.center.y - 240)));
+            output.add(new Point((i.center.x - scaled320) / scaled320 * canvasHorizontal, -(i.center.y - scaled240) / scaled240 * canvasVertical));
+
+
+            // 4 in height = 1.5 width vertical (half width, not full)
+            // 6 : 2.25
+            // 2 : 0.75
+            // 8 : 3
+            // horizontal: 8 / 4
+        }
+
 
         return output;
     }

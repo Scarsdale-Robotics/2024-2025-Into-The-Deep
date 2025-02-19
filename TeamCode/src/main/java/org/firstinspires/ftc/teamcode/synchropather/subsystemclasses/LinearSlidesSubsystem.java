@@ -16,7 +16,7 @@ public class LinearSlidesSubsystem {
 
     public final Telemetry telemetry;
 
-    public static double extendoOffset = 2; // TODO: REMOVE!!!!!!!!!!! (AFTER WIRING IS FIXED)
+    public static double extendoOffset = 0; // TODO: REMOVE!!!!!!!!!!! (AFTER WIRING IS FIXED)
 
     private double extendoPosition;
     private double leftLiftPosition;
