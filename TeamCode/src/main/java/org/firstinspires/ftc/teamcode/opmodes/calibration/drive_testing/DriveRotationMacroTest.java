@@ -64,9 +64,9 @@ public class DriveRotationMacroTest extends LinearOpMode {
      */
     public static double searchSpeedFactor = 0.5;
 
-    public static double driveSpeed = 0.5;
+    public static double driveSpeed = 1;
 
-    public static double intakeDelay = 0.4;
+    public static double intakeDelay = 0.25;
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -237,7 +237,7 @@ public class DriveRotationMacroTest extends LinearOpMode {
         this.localization = robot.localization;
         this.drive = robot.drive;
         this.sampleData = robot.sampleData;
-        OverheadCameraSubsystem.CLAW_OFFSET[0] = -2.4;
+        OverheadCameraSubsystem.CLAW_OFFSET[0] = -2;
 
         // init extendo retract macro
         extendoRetract = new ExtendoRetractMacro(linearSlides);

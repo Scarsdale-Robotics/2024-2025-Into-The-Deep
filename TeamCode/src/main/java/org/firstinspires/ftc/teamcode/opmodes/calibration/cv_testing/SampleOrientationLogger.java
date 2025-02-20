@@ -13,6 +13,7 @@ import org.firstinspires.ftc.robotcore.external.hardware.camera.controls.Exposur
 import org.firstinspires.ftc.teamcode.cvprocessors.SampleOrientationProcessor;
 import org.firstinspires.ftc.vision.VisionPortal;
 
+import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 
 @Config
@@ -42,7 +43,9 @@ public class SampleOrientationLogger extends LinearOpMode {
         updateExposure(visionPortal, getCorrectedExposure(processor.getAverageBrightness()));
 
         while (opModeIsActive()) {
-            double sampleAngleProportion = (processor.getFirstSampleAngle() - -Math.PI/2) / Math.PI;
+            ArrayList<Double> sampleAngles = processor.getSampleAngles();
+            if (sampleAngles.isEmpty()) continue;
+            double sampleAngleProportion = (sampleAngles.get(0) - -Math.PI/2) / Math.PI;
             double servoAngle = minusNinetyPosition + sampleAngleProportion*(plusNinetyPosition - minusNinetyPosition);
             wrist.setPosition(servoAngle);
         }

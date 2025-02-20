@@ -1,12 +1,8 @@
-package org.firstinspires.ftc.teamcode.cvprocessors;
+package org.firstinspires.ftc.teamcode.cvpipelines;
 
 import android.graphics.Canvas;
 
-import com.acmerobotics.dashboard.config.Config;
-
 import org.firstinspires.ftc.robotcore.external.Telemetry;
-import org.firstinspires.ftc.robotcore.internal.camera.calibration.CameraCalibration;
-import org.firstinspires.ftc.vision.VisionProcessor;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
@@ -19,26 +15,26 @@ import org.opencv.core.RotatedRect;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
+import org.openftc.easyopencv.OpenCvPipeline;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-@Config
-public class SampleOrientationProcessor implements VisionProcessor {
+public class RectDrawer_suspicious extends OpenCvPipeline {
+
     public enum SampleColor {
         YELLOW(),
         BLUE(),
-        RED()
+        RED();
     }
 
-    private Mat frame;
+    public Mat frame;
 
-    private Telemetry telemetry;
-
-    public static double cameraHeight = 8.409; // inches (-1.5 because of sample height)
+    public static Telemetry telemetry;
 
     public static Scalar lowerYellow = new Scalar(15.0, 100.0, 100.1); // hsv
     public static Scalar upperYellow = new Scalar(30.0, 255.0, 255.0); // hsv
@@ -49,27 +45,25 @@ public class SampleOrientationProcessor implements VisionProcessor {
     public static Scalar lowerRedSV = new Scalar(0.0, 100.0, 100.0); // hsv
     public static Scalar upperRedSV = new Scalar(255.0, 255.0, 255.0); // hsv
 
+    private double sampleAngle = 0;
+
     public static double AREA_PER_SAMPLE = 6000d;
     public static double SAMPLE_LONG_LENGTH = 120;
     public static double SAMPLE_SHORT_LENGTH = 50;
 
-    private volatile double averageBrightness = -1;
-    private volatile ArrayList<double[]> realPositions = new ArrayList<>();
-    private volatile ArrayList<Double> sampleAngles = new ArrayList<>();
+    public static SampleColor colorType = SampleColor.YELLOW;
+//    @Override
+//    public void init(int width, int height, CameraCalibration calibration) {
+//
+//    }
 
-    public static volatile SampleColor colorType = SampleColor.YELLOW;
-
-    public SampleOrientationProcessor(Telemetry telemetry) {
+    public RectDrawer_suspicious(Telemetry telemetry){
         this.telemetry = telemetry;
+//        this.colorType = colorType;
     }
 
     @Override
-    public void init(int width, int height, CameraCalibration calibration) {
-
-    }
-
-    @Override
-    public Object processFrame(Mat input, long captureTimeNanos) {
+    public Mat processFrame(Mat input) {
         frame = input.clone();
         double scalingFactor = (double) 640 /frame.width();
 
@@ -88,12 +82,12 @@ public class SampleOrientationProcessor implements VisionProcessor {
         Scalar upperBound = new Scalar(mu+k*sigma);
         Mat mask = new Mat();
         Core.inRange(gray, lowerBound, upperBound, mask);
+
         Scalar maskedMean = Core.mean(gray, mask);
-        averageBrightness = maskedMean.val[0];
-//        telemetry.addData("averageBrightness", averageBrightness);
+        double averageBrightness = maskedMean.val[0];
+        telemetry.addData("averageBrightness", averageBrightness);
         double targetAverageInRange = 120;
         frame.convertTo(frame, -1, targetAverageInRange/ averageBrightness, 0);
-
 
         // Color threshold
         Mat hsv = new Mat(); // convert to hsv
@@ -295,52 +289,137 @@ public class SampleOrientationProcessor implements VisionProcessor {
         }
 
 
-        // Draw filtered rects as green
-        ArrayList<double[]> tempRealPositions = getOffsets(rotatedRects, scalingFactor);
-        realPositions = tempRealPositions;
-        for (RotatedRect rotatedRect : rotatedRects) {
+
+        // Draw filtered rects as green and their corresponding data
+        ArrayList<Point> real = getOffsets(rotatedRects, scalingFactor);
+        for (int i = 0; i < rotatedRects.size(); i++) {
+            RotatedRect rotatedRect = rotatedRects.get(i);
             Point[] vertices = new Point[4];
             rotatedRect.points(vertices);
             for (int j = 0; j < 4; j++) {
-                Imgproc.line(input, vertices[j], vertices[(j + 1) % 4], new Scalar(0, 255, 0), 2);
+                Imgproc.line(frame, vertices[j], vertices[(j + 1) % 4], new Scalar(0, 255, 0), 2);
             }
-            Imgproc.circle(input, rotatedRect.center, 5, new Scalar(255, 255, 0));
-        }
+            Point center = rotatedRect.center;
 
 
-        // Update sample angles list
-        ArrayList<Double> tempSampleAngles = new ArrayList<>();
-        for (RotatedRect rect : rotatedRects) {
-            double procAngle = rect.angle;
-            if (rect.size.width > rect.size.height)
+
+            double procAngle = rotatedRect.angle;
+            if (rotatedRects.get(i).size.width > rotatedRects.get(i).size.height)
                 procAngle *= -1;
             else
                 procAngle = 90-procAngle;
             while (procAngle>0) procAngle -= 180;
+
+            double length = 200/scalingFactor;
+            double dX = length*Math.cos(Math.toRadians(procAngle));
+            double dY = length*Math.sin(Math.toRadians(procAngle));
+            double vecX = center.x+dX;
+            double vecY = center.y-dY;
+            telemetry.addData("vecX", vecX);
+            telemetry.addData("vecY", vecY);
+            double scaled640 = 640/scalingFactor;
+            double scaled480 = 480/scalingFactor;
+            if (vecX < 0) {
+                vecY = center.y - (1+vecX/dX)*dY;
+                vecX = 0;
+            } if (vecY < 0) {
+                vecX = center.x + (1+vecY/dY)*dX;
+                vecY = 0;
+            } if (vecX > scaled640) {
+                vecY = center.y - (1-(vecX-scaled640)/dX)*dY;
+                vecX = scaled640;
+            } if (vecY > scaled480) {
+                vecX = center.x + (1+(vecY-scaled480)/dY)*dX;
+                vecY = scaled480;
+            }
+            dX = vecX-center.x;
+            dY = vecY-center.y;
+            Imgproc.line(frame, center, new Point(vecX,vecY), new Scalar(0, 255, 255), 1);
+            Imgproc.line(frame, center, new Point(center.x+dY/3, center.y-dX/3), new Scalar(255, 0, 255), 1);
+            Imgproc.line(frame, new Point(center.x+dY/10, center.y-dX/10), new Point(center.x+dY/10+dX/10, center.y-dX/10+dY/10), new Scalar(255, 0, 255), 1);
+            Imgproc.line(frame, new Point(center.x+dY/10+dX/10, center.y-dX/10+dY/10), new Point(center.x+dX/10, center.y+dY/10), new Scalar(255, 0, 255), 1);
+            Imgproc.line(frame, center, new Point(center.x+length/2,center.y), new Scalar(0, 255, 255), 1);
+            // Define arc parameters
+            int radius = (int)(20/scalingFactor);
+            double endAngle = -procAngle;
+            Scalar color = new Scalar(0, 255, 255);
+            int thickness = 1;
+
+            // Generate points on the arc
+            MatOfPoint points = new MatOfPoint();
+            Imgproc.ellipse2Poly(center, new Size(radius, radius), 0, 0, (int) endAngle, 1, points);
+
+            // Draw the arc
+            List<MatOfPoint> listThing = new ArrayList<>();
+            listThing.add(points);
+            Imgproc.polylines(frame, listThing, false, color, thickness);
+            Imgproc.putText(frame, (Math.round(10*procAngle)/10d)+" deg", new Point(center.x+30/scalingFactor, center.y-10/scalingFactor+(procAngle<0 ? 30 : 0)/scalingFactor), 0, 0.5/scalingFactor, new Scalar(0, 255, 255));
+
+
+            // get real sample coords
+            double area = rotatedRect.size.area()*scalingFactor*scalingFactor; //*2.091295825;
+            double sampleHeight = 1435.0/Math.sqrt(area)-0.308; // calculate height of camer based on area of sample
+            telemetry.addData("sampleHeight", sampleHeight);
+
+
+            // TODO: remove
+            real = getOffsets(rotatedRects, sampleHeight, scalingFactor);
+
+
+
+
+
+
+            double real_x = real.get(i).x; // in inches
+            double real_y = real.get(i).y;
+            double scaled320 = 320/scalingFactor;
+            double scaled240 = 240/scalingFactor;
+            telemetry.addData("real_x", real_x);
+            telemetry.addData("real_y", real_y);
+            Imgproc.line(frame, center, new Point(scaled320, center.y), new Scalar(255, 255, 0), 1);
+            Imgproc.putText(frame, (Math.round(10*real_x)/10d)+(Math.abs(real_x)>1?" in":""), new Point(scaled320+(center.x-scaled320)*0.5-20/scalingFactor, center.y+15/scalingFactor), 0, 0.5/scalingFactor, new Scalar(255, 255, 0));
+            Imgproc.line(frame, new Point(scaled320, center.y), new Point(scaled320,scaled240), new Scalar(255, 255, 0), 1);
+            Imgproc.putText(frame, (Math.round(10*real_y)/10d)+(Math.abs(real_y)>1?" in":""), new Point(scaled320-5/scalingFactor-10*Double.toString(Math.round(10*real_y)/10d).length()/scalingFactor-(Math.abs(real_y)>1?22:0)/scalingFactor, scaled240+(center.y-scaled240)*0.5+10/scalingFactor), 0, 0.5/scalingFactor, new Scalar(255, 255, 0));
+
+
+
+
+            Imgproc.circle(frame, rotatedRect.center, 1, new Scalar(255, 255, 0), 3);
+        }
+        Imgproc.circle(frame, new Point(320, 240), 1, new Scalar(255, 255, 0), 3);
+
+
+        // telemetry
+        if (!rotatedRects.isEmpty()) {
+            telemetry.addData("width ", rotatedRects.get(0).size.width);
+            telemetry.addData("height ", rotatedRects.get(0).size.height);
+            telemetry.addData("area ", rotatedRects.get(0).size.area());
+            telemetry.addData("angle ", rotatedRects.get(0).angle);
+            telemetry.addData("center ", rotatedRects.get(0).center);
+//            telemetry.addData("center scaled", new Point((filteredRects.get(0).center.x - 320) / 640 * 3.0/8.0, -(filteredRects.get(0).center.y - 240) / 480));
+//            output.add(new Point((i.center.x - 320) / 640 * canvasHorizontal, -(i.center.y - 240) / 240 * canvasVertical));
+            double procAngle = rotatedRects.get(0).angle;
+            if (rotatedRects.get(0).size.width > rotatedRects.get(0).size.height)
+                procAngle *= -1;
+            else
+                procAngle = 90-procAngle;
             procAngle -= 90;
             if (procAngle < -90) procAngle += 180;
-            tempSampleAngles.add(Math.toRadians(procAngle));
+            telemetry.addData("procAngle ", procAngle);
+            sampleAngle = procAngle;
         }
-        sampleAngles = tempSampleAngles;
+        telemetry.addData("sampleAngle", sampleAngle);
 
 
-        return input;
-    }
 
-    public synchronized double getAverageBrightness() {
-        return averageBrightness;
-    }
 
-    public synchronized ArrayList<double[]> getRealPositions() {
-        return realPositions;
-    }
 
-    public synchronized ArrayList<Double> getSampleAngles() {
-        return sampleAngles;
-    }
 
-    public synchronized void setFilterColor(SampleColor color) {
-        colorType = color;
+
+        telemetry.update();
+
+
+        return frame;
     }
 
     public static RotatedRect createRotatedRect(Point p, double theta, boolean shortSide) {
@@ -388,27 +467,48 @@ public class SampleOrientationProcessor implements VisionProcessor {
 
     @Override
     public void onDrawFrame(Canvas canvas, int onscreenWidth, int onscreenHeight, float scaleBmpPxToCanvasPx, float scaleCanvasDensity, Object userContext) {
-
+//        Paint p = new Paint();
+//        p.setColor(Color.BLUE);
+//        p.setStrokeWidth(4);
+//        canvas.drawCircle((float) getPixelsCenter().x, (float) getPixelsCenter().y, 0, p);
+//        canvas.drawCircle((float) getPixelsCenter().x, (float) getPixelsCenter().y, 6, p);
     }
 
-    public ArrayList<double[]> getOffsets(ArrayList<RotatedRect> input, double scalingFactor) {
+    private double getIntersectionArea_bad(RotatedRect rect1, RotatedRect rect2) {
+        // Get vertices of the rectangles
+        Point[] vertices1 = new Point[4];
+        rect1.points(vertices1);
+
+        Point[] vertices2 = new Point[4];
+        rect2.points(vertices2);
+
+        // Convert vertices arrays to MatOfPoint2f
+        MatOfPoint2f poly1 = new MatOfPoint2f(vertices1);
+        MatOfPoint2f poly2 = new MatOfPoint2f(vertices2);
+
+        // Output MatOfPoint2f for the intersection polygon
+        MatOfPoint2f intersection = new MatOfPoint2f();
+
+        // Calculate intersection
+        return Imgproc.intersectConvexConvex(poly1, poly2, intersection, true);
+    }
+
+    public ArrayList<Point> getOffsets(ArrayList<RotatedRect> input, double scalingFactor) {
         // Note: This method only works when the camera is directly above the samples, looking straight down
 
-        ArrayList<double[]> output = new ArrayList<>();
+        ArrayList<Point> output = new ArrayList<Point>();
 
-        // TODO: Make height not hardcoded, instead base it off of robot position
-        double height = cameraHeight; // in inches
+        double height = 10.0; // in inches
         double canvasVertical = 1.1 * height*3.0/8.0; // inches
         double canvasHorizontal = 1.1 * height / 2;
+        // TODO: Make height not hardcoded, instead base it off of robot position
 
         double scaled320 = 320/scalingFactor;
         double scaled240 = 240/scalingFactor;
         for (RotatedRect i : input) {
             // real center is (320, 480), positive direction is right and down
 //            output.add(new Point(i.center.x - 320, -(i.center.y - 240)));
-            double horizontalCoordinate = (i.center.x - scaled320) / scaled320 * canvasHorizontal;
-            double verticalCoordinate = -(i.center.y - scaled240) / scaled240 * canvasVertical;
-            output.add(new double[]{verticalCoordinate, -horizontalCoordinate});
+            output.add(new Point((i.center.x - scaled320) / scaled320 * canvasHorizontal, -(i.center.y - scaled240) / scaled240 * canvasVertical));
 
 
             // 4 in height = 1.5 width vertical (half width, not full)
@@ -420,5 +520,45 @@ public class SampleOrientationProcessor implements VisionProcessor {
 
         return output;
     }
+
+    public ArrayList<Point> getOffsets(ArrayList<RotatedRect> input, double height, double scalingFactor) {
+        // Note: This method only works when the camera is directly above the samples, looking straight down
+
+        ArrayList<Point> output = new ArrayList<Point>();
+
+        double canvasVertical = 1.1 * height*3.0/8.0; // inches
+        double canvasHorizontal = 1.1 * height / 2;
+
+        double scaled320 = 320/scalingFactor;
+        double scaled240 = 240/scalingFactor;
+        for (RotatedRect i : input) {
+            // real center is (320, 480), positive direction is right and down
+//            output.add(new Point(i.center.x - 320, -(i.center.y - 240)));
+            output.add(new Point((i.center.x - scaled320) / scaled320 * canvasHorizontal, -(i.center.y - scaled240) / scaled240 * canvasVertical));
+
+
+            // 4 in height = 1.5 width vertical (half width, not full)
+            // 6 : 2.25
+            // 2 : 0.75
+            // 8 : 3
+            // horizontal: 8 / 4
+        }
+
+
+        return output;
+    }
+
+
+    private Point from3D(double FOV, double x, double y, double z) {
+        return new Point(FOV*x/z, FOV*y/z);
+    }
+
+//    private void drawRectangle(double x0, double y0, double z0, double x1, double y1, double z1) {
+//        double dx = x1-x0;
+//        double dy = y1-y0;
+//        double dz = z1-z0;
+//        Point p1 = new Point(x0, y0, z0);
+//        Point p1 = new Point(x0, y0, z0);
+//    }
 
 }

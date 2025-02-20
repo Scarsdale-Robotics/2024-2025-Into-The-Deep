@@ -89,7 +89,7 @@ public class AutonomousRobot {
         // init overhead camera
         WebcamName cameraName = hardwareMap.get(WebcamName.class, "Webcam 1");
         this.overheadCamera = new OverheadCameraSubsystem(cameraName, telemetry);
-        overheadCamera.correctExposure(this.opMode, telemetry);
+//        overheadCamera.correctExposure(this.opMode, telemetry);
 
 
         // init linear slides
@@ -182,7 +182,7 @@ public class AutonomousRobot {
                 linearSlides,
                 localization,
                 0.03,
-                3
+                1
         );
     }
 
