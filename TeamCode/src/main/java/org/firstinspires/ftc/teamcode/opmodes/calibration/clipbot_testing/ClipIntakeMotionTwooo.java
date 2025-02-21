@@ -65,7 +65,8 @@ public class ClipIntakeMotionTwooo extends LinearOpMode {
     public static double M_INTAKE_UP = 0.7;
     public static double M_INTAKE_CLOSED = 0.21;
     public static double M_LOADER_OPEN = 0.86;
-    public static double M_LOADER_CLOSED = 0.3;
+    public static double M_LOADER_CLOSED_MAX = 0.27;
+    public static double M_LOADER_CLOSED_PARTIAL = 0.32;
     public static int M_FEEDER_MAX = 10000;
     public static int M_FEEDER_MIN = 0;
 
@@ -145,7 +146,12 @@ public class ClipIntakeMotionTwooo extends LinearOpMode {
             );
             MoveMLoader loaderClose = new MoveMLoader(
                     intakeClose.getEndTime(),
-                    M_LOADER_CLOSED
+                    M_LOADER_CLOSED_MAX
+            );
+
+            MoveMLoader loaderRelease = new MoveMLoader(
+                    loaderClose.getEndTime(),
+                    M_LOADER_CLOSED_PARTIAL
             );
 
             MIntakePlan intakePlan = new MIntakePlan(
@@ -154,7 +160,7 @@ public class ClipIntakeMotionTwooo extends LinearOpMode {
             );
             MLoaderPlan loaderPlan = new MLoaderPlan(
                     clipbot,
-                    loaderOpen, loaderClose
+                    loaderOpen, loaderClose, loaderRelease
             );
 
             return new Synchronizer(
