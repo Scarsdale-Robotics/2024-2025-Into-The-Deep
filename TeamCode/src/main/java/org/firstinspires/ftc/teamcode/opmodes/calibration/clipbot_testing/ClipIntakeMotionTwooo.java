@@ -65,8 +65,8 @@ public class ClipIntakeMotionTwooo extends LinearOpMode {
     public static double M_INTAKE_UP = 0.7;
     public static double M_INTAKE_CLOSED = 0.21;
     public static double M_LOADER_OPEN = 0.86;
-    public static double M_LOADER_CLOSED_MAX = 0.27;
-    public static double M_LOADER_CLOSED_PARTIAL = 0.32;
+    public static double M_LOADER_CLOSED_MAX = 0.22;
+    public static double M_LOADER_CLOSED_PARTIAL = 0.35;
     public static int M_FEEDER_MAX = 10000;
     public static int M_FEEDER_MIN = 0;
 
