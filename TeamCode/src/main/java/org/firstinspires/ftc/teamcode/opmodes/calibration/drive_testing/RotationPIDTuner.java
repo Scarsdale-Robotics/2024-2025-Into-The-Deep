@@ -190,8 +190,8 @@ public class RotationPIDTuner extends LinearOpMode {
 //        TranslationConstants.MAX_VELOCITY = 0.5*40d;
 //        TranslationConstants.MAX_ACCELERATION = 0.5*54d;
 //
-//        RotationConstants.MAX_ANGULAR_VELOCITY = 3.6;
-//        RotationConstants.MAX_ANGULAR_ACCELERATION = 7.2;
+        RotationConstants.MAX_ANGULAR_VELOCITY = 0.8*3.6;
+        RotationConstants.MAX_ANGULAR_ACCELERATION = 4;
 
         // Translation plan
         LinearTranslation lineStill = new LinearTranslation(new TimeSpan(0,1),

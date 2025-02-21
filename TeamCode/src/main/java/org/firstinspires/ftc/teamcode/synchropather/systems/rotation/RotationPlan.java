@@ -27,8 +27,8 @@ public class RotationPlan extends Plan<RotationState> {
 
 	// SQUID constants
 	//TODO: TUNE
-	public static double kSQU = 1;
-	public static double kI = 4;
+	public static double kSQU = 2;
+	public static double kI = 0;
 	public static double kD = 0;
 
 	// Integrator variable

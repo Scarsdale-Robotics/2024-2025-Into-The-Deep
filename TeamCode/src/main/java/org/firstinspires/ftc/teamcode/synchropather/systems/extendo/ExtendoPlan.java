@@ -18,7 +18,7 @@ public class ExtendoPlan extends Plan<ExtendoState> {
     //TODO: TUNE
     public static double kS = 0.0*ExtendoConstants.MAX_MOTOR_VELOCITY;
     public static double kV = 1;
-    public static double kA = 0.2;
+    public static double kA = 0;
 
     // Positional SQUID constants
     //TODO: TUNE

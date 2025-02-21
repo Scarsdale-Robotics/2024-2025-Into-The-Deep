@@ -9,6 +9,7 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.subsystems.LocalizationSubsystem;
 import org.firstinspires.ftc.teamcode.synchropather.subsystemclasses.LinearSlidesSubsystem;
 import org.firstinspires.ftc.teamcode.synchropather.subsystemclasses.OverheadCameraSubsystem;
+import org.firstinspires.ftc.teamcode.synchropather.systems.extendo.ExtendoConstants;
 import org.firstinspires.ftc.teamcode.synchropather.systems.extendo.ExtendoState;
 
 import java.util.ArrayList;
@@ -16,6 +17,11 @@ import java.util.Collections;
 
 @Config
 public class SampleDataBufferFilter {
+
+    public enum SampleTargetingMethod {
+        ROTATION(),
+        TRANSLATION()
+    }
 
     private final LinearSlidesSubsystem linearSlides;
     private final LocalizationSubsystem localization;
@@ -31,8 +37,11 @@ public class SampleDataBufferFilter {
     // For filtering incoming cv sample data
     private final int filterLength;
     private final ArrayList<Pose2d> samplePoses; // {x_sample, y_sample, theta_sample}
+    private final SampleTargetingMethod targetingMethod;
 
-    public SampleDataBufferFilter(LinearSlidesSubsystem linearSlides, LocalizationSubsystem localization, double timeBuffer, int filterLength) {
+    public static double FILTER_ERROR_TOLERANCE = 0.5; // inches
+
+    public SampleDataBufferFilter(LinearSlidesSubsystem linearSlides, LocalizationSubsystem localization, double timeBuffer, int filterLength, SampleTargetingMethod targetingMethod) {
         this.linearSlides = linearSlides;
         this.localization = localization;
 
@@ -48,13 +57,15 @@ public class SampleDataBufferFilter {
         // init filter
         this.filterLength = filterLength;
         samplePoses = new ArrayList<>();
+
+        this.targetingMethod = targetingMethod;
     }
 
     /**
      * Initializes with timeBuffer=0.045, and filterLength=5.
      */
-    public SampleDataBufferFilter(LinearSlidesSubsystem linearSlides, LocalizationSubsystem localization) {
-        this(linearSlides, localization, 0.045, 5);
+    public SampleDataBufferFilter(LinearSlidesSubsystem linearSlides, LocalizationSubsystem localization, SampleTargetingMethod targetingMethod) {
+        this(linearSlides, localization, 0.03, 3, targetingMethod);
     }
 
     /**
@@ -68,11 +79,20 @@ public class SampleDataBufferFilter {
 
         if (samplePoses.isEmpty()) {
             sampleToAppend = getSampleFieldPosition(closestSamplePosition);
+
+            // TODO: add trnaslation case
+            double extendoTargetDistance = 0;
+            if (targetingMethod==SampleTargetingMethod.ROTATION) {
+                extendoTargetDistance = getRotationTargetExtendoDistance(sampleToAppend);
+            }
+            if (extendoTargetDistance > ExtendoConstants.MAX_EXTENSION) {
+                sampleToAppend = null;
+            }
         }
         // get sample closest to current samples in filter
         else {
             double closestSampleDistance = Double.MAX_VALUE;
-            Pose2d closestSamplePose = new Pose2d();
+            Pose2d closestSamplePose = null;
 
             for (int i = 0; i < Math.min(sampleTranslations.size(), sampleAngles.size()); i++) {
                 double[] sampleCameraPosition = new double[]{
@@ -84,6 +104,15 @@ public class SampleDataBufferFilter {
                 // calculate sample position
                 Pose2d sampleFieldPosition = getSampleFieldPosition(sampleCameraPosition);
 
+                // TODO: add trnaslation case
+                double extendoTargetDistance = 0;
+                if (targetingMethod==SampleTargetingMethod.ROTATION) {
+                    extendoTargetDistance = getRotationTargetExtendoDistance(sampleFieldPosition);
+                }
+                if (extendoTargetDistance > ExtendoConstants.MAX_EXTENSION) {
+                    continue;
+                }
+
                 double dx = samplePoses.get(0).getX() - sampleFieldPosition.getX();
                 double dy = samplePoses.get(0).getY() - sampleFieldPosition.getY();
                 double distance = Math.hypot(dx, dy);
@@ -94,7 +123,15 @@ public class SampleDataBufferFilter {
                 }
             }
             sampleToAppend = closestSamplePose;
+
+            // Cannot locate the sample of the position in the samplePoses list, so just clear it
+            if (closestSampleDistance > FILTER_ERROR_TOLERANCE) {
+                samplePoses.clear();
+            }
         }
+
+        // Sample being null means it is outside of the extendo's reach
+        if (sampleToAppend==null) return;
 
         //// Append current data to end of filter
         samplePoses.add(sampleToAppend);
@@ -235,6 +272,47 @@ public class SampleDataBufferFilter {
         // store latest data
         lastBufferedExtendoPosition = new ExtendoState(bufferedExtendoPositions.get(0)[0]);
         lastBufferedBotPose = bufferedBotPoses.get(0);
+    }
+
+
+    /**
+     * Gets the target position of extendo if the robot rotates to reach the given sample
+     * @param samplePose
+     * @return
+     */
+    private double getRotationTargetExtendoDistance(Pose2d samplePose) {
+        // Unpack bot pose
+        Pose2d botPose = localization.getPose();
+        double x_bot = botPose.getX();
+        double y_bot = botPose.getY();
+        double heading_bot = botPose.getHeading();
+
+        // Unpack sample pose
+        double x_sample = samplePose.getX();
+        double y_sample = samplePose.getY();
+
+        // Convert global sample pose to robot frame
+        double dx = x_sample - x_bot;
+        double dy = y_sample - y_bot;
+        double sin = Math.sin(-heading_bot);
+        double cos = Math.cos(-heading_bot);
+        double x_sample_bot = dx*cos - dy*sin;
+        double y_sample_bot = dx*sin + dy*cos;
+
+        // Calculate heading difference given horizontal claw offset
+        double r_sample_bot_norm = Math.hypot(x_sample_bot, y_sample_bot);
+        double theta_sample_tangent = Math.atan2(y_sample_bot, x_sample_bot) - Math.acos(OverheadCameraSubsystem.CAMERA_OFFSET[1]/r_sample_bot_norm);
+
+        // Extendo prep calculations
+        double rcos = OverheadCameraSubsystem.CAMERA_OFFSET[1]*Math.cos(theta_sample_tangent);
+        double rsin = OverheadCameraSubsystem.CAMERA_OFFSET[1]*Math.sin(theta_sample_tangent);
+        double d_sample_bot = Math.hypot(rcos-x_sample_bot, rsin-y_sample_bot);
+
+        ExtendoState extendoTarget = new ExtendoState(
+                d_sample_bot - (OverheadCameraSubsystem.CAMERA_OFFSET[0] + OverheadCameraSubsystem.CLAW_OFFSET[0])
+        );
+
+        return extendoTarget.getLength();
     }
 
 }

@@ -64,9 +64,9 @@ public class DriveXTranslationMacroTest extends LinearOpMode {
      */
     public static double searchSpeedFactor = 0.67;
 
-    public static double driveSpeed = 0.5;
+    public static double driveSpeed = 1;
 
-    public static double intakeDelay = 0.2;
+    public static double intakeDelay = 0.35;
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -226,9 +226,10 @@ public class DriveXTranslationMacroTest extends LinearOpMode {
         // init subsystems
         this.robot = new AutonomousRobot(
                 hardwareMap,
-                new Pose2d(1,1,new Rotation2d(0)),
+                new Pose2d(1,1,new Rotation2d(Math.PI/2)),
                 AutonomousRobot.TeamColor.BLUE,
-                this
+                this,
+                SampleDataBufferFilter.SampleTargetingMethod.TRANSLATION
         );
         this.telemetry = robot.telemetry;
         this.horizontalIntake = robot.horizontalIntake;
@@ -237,11 +238,16 @@ public class DriveXTranslationMacroTest extends LinearOpMode {
         this.localization = robot.localization;
         this.drive = robot.drive;
         this.sampleData = robot.sampleData;
-        OverheadCameraSubsystem.CLAW_OFFSET[0] = -3.2;
+        OverheadCameraSubsystem.CLAW_OFFSET[0] = -2;
 
         // init extendo retract macro
         extendoRetract = new ExtendoRetractMacro(linearSlides);
         extendoRetract.start();
+
+        // init servos
+        horizontalIntake.setClawPosition(HClawConstants.RELEASE_POSITION);
+        horizontalIntake.setWristAngle(0);
+        horizontalIntake.setArmPosition(0.9);
     }
 
 

@@ -50,7 +50,7 @@ public class AutonomousRobot {
     public final OverheadCameraSubsystem overheadCamera;
     public final LinearSlidesSubsystem linearSlides;
 
-    public final SampleDataBufferFilter sampleData;
+    public SampleDataBufferFilter sampleData;
 
 //    public static double clawOpen = ClawConstants.OPEN_POSITION;
 //    public static double clawClosed = ClawConstants.CLOSED_POSITION;
@@ -63,7 +63,7 @@ public class AutonomousRobot {
     // TODO =========== Update HardwareRobot when hardware is finalized ========= TODO
     // TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO
 
-    public AutonomousRobot(HardwareMap hardwareMap, Pose2d initialPose, TeamColor teamColor, LinearOpMode opMode) {
+    public AutonomousRobot(HardwareMap hardwareMap, Pose2d initialPose, TeamColor teamColor, LinearOpMode opMode, SampleDataBufferFilter.SampleTargetingMethod targetingMethod) {
         this.opMode = opMode;
         this.telemetry = new MultipleTelemetry(opMode.telemetry, FtcDashboard.getInstance().getTelemetry());
         this.teamColor = teamColor;
@@ -81,15 +81,12 @@ public class AutonomousRobot {
                 horizontalWrist,
                 horizontalClaw
         );
-        horizontalIntake.setClawPosition(HClawConstants.RELEASE_POSITION);
-        horizontalIntake.setWristAngle(0);
-        horizontalIntake.setArmPosition(0.9);
 
 
         // init overhead camera
         WebcamName cameraName = hardwareMap.get(WebcamName.class, "Webcam 1");
         this.overheadCamera = new OverheadCameraSubsystem(cameraName, telemetry);
-//        overheadCamera.correctExposure(this.opMode, telemetry);
+        overheadCamera.correctExposure(this.opMode, telemetry);
 
 
         // init linear slides
@@ -181,9 +178,14 @@ public class AutonomousRobot {
         sampleData = new SampleDataBufferFilter(
                 linearSlides,
                 localization,
-                0.03,
-                1
+                0.04375,
+                3,
+                targetingMethod
         );
+    }
+
+    public void setSampleDataBufferFilter(SampleDataBufferFilter sampleData) {
+        this.sampleData = sampleData;
     }
 
     public void update() {

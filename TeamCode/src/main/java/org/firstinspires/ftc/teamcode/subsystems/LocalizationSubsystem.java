@@ -165,6 +165,7 @@ public class LocalizationSubsystem extends SubsystemBase {
             this.telemetry.addData("[LOCALIZATION] ppX", ppX);
             this.telemetry.addData("[LOCALIZATION] ppY", ppY);
             this.telemetry.addData("[LOCALIZATION] ppH", ppH);
+            this.telemetry.addData("[LOCALIZATION] initialH", initialH);
             this.telemetry.update();
         }
         this.telemetry.addData("[L. SUB STATUS]", "finished initializing pinpoint");
@@ -368,13 +369,13 @@ public class LocalizationSubsystem extends SubsystemBase {
 
     /**
      * Determines whether the two inputs are approximately equal to each other
-     * within an epsilon of 1e-6
+     * within an epsilon of 1e-3
      * @param a
      * @param b
-     * @return Math.abs(a-b) <= 1e-6
+     * @return Math.abs(a-b) <= 1e-3
      */
     private static boolean equal(double a, double b) {
-        return Math.abs(a-b) <= 1e-6;
+        return Math.abs(a-b) <= 1e-3;
     }
 
 }

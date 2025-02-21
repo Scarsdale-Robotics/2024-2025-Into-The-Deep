@@ -57,22 +57,20 @@ public class DynamicLinearExtendo extends Movement {
      */
     @Override
     public ExtendoState getVelocity(double elapsedTime) {
-        double sign = end.minus(start).sign();
-        double speed = motionProfile.getVelocity(elapsedTime);
+        double velocity = motionProfile.getVelocity(elapsedTime);
 
         // scaled velocity vector
-        return new ExtendoState(sign * speed);
+        return new ExtendoState(velocity);
     }
     /**
      * @return the indicated acceleration ExtendoState.
      */
     @Override
     public ExtendoState getAcceleration(double elapsedTime) {
-        double sign = end.minus(start).sign();
-        double speed = motionProfile.getAcceleration(elapsedTime);
+        double acceleration = motionProfile.getAcceleration(elapsedTime);
 
         // scaled acceleration vector
-        return new ExtendoState(sign * speed);
+        return new ExtendoState(acceleration);
     }
     /**
      * @return the ExtendoState of this Movement at the start time.
@@ -101,7 +99,7 @@ public class DynamicLinearExtendo extends Movement {
      * Calculates total time.
      */
     private void init(boolean startTimeConstructor, double startTime) {
-        distance = end.minus(start).abs();
+        distance = end.minus(start).getLength();
 
         double v0 = this.v0.getLength();
         double v_max = ExtendoConstants.MAX_PATHING_VELOCITY;

@@ -124,25 +124,25 @@ public class RectDrawer extends OpenCvPipeline {
         Imgproc.findContours(inRange, unfilteredContours, hierarchy, Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_SIMPLE);
 
         // Filter contours by size and get rotated rects
-        int minArea = 2500;
+        int minArea = 8000;
         ArrayList<RotatedRect> rotatedRects = new ArrayList<>();
         List<MatOfPoint> filteredContours = new ArrayList<>();
         for (MatOfPoint contour : unfilteredContours) {
             RotatedRect minAreaRect = Imgproc.minAreaRect(new MatOfPoint2f(contour.toArray()));
-            double area = minAreaRect.size.area();
+            double area = Imgproc.contourArea(contour);
             Point[] corners = new Point[4];
             minAreaRect.points(corners);
 
             // Valid rectangle doesn't touch the frame's borders and is larger than minArea
             boolean validRect = true;
-            double frameMargin = 5;
-            for (Point corner : corners) {
-                double cornerX = corner.x;
-                double cornerY = corner.y;
-                if (cornerX <= frameMargin || cornerX >= frame.width() - frameMargin || cornerY <= frameMargin || cornerY >= frame.height() - frameMargin) {
-                    validRect = false;
-                }
-            }
+//            double frameMargin = 1;
+//            for (Point corner : corners) {
+//                double cornerX = corner.x;
+//                double cornerY = corner.y;
+//                if (cornerX <= frameMargin || cornerX >= frame.width() - frameMargin || cornerY <= frameMargin || cornerY >= frame.height() - frameMargin) {
+//                    validRect = false;
+//                }
+//            }
             if (area < minArea) {
                 validRect = false;
             }

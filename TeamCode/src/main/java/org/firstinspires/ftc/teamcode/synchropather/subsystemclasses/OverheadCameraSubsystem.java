@@ -29,7 +29,7 @@ public class OverheadCameraSubsystem {
     // (X,Y)
     // +X is forward, +Y is to the left
     // How far forward the claw (at pickup position) is from the camera, in inches
-    public static double[] CLAW_OFFSET = new double[]{-4.2, 0}; // TODO: TUNE THIS
+    public static double[] CLAW_OFFSET = new double[]{-2, 0}; // TODO: TUNE THIS
 
     // How far forward and to the left the camera is from the robot's center of rotation
     // when the extendo is fully retracted, in inches.
@@ -102,7 +102,7 @@ public class OverheadCameraSubsystem {
         // iterate through samples list
         double bestDistance = Double.POSITIVE_INFINITY;
         int bestIndex = -1;
-        for (int i = 0; i < samplePositions.size(); i++) {
+        for (int i = 0; i < Math.min(samplePositions.size(), sampleAngles.size()); i++) {
             double[] position = samplePositions.get(i);
             double distance = Math.hypot(
                     position[0] - CLAW_OFFSET[0],
@@ -163,8 +163,8 @@ public class OverheadCameraSubsystem {
         if (averageBrightness < 50) return 50;
         else if (averageBrightness < 80) return 27;
         else if (averageBrightness < 100) return 15;
-        else if (averageBrightness < 140) return 14;
-        else return 5;
+//        else if (averageBrightness < 140) return 14;
+        else return 14; // was 5
     }
 
 }

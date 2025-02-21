@@ -36,13 +36,13 @@ public class RectDrawer_suspicious extends OpenCvPipeline {
 
     public static Telemetry telemetry;
 
-    public static Scalar lowerYellow = new Scalar(15.0, 100.0, 100.1); // hsv
+    public static Scalar lowerYellow = new Scalar(15.0, 180.0, 160.0); // hsv
     public static Scalar upperYellow = new Scalar(30.0, 255.0, 255.0); // hsv
-    public static Scalar lowerBlue = new Scalar(90.0, 140.0, 100.0); // hsv
+    public static Scalar lowerBlue = new Scalar(90.0, 140.0, 140.0); // hsv
     public static Scalar upperBlue = new Scalar(140.0, 255.0, 255.0); // hsv
     public static Scalar lowerRedH = new Scalar(10.0, 0.0, 0.0); // hsv
     public static Scalar upperRedH = new Scalar(160.0, 255.0, 255.0); // hsv
-    public static Scalar lowerRedSV = new Scalar(0.0, 100.0, 100.0); // hsv
+    public static Scalar lowerRedSV = new Scalar(0.0, 160.0, 160.0); // hsv
     public static Scalar upperRedSV = new Scalar(255.0, 255.0, 255.0); // hsv
 
     private double sampleAngle = 0;
@@ -132,6 +132,7 @@ public class RectDrawer_suspicious extends OpenCvPipeline {
                         {boundingRect.x, boundingRect.y},
                         {boundingRect.x + boundingRect.width, boundingRect.y + boundingRect.height}
                 };
+
                 double frameMargin = 1;
                 boolean validRect = true;
                 for (double[] corner : corners) {
@@ -152,6 +153,13 @@ public class RectDrawer_suspicious extends OpenCvPipeline {
             } else {
                 largeContours.add(contour);
                 largeContoursSampleCount.add(sampleCount);
+
+//                //TODO:remove
+//                Imgproc.drawContours(frame, Collections.singletonList(contour),-1, new Scalar(0, 255, 255),2);
+//                Imgproc.putText(frame, "  area = "+area, new Point(150,180), 0, 0.5, new Scalar(0,255,255), 1);
+//                Imgproc.putText(frame, "  n =  "+sampleCount, new Point(150,210), 0, 0.5, new Scalar(0,255,255), 1);
+//
+//                if (true) return frame;
             }
         }
 
@@ -192,7 +200,6 @@ public class RectDrawer_suspicious extends OpenCvPipeline {
                     candidateEdges.add(new Point[]{p1, p2});
                     candidateEdgeLengths.add(false);
                 }
-                Imgproc.line(frame, p1, p2, new Scalar(0, 255, 255), 1);
             }
 
             for (int r = 0; r < largeContoursSampleCount.get(contourIdx); r++) {
@@ -264,6 +271,28 @@ public class RectDrawer_suspicious extends OpenCvPipeline {
                 if (greatestAreaRotatedRect==null) continue;
                 if (greatestIntersectionArea<minArea/(resolutionDivisor*resolutionDivisor)) continue;
 
+//                //TODO: RMEOVE
+//                Point[] edge = candidateEdges.get(greatestAreaIndex);
+//                Point p1 = edge[0];
+//                Point p2 = edge[1];
+//                double dx = p2.x - p1.x;
+//                double dy = p2.y - p1.y;
+//                Point[] originalVertices = new Point[4];
+//                greatestAreaRotatedRect.points(originalVertices);
+//                MatOfPoint matOfPoint = new MatOfPoint(originalVertices);
+//                Imgproc.fillPoly(frame, Collections.singletonList(matOfPoint), new Scalar(255, 255, 255));
+//
+//                Point mp = new Point(
+//                        p1.x + dx / 2-150,
+//                        p1.y + dy / 2
+//                );
+//
+//                double intersectionArea = getIntersectionArea(inRange, greatestAreaRotatedRect, 1);
+//                Imgproc.putText(frame, "  intersection = "+Math.round(intersectionArea), mp, 0, 0.5, new Scalar(0,0,255), 1);
+//
+//                if (true) return frame;
+
+
                 // Erase greatest intersecting RotatedRect from working image
                 Point[] originalVertices = new Point[4];
                 Point[] scaledVertices = new Point[4];
@@ -284,6 +313,11 @@ public class RectDrawer_suspicious extends OpenCvPipeline {
 
                 // Save rotated rect
                 rotatedRects.add(greatestAreaRotatedRect);
+
+//                //TODO:REMOE
+//                MatOfPoint matOfPoint2 = new MatOfPoint(originalVertices);
+//                Imgproc.fillPoly(frame, Collections.singletonList(matOfPoint2), new Scalar(0, 0, 0));
+//                if (r==3) return frame;
 
             }
         }

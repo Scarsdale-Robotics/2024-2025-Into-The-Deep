@@ -30,7 +30,7 @@ public class SearchMacro extends Synchronizer {
         );
         LinearExtendo extendoIn = new LinearExtendo(extendoOut.getEndTime(),
                 new ExtendoState(extendoTarget),
-                new ExtendoState(2)
+                new ExtendoState(LinearSlidesSubsystem.extendoOffset)
         );
         ExtendoConstants.MAX_PATHING_VELOCITY = previousMaxVelocity;
 

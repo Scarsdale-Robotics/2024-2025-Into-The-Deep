@@ -57,16 +57,16 @@ public class DriveRotationMacroTest extends LinearOpMode {
 
     private SampleDataBufferFilter sampleData;
 
-    public static double armDownPosition = 1.025;
+    public static double armDownPosition = 1.04;
 
     /**
      * Between 0 and 1 (please).
      */
-    public static double searchSpeedFactor = 0.5;
+    public static double searchSpeedFactor = 0.67;
 
     public static double driveSpeed = 1;
 
-    public static double intakeDelay = 0.25;
+    public static double intakeDelay = 0.35;
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -90,7 +90,7 @@ public class DriveRotationMacroTest extends LinearOpMode {
                 drive.stopController();
                 // init search
                 search = new SearchMacro(
-                        16,
+                        ExtendoConstants.MAX_EXTENSION,
                         searchSpeedFactor,
                         linearSlides,
                         horizontalIntake
@@ -106,6 +106,7 @@ public class DriveRotationMacroTest extends LinearOpMode {
             }
             // Case: Cancel search macro
             else if (gamepad1.triangle && !toggleTriangle && sampleMacroRunning) {
+                horizontalIntake.setClawPosition(HClawConstants.RELEASE_POSITION);
                 sampleMacroRunning = false;
             }
             toggleTriangle = gamepad1.triangle;
@@ -162,6 +163,7 @@ public class DriveRotationMacroTest extends LinearOpMode {
             }
             FtcDashboard.getInstance().sendTelemetryPacket(packet);
 
+            telemetry.update();
         }
     }
 
@@ -228,7 +230,8 @@ public class DriveRotationMacroTest extends LinearOpMode {
                 hardwareMap,
                 new Pose2d(1,1,new Rotation2d(0)),
                 AutonomousRobot.TeamColor.BLUE,
-                this
+                this,
+                SampleDataBufferFilter.SampleTargetingMethod.ROTATION
         );
         this.telemetry = robot.telemetry;
         this.horizontalIntake = robot.horizontalIntake;
@@ -242,8 +245,12 @@ public class DriveRotationMacroTest extends LinearOpMode {
         // init extendo retract macro
         extendoRetract = new ExtendoRetractMacro(linearSlides);
         extendoRetract.start();
-    }
 
+        // init servos
+        horizontalIntake.setClawPosition(HClawConstants.RELEASE_POSITION);
+        horizontalIntake.setWristAngle(0);
+        horizontalIntake.setArmPosition(0.9);
+    }
 
     private void initPickupMotion(ExtendoState extendoVelocity) {
         // Unpack bot pose
@@ -307,7 +314,6 @@ public class DriveRotationMacroTest extends LinearOpMode {
         telemetry.addData("[DEBUG] extendoTarget.getLength()", extendoTarget.getLength());
         telemetry.addData("[DEBUG] hWristTarget", hWristTarget);
 
-        telemetry.update();
 
         //// SYNCHRONIZER
         // Extendo
@@ -329,6 +335,11 @@ public class DriveRotationMacroTest extends LinearOpMode {
                 extendoVelocity
         );
         ExtendoConstants.MAX_PATHING_VELOCITY = previousMaxVelocity;
+
+        telemetry.addData("extendoPosition.getLength()", extendoPosition.getLength());
+        telemetry.addData("extendoTarget.getLength()", extendoTarget.getLength());
+        telemetry.addData("extendoVelocity.getLength()", extendoVelocity.getLength());
+        telemetry.update();
 
         // Move arm down
         LinearHArm h_arm_down = new LinearHArm(intakeDelay+Math.max(Math.max(extendoOut.getEndTime(), rotation.getEndTime()), translation.getEndTime()),

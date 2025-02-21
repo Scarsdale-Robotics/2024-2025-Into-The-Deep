@@ -187,8 +187,8 @@ public class ForwardPIDTuner extends LinearOpMode {
 
 
     private void initSynchronizer() {
-//        TranslationConstants.MAX_VELOCITY = 0.5*40d;
-//        TranslationConstants.MAX_ACCELERATION = 0.5*54d;
+        TranslationConstants.MAX_VELOCITY = 0.8*40d;
+        TranslationConstants.MAX_ACCELERATION = 54d;
 
 //        RotationConstants.MAX_ANGULAR_VELOCITY = 0.65*3.6;
 //        RotationConstants.MAX_ANGULAR_ACCELERATION = 0.65*4;
@@ -196,10 +196,10 @@ public class ForwardPIDTuner extends LinearOpMode {
         // Translation plan
         LinearTranslation line1 = new LinearTranslation(0,
                 new TranslationState(0, 0),
-                new TranslationState(24, 0)
+                new TranslationState(48, 0)
         );
         LinearTranslation line2 = new LinearTranslation(line1.getEndTime()+1,
-                new TranslationState(24, 0),
+                new TranslationState(48, 0),
                 new TranslationState(0, 0)
         );
         TranslationPlan translationPlan = new TranslationPlan(drive, localization,

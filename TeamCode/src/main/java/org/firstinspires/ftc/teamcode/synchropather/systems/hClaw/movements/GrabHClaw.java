@@ -11,11 +11,18 @@ import org.firstinspires.ftc.teamcode.synchropather.systems.hClaw.HClawState;
  */
 public class GrabHClaw extends Movement {
 
-    private final double duration = HClawConstants.MOVEMENT_TIME;
+    private final double duration;
     private final HClawState state = new HClawState(HClawConstants.GRAB_POSITION);
 
     public GrabHClaw(double startTime) {
         super(MovementType.HORIZONTAL_CLAW);
+        this.duration = HClawConstants.MOVEMENT_TIME;
+        timeSpan = new TimeSpan(startTime, startTime + duration);
+    }
+
+    public GrabHClaw(double startTime, double duration) {
+        super(MovementType.HORIZONTAL_CLAW);
+        this.duration = duration;
         timeSpan = new TimeSpan(startTime, startTime + duration);
     }
 
