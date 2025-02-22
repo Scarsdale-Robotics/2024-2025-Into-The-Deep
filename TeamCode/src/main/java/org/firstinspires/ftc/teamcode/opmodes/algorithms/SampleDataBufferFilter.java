@@ -61,6 +61,10 @@ public class SampleDataBufferFilter {
         this.targetingMethod = targetingMethod;
     }
 
+    public Pose2d getLastBufferedBotPose() {
+        return lastBufferedBotPose;
+    }
+
     /**
      * Initializes with timeBuffer=0.045, and filterLength=5.
      */

@@ -36,8 +36,6 @@ public class SampleOrientationProcessor implements VisionProcessor {
 
     private Mat frame;
 
-    private Telemetry telemetry;
-
     public static double cameraHeight = 8.409; // inches (-1.5 because of sample height)
 
     public static Scalar lowerYellow = new Scalar(15.0, 100.0, 100.1); // hsv
@@ -59,8 +57,7 @@ public class SampleOrientationProcessor implements VisionProcessor {
 
     public static volatile SampleColor colorType = SampleColor.YELLOW;
 
-    public SampleOrientationProcessor(Telemetry telemetry) {
-        this.telemetry = telemetry;
+    public SampleOrientationProcessor() {
     }
 
     @Override
@@ -90,7 +87,6 @@ public class SampleOrientationProcessor implements VisionProcessor {
         Core.inRange(gray, lowerBound, upperBound, mask);
         Scalar maskedMean = Core.mean(gray, mask);
         averageBrightness = maskedMean.val[0];
-//        telemetry.addData("averageBrightness", averageBrightness);
         double targetAverageInRange = 120;
         frame.convertTo(frame, -1, targetAverageInRange/ averageBrightness, 0);
 

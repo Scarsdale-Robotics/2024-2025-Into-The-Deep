@@ -23,7 +23,7 @@ public class TranslationPlan extends Plan<TranslationState> {
 	//TODO: TUNE
 	public static double kS = 0;
 	public static double kV = 1;
-	public static double kA = 0.25;
+	public static double kA = 0.175;
 
 	// Positional SQUID constants
 	//TODO: TUNE

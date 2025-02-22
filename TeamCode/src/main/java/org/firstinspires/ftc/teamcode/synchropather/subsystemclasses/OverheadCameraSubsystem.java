@@ -40,8 +40,16 @@ public class OverheadCameraSubsystem {
         this.telemetry = telemetry;
 
         // init VisionPortal
-        processor = new SampleOrientationProcessor(this.telemetry);
+        processor = new SampleOrientationProcessor();
         visionPortal = buildVisionPortal(cameraName);
+    }
+
+
+    public OverheadCameraSubsystem(VisionPortal visionPortal, SampleOrientationProcessor processor, Telemetry telemetry) {
+        this.telemetry = telemetry;
+        this.visionPortal = visionPortal;
+        this.processor = processor;
+        processorEnabled = true;
     }
 
     private VisionPortal buildVisionPortal(WebcamName cameraName) {

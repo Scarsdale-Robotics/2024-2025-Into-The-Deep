@@ -1,28 +1,20 @@
 package org.firstinspires.ftc.teamcode.opmodes.autons;
 
-import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
-import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.arcrobotics.ftclib.geometry.Pose2d;
 import com.arcrobotics.ftclib.geometry.Rotation2d;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
-import org.firstinspires.ftc.teamcode.cvprocessors.SampleOrientationProcessor;
 import org.firstinspires.ftc.teamcode.opmodes.algorithms.SampleDataBufferFilter;
-import org.firstinspires.ftc.teamcode.opmodes.calibration.drive_testing.Drawing;
 import org.firstinspires.ftc.teamcode.subsystems.DriveSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.LocalizationSubsystem;
 import org.firstinspires.ftc.teamcode.synchropather.AutonomousRobot;
-import org.firstinspires.ftc.teamcode.synchropather.macros.ExtendoRetractMacro;
-import org.firstinspires.ftc.teamcode.synchropather.macros.SearchMacro;
 import org.firstinspires.ftc.teamcode.synchropather.subsystemclasses.HorizontalIntakeSubsystem;
 import org.firstinspires.ftc.teamcode.synchropather.subsystemclasses.LinearSlidesSubsystem;
 import org.firstinspires.ftc.teamcode.synchropather.subsystemclasses.OverheadCameraSubsystem;
 import org.firstinspires.ftc.teamcode.synchropather.systems.MovementType;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.Synchronizer;
-import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.TimeSpan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.extendo.ExtendoConstants;
 import org.firstinspires.ftc.teamcode.synchropather.systems.extendo.ExtendoPlan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.extendo.ExtendoState;
@@ -195,7 +187,7 @@ public class BetterSampleCycleAuto extends LinearOpMode {
                 1,
                 SampleDataBufferFilter.SampleTargetingMethod.ROTATION
         );
-        robot.setSampleDataBufferFilter(this.sampleData);
+        robot.setOverheadSampleDataBufferFilter(this.sampleData);
         SampleDataBufferFilter.FILTER_ERROR_TOLERANCE = 0.5;
 
         // init servos

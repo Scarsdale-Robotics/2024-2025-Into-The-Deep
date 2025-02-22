@@ -1,11 +1,13 @@
 package org.firstinspires.ftc.teamcode.synchropather;
 
+import android.util.Size;
+
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
-import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.arcrobotics.ftclib.geometry.Pose2d;
 import com.arcrobotics.ftclib.hardware.motors.Motor;
 import com.arcrobotics.ftclib.hardware.motors.MotorEx;
+import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
@@ -14,21 +16,17 @@ import com.qualcomm.robotcore.hardware.ServoImplEx;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
-import org.firstinspires.ftc.teamcode.HardwareRobot;
+import org.firstinspires.ftc.teamcode.cvprocessors.LimelightDetectorProcessor;
+import org.firstinspires.ftc.teamcode.cvprocessors.SampleOrientationProcessor;
 import org.firstinspires.ftc.teamcode.opmodes.algorithms.SampleDataBufferFilter;
-import org.firstinspires.ftc.teamcode.opmodes.calibration.drive_testing.Drawing;
-import org.firstinspires.ftc.teamcode.subsystems.CVSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.DriveSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.GoBildaPinpointDriver;
 import org.firstinspires.ftc.teamcode.subsystems.LocalizationSubsystem;
-import org.firstinspires.ftc.teamcode.subsystems.indep.InDepSubsystem;
 import org.firstinspires.ftc.teamcode.synchropather.subsystemclasses.HorizontalIntakeSubsystem;
+import org.firstinspires.ftc.teamcode.synchropather.subsystemclasses.LimelightSubsystem;
 import org.firstinspires.ftc.teamcode.synchropather.subsystemclasses.LinearSlidesSubsystem;
 import org.firstinspires.ftc.teamcode.synchropather.subsystemclasses.OverheadCameraSubsystem;
-import org.firstinspires.ftc.teamcode.synchropather.systems.hClaw.HClawConstants;
+import org.firstinspires.ftc.vision.VisionPortal;
 
 // TODO: merge with robotsystem later(?)
 // nathan i am sorry
@@ -49,14 +47,15 @@ public class AutonomousRobot {
     public final HorizontalIntakeSubsystem horizontalIntake;
     public final OverheadCameraSubsystem overheadCamera;
     public final LinearSlidesSubsystem linearSlides;
+    public final LimelightSubsystem limelightSubsystem;
 
-    public SampleDataBufferFilter sampleData;
+    private final Size CAMERA_RESOLUTION = new Size(320, 240);
+    public final VisionPortal visionPortal;
+    public final SampleOrientationProcessor sampleOrientationProcessor;
+    public final LimelightDetectorProcessor limelightDetectorProcessor;
 
-//    public static double clawOpen = ClawConstants.OPEN_POSITION;
-//    public static double clawClosed = ClawConstants.CLOSED_POSITION;
-//
-//    public static double elbowUp = ElbowConstants.UP_POSITION;
-//    public static double elbowDown = ElbowConstants.DOWN_POSITION;
+    public SampleDataBufferFilter overheadSampleData;
+    public SampleDataBufferFilter limelightSampleData;
 
 
     // TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO
@@ -81,12 +80,6 @@ public class AutonomousRobot {
                 horizontalWrist,
                 horizontalClaw
         );
-
-
-        // init overhead camera
-        WebcamName cameraName = hardwareMap.get(WebcamName.class, "Webcam 1");
-        this.overheadCamera = new OverheadCameraSubsystem(cameraName, telemetry);
-        overheadCamera.correctExposure(this.opMode, telemetry);
 
 
         // init linear slides
@@ -162,10 +155,23 @@ public class AutonomousRobot {
         );
 
 
+        // init VisionPortal
+        WebcamName cameraName = hardwareMap.get(WebcamName.class, "Webcam 1");
+        this.sampleOrientationProcessor = new SampleOrientationProcessor();
+        this.limelightDetectorProcessor = new LimelightDetectorProcessor();
+        this.visionPortal = buildVisionPortal(cameraName);
+
+        // init overhead camera
+        this.overheadCamera = new OverheadCameraSubsystem(visionPortal, sampleOrientationProcessor, telemetry);
+
+        // init limelight
+        Limelight3A limelight = hardwareMap.get(Limelight3A.class, "limelight");
+        this.limelightSubsystem = new LimelightSubsystem(limelight, limelightDetectorProcessor);
+
+
         // init localization
         GoBildaPinpointDriver pinpoint = hardwareMap.get(GoBildaPinpointDriver.class,"pinpoint");
         pinpoint.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.FORWARD, GoBildaPinpointDriver.EncoderDirection.FORWARD);
-
         this.localization = new LocalizationSubsystem(
                 initialPose,
                 pinpoint,
@@ -174,24 +180,51 @@ public class AutonomousRobot {
         );
 
 
-        // init sample data buffer
-        sampleData = new SampleDataBufferFilter(
+        // init sample data buffer filters
+        overheadSampleData = new SampleDataBufferFilter(
                 linearSlides,
                 localization,
                 0.04375,
                 3,
                 targetingMethod
         );
+        limelightSampleData = new SampleDataBufferFilter(
+                linearSlides,
+                localization,
+                0, // TODO: tune
+                1,
+                targetingMethod
+        );
+
+
+
+        // correct camera exposure
+        overheadCamera.correctExposure(this.opMode, telemetry);
     }
 
-    public void setSampleDataBufferFilter(SampleDataBufferFilter sampleData) {
-        this.sampleData = sampleData;
+    private VisionPortal buildVisionPortal(WebcamName cameraName) {
+        VisionPortal visionPortal = new VisionPortal.Builder()
+                .setCamera(cameraName)
+                .setCameraResolution(CAMERA_RESOLUTION)
+                .setAutoStopLiveView(false)
+                .addProcessors(sampleOrientationProcessor, limelightDetectorProcessor)  // ADD PROCESSORS HERE
+                .build();
+
+        visionPortal.setProcessorEnabled(sampleOrientationProcessor, true);
+        visionPortal.setProcessorEnabled(limelightDetectorProcessor, true);
+
+        return visionPortal;
+    }
+
+    public void setOverheadSampleDataBufferFilter(SampleDataBufferFilter overheadSampleData) {
+        this.overheadSampleData = overheadSampleData;
     }
 
     public void update() {
         localization.update();
         linearSlides.update();
-        sampleData.updateBufferData();
+        overheadSampleData.updateBufferData();
+        limelightSubsystem.update(limelightSampleData);
     }
 
 }

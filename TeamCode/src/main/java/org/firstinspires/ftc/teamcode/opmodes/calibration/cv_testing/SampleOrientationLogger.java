@@ -52,7 +52,7 @@ public class SampleOrientationLogger extends LinearOpMode {
     }
 
     public VisionPortal buildVisionPortal(WebcamName cameraName) {
-        processor = new SampleOrientationProcessor(telemetry);
+        processor = new SampleOrientationProcessor();
 
         VisionPortal visionPortal = new VisionPortal.Builder()
                 .setCamera(cameraName)

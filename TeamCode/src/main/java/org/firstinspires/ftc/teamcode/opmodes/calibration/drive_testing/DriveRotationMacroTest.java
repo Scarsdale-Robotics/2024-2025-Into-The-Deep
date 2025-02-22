@@ -10,6 +10,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.teamcode.cvprocessors.SampleOrientationProcessor;
 import org.firstinspires.ftc.teamcode.opmodes.algorithms.SampleDataBufferFilter;
+import org.firstinspires.ftc.teamcode.opmodes.calibration.Drawing;
 import org.firstinspires.ftc.teamcode.subsystems.DriveSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.LocalizationSubsystem;
 import org.firstinspires.ftc.teamcode.synchropather.AutonomousRobot;
@@ -239,7 +240,7 @@ public class DriveRotationMacroTest extends LinearOpMode {
         this.linearSlides = robot.linearSlides;
         this.localization = robot.localization;
         this.drive = robot.drive;
-        this.sampleData = robot.sampleData;
+        this.sampleData = robot.overheadSampleData;
         OverheadCameraSubsystem.CLAW_OFFSET[0] = -2;
 
         // init extendo retract macro

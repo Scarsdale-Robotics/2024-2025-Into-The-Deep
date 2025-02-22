@@ -41,6 +41,11 @@ public enum MovementType {
 	HORIZONTAL_CLAW(),
 
 	/**
+	 * A Movement involving the Limelight camera.
+	 */
+	LIMELIGHT(),
+
+	/**
 	 * A Movement involving the magazine's intake servo.
 	 */
 	MAGAZINE_INTAKE(),

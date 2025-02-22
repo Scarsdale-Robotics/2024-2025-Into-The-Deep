@@ -10,6 +10,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.teamcode.cvprocessors.SampleOrientationProcessor;
 import org.firstinspires.ftc.teamcode.opmodes.algorithms.SampleDataBufferFilter;
+import org.firstinspires.ftc.teamcode.opmodes.calibration.Drawing;
 import org.firstinspires.ftc.teamcode.subsystems.DriveSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.LocalizationSubsystem;
 import org.firstinspires.ftc.teamcode.synchropather.AutonomousRobot;
@@ -57,7 +58,7 @@ public class DriveXTranslationMacroTest extends LinearOpMode {
 
     private SampleDataBufferFilter sampleData;
 
-    public static double armDownPosition = 1.025;
+    public static double armDownPosition = 1.04;
 
     /**
      * Between 0 and 1 (please).
@@ -66,7 +67,7 @@ public class DriveXTranslationMacroTest extends LinearOpMode {
 
     public static double driveSpeed = 1;
 
-    public static double intakeDelay = 0.35;
+    public static double intakeDelay = 0.25;
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -90,7 +91,7 @@ public class DriveXTranslationMacroTest extends LinearOpMode {
                 drive.stopController();
                 // init search
                 search = new SearchMacro(
-                        16,
+                        ExtendoConstants.MAX_EXTENSION,
                         searchSpeedFactor,
                         linearSlides,
                         horizontalIntake
@@ -171,8 +172,8 @@ public class DriveXTranslationMacroTest extends LinearOpMode {
      * @return whether or not the driver is giving joystick inputs
      */
     private boolean controlDrive(boolean macroRunning) {
-        double forward = -gamepad1.left_stick_y;
-        double strafe = -gamepad1.left_stick_x;
+        double forward = gamepad1.left_stick_y;
+        double strafe = gamepad1.left_stick_x;
         double turn = gamepad1.right_stick_x;
         boolean driving = !(forward==0 && strafe==0 && turn==0);
 
@@ -237,7 +238,7 @@ public class DriveXTranslationMacroTest extends LinearOpMode {
         this.linearSlides = robot.linearSlides;
         this.localization = robot.localization;
         this.drive = robot.drive;
-        this.sampleData = robot.sampleData;
+        this.sampleData = robot.overheadSampleData;
         OverheadCameraSubsystem.CLAW_OFFSET[0] = -2;
 
         // init extendo retract macro
