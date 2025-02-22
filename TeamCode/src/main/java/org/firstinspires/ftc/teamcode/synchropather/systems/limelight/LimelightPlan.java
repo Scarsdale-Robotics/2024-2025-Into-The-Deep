@@ -61,7 +61,7 @@ public class LimelightPlan extends Plan<LimelightState> {
 
     @Override
     public void stop() {
-        limelight.pause();
+        limelightSubsystem.pauseLimelight();
     }
 
 }
