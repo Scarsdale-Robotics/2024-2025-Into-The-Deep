@@ -18,6 +18,9 @@ import org.firstinspires.ftc.teamcode.synchropather.subsystemclasses.LinearSlide
 import org.firstinspires.ftc.teamcode.synchropather.subsystemclasses.OverheadCameraSubsystem;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.Synchronizer;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.TimeSpan;
+import org.firstinspires.ftc.teamcode.synchropather.systems.klipper.KlipperPlan;
+import org.firstinspires.ftc.teamcode.synchropather.systems.klipper.KlipperState;
+import org.firstinspires.ftc.teamcode.synchropather.systems.klipper.movements.MoveKlipper;
 import org.firstinspires.ftc.teamcode.synchropather.systems.mFeeder.MFeederPlan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.mFeeder.MFeederState;
 import org.firstinspires.ftc.teamcode.synchropather.systems.mFeeder.movements.LinearMFeeder;
@@ -42,6 +45,8 @@ public class ClipIntakeMotionTwooo extends LinearOpMode {
     private Synchronizer clipIntakeSynchronizer;
     private Synchronizer feedOneClipSynchronizer;
     private Synchronizer feederResetSynchronizer;
+    private Synchronizer openKlipperSynchronizer;
+    private Synchronizer closeKlipperSynchronizer;
 
     private double wristPos = 0;
     private double extendoPos = 0;
@@ -60,16 +65,18 @@ public class ClipIntakeMotionTwooo extends LinearOpMode {
     private static final double INTAKE_ARM = 1.05;
     private static final int TRANSFER_EXTENDO = 200;
 
-    public static int FEEDER_ENCODERS_PER_CLIP = 100;
+    public static double FEEDER_ENCODERS_PER_CLIP = 5.5;
 
     public static double M_INTAKE_OPEN = 0.5;
     public static double M_INTAKE_UP = 0.7;
     public static double M_INTAKE_CLOSED = 0.21;
     public static double M_LOADER_OPEN = 0.86;
     public static double M_LOADER_CLOSED_MAX = 0.22;
-    public static double M_LOADER_CLOSED_PARTIAL = 0.35;
+    public static double M_LOADER_CLOSED_PARTIAL = 0.1;
     public static int M_FEEDER_MAX = 10000;
     public static int M_FEEDER_MIN = 0;
+    public static double KLIPPER_CLOSED = 0.0;
+    public static double KLIPPER_OPEN = 1.0;
 
     private static boolean RUN_INTAKE = true;
     private static boolean RUN_CLIPBOT = true;
@@ -105,30 +112,56 @@ public class ClipIntakeMotionTwooo extends LinearOpMode {
         runtime = new ElapsedTime(0);
         runtime.reset();
 
+        boolean lastKlipperPressed = false;
+        boolean lastIntakePressed = false;
+        boolean lastFeederPressed = false;
+
+        boolean klipperOpen = true;
         boolean clipIntakeRunning = false;
         boolean feederRunning = false;
+        boolean klipperRunning = false;
         while (opModeIsActive()) {
             if (!clipIntakeRunning) {
                 updateIntakeSyncs();
             }
-            if (gamepad1.left_bumper && gamepad1.right_bumper) {
+            boolean currIntakePressed = gamepad1.left_bumper && gamepad1.right_bumper;
+            if (!currIntakePressed && lastIntakePressed) {
                 clipIntakeSynchronizer.start();
                 clipIntakeRunning = true;
             }
             if (clipIntakeRunning) {
                 clipIntakeRunning = clipIntakeSynchronizer.update();
             }
+            lastIntakePressed = currIntakePressed;
 
             if (!feederRunning) {
                 updateFeederSyncs();
             }
-            if (gamepad1.cross) {
+            boolean currFeederPressed = gamepad1.cross;
+            if (!currFeederPressed && lastFeederPressed) {
                 feedOneClipSynchronizer.start();
                 feederRunning = true;
             }
             if (feederRunning) {
                 feederRunning = feedOneClipSynchronizer.update();
             }
+            lastFeederPressed = currFeederPressed;
+
+            if (!klipperRunning) {
+                updateKlipperSyncs();
+            }
+            boolean currKlipperPressed = gamepad1.triangle;
+            if (!currKlipperPressed && lastKlipperPressed) {
+                klipperOpen = !klipperOpen;
+                if (klipperOpen) openKlipperSynchronizer.start();
+                else closeKlipperSynchronizer.start();
+                klipperRunning = true;
+            }
+            if (klipperRunning) {
+                if (klipperOpen) klipperRunning = openKlipperSynchronizer.update();
+                else klipperRunning = closeKlipperSynchronizer.update();
+            }
+            lastKlipperPressed = currKlipperPressed;
         }
     }
 
@@ -148,18 +181,19 @@ public class ClipIntakeMotionTwooo extends LinearOpMode {
             LinearMIntake intakeClose = new LinearMIntake(
                     new TimeSpan(
                             intakeUp.getEndTime() + 5,
-                            intakeUp.getEndTime() + 15
+                            intakeUp.getEndTime() + 10
                     ),
                     new MIntakeState(M_INTAKE_UP),
                     new MIntakeState(M_INTAKE_CLOSED)
             );
+
             MoveMLoader loaderClose = new MoveMLoader(
                     intakeClose.getEndTime(),
                     M_LOADER_CLOSED_MAX
             );
 
             MoveMLoader loaderRelease = new MoveMLoader(
-                    loaderClose.getEndTime(),
+                    loaderClose.getEndTime() + 5,
                     M_LOADER_CLOSED_PARTIAL
             );
 
@@ -201,6 +235,31 @@ public class ClipIntakeMotionTwooo extends LinearOpMode {
         };
 
         feedOneClipSynchronizer = feedOneClip.get();
+    }
+
+    private void updateKlipperSyncs() {
+        Supplier<Synchronizer> closeKlipper = () -> {
+            MoveKlipper klipperClose = new MoveKlipper(0, KLIPPER_CLOSED);
+            KlipperPlan klipperPlan = new KlipperPlan(
+                    clipbot,
+                    klipperClose
+            );
+
+            return new Synchronizer(klipperPlan);
+        };
+
+        Supplier<Synchronizer> openKlipper = () -> {
+            MoveKlipper klipperOpen = new MoveKlipper(0, KLIPPER_OPEN);
+            KlipperPlan klipperPlan = new KlipperPlan(
+                    clipbot,
+                    klipperOpen
+            );
+
+            return new Synchronizer(klipperPlan);
+        };
+
+        closeKlipperSynchronizer = closeKlipper.get();
+        openKlipperSynchronizer = openKlipper.get();
     }
 
 

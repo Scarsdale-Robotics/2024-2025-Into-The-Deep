@@ -8,7 +8,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.Servo;
 
 @Config
-@TeleOp(name="Deposit Servo Calibrator", group="Calibration")
+@TeleOp(name = "Deposit Servo Calibrator", group = "Calibration")
 public class DepositServoCalibrator extends LinearOpMode {
     public static double D_ARM_DEPOSIT = 0.;
     public static double D_ARM_TRANSFER = 0.;
