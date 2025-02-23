@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.opmodes.calibration.clipbot_testing;
 
 import static org.firstinspires.ftc.teamcode.Auxiliary.initMotor;
+import static org.firstinspires.ftc.teamcode.Auxiliary.initServo;
 
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
@@ -66,6 +67,7 @@ public class MagazineHomingTester extends LinearOpMode {
                 null,
                 null,
                 null,
+                initServo(hardwareMap, "klipper"),
                 initMotor(hardwareMap, "magazineFeeder", Motor.GoBILDA.RPM_312),
                 telemetry
         );

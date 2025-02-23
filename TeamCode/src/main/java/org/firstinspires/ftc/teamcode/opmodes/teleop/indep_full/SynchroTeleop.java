@@ -118,6 +118,7 @@ public class SynchroTeleop extends LinearOpMode {
                 initServo(hardwareMap, "magazineIntake"),
                 initServo(hardwareMap, "magazineLoader1"),
                 initServo(hardwareMap, "magazineLoader2"),
+                initServo(hardwareMap, "klipper"),
                 initMotor(hardwareMap, "magazineFeeder", Motor.GoBILDA.RPM_312),
                 telemetry
         );

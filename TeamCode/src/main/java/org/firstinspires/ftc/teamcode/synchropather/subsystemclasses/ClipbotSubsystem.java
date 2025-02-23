@@ -17,6 +17,7 @@ public class ClipbotSubsystem {
     private final Servo magazineIntake;
     private final Servo magazineLoader1;
     private final Servo magazineLoader2;
+    private final Servo klipper;
 
     private final Motor magazineFeeder;
     private final PhotonDcMotor magazineFeederCurrentSensor;
@@ -30,6 +31,7 @@ public class ClipbotSubsystem {
             Servo magazineIntake,
             Servo magazineLoader1,
             Servo magazineLoader2,
+            Servo klipper,
             Motor magazineFeeder,
             Telemetry telemetry
     ) {
@@ -41,6 +43,9 @@ public class ClipbotSubsystem {
         // Servo that snaps the clips from the intake onto the lead screw rail
         this.magazineLoader1 = magazineLoader1;
         this.magazineLoader2 = magazineLoader2;
+
+        // Servo that snaps the clips on samples to form specimens
+        this.klipper = klipper;
 
         // Motor that controls the lead screw position
         this.magazineFeeder = magazineFeeder;
@@ -55,7 +60,7 @@ public class ClipbotSubsystem {
      */
     public void update() {
         magazineFeederPosition = magazineFeeder.getCurrentPosition();
-        magazineFeederCurrent = magazineFeederCurrentSensor.getCorrectedCurrent(CurrentUnit.MILLIAMPS);
+//        magazineFeederCurrent = magazineFeederCurrentSensor.getCorrectedCurrent(CurrentUnit.MILLIAMPS);
     }
 
     public void setMagazineIntakePosition(double servoPosition) {
@@ -65,6 +70,10 @@ public class ClipbotSubsystem {
     public void setMagazineLoaderPosition(double servoPosition) {
         magazineLoader1.setPosition(servoPosition);
         magazineLoader2.setPosition(1-servoPosition);
+    }
+
+    public void setKlipperPosition(double servoPosition) {
+        klipper.setPosition(servoPosition);
     }
 
     /**
