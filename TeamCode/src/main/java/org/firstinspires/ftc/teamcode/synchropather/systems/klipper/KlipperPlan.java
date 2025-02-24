@@ -17,7 +17,7 @@ public class KlipperPlan extends Plan<KlipperState> {
 
 
     public KlipperPlan(ClipbotSubsystem clipbot, Telemetry telemetry, Movement... movements) {
-        super(MovementType.MAGAZINE_INTAKE, movements);
+        super(MovementType.KLIPPER, movements);
         this.clipbot = clipbot;
         this.telemetry = telemetry;
         if (telemetry != null) {

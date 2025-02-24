@@ -58,7 +58,22 @@ public enum MovementType {
 	/**
 	 * A Movement involving the magazine's feeder motor.
 	 */
-	MAGAZINE_FEEDER();
+	MAGAZINE_FEEDER(),
+
+	/**
+	 * A Movement involving the klipper.
+	 */
+	KLIPPER(),
+
+	/**
+	 * A Movement involving the vertical arm
+	 */
+	VERTICAL_ARM(),
+
+	/**
+	 * A Movement involving the vertical claw
+	 */
+	VERTICAL_CLAW();
 
 	MovementType() {};
 }
