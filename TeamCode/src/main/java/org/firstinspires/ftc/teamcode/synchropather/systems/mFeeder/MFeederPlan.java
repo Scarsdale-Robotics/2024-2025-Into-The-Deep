@@ -22,7 +22,7 @@ public class MFeederPlan extends Plan<MFeederState> {
 
     // Positional SQUID constants
     //TODO: TUNE
-    public static double kSQU = 0;
+    public static double kSQU = 8;
     public static double kI = 0;
     public static double kD = 0;
 
