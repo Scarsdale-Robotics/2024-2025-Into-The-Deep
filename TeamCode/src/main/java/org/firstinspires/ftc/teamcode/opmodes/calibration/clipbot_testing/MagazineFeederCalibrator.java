@@ -21,7 +21,6 @@ import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 public class MagazineFeederCalibrator extends LinearOpMode {
 
     private Motor magazineFeeder;
-    private PhotonDcMotor magazineFeederCurrentSensor;
 
     public static double feederPower = 0;
 
@@ -42,10 +41,8 @@ public class MagazineFeederCalibrator extends LinearOpMode {
             }
 
             double position = magazineFeeder.getCurrentPosition();
-            double current = magazineFeederCurrentSensor.getCorrectedCurrent(CurrentUnit.MILLIAMPS);
 
             telemetry.addData("position", position);
-            telemetry.addData("current [mA]", current);
             telemetry.update();
         }
 
@@ -61,7 +58,5 @@ public class MagazineFeederCalibrator extends LinearOpMode {
         magazineFeeder.motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         magazineFeeder.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
         magazineFeeder.setInverted(false);
-
-        this.magazineFeederCurrentSensor = (PhotonDcMotor) magazineFeeder.motor;
     }
 }

@@ -11,7 +11,7 @@ public class MFeederConstants {
     /**
      *  Conversion factor
      */
-    public static double TICKS_PER_INCH = 50;//TODO: TUNE
+    public static double TICKS_PER_INCH = 332.33333333333333;
 
     public static double ticksToInches(double ticks) {
         return ticks / TICKS_PER_INCH;
@@ -20,17 +20,17 @@ public class MFeederConstants {
     /**
      *  Max magazine feeder velocity in inches/s.
      */
-    public static double MAX_VELOCITY = ticksToInches(2500);
+    public static double MAX_VELOCITY = 13;
 
     /**
      *  Max magazine feeder acceleration in inches/s^2.
      */
-    public static double MAX_ACCELERATION = ticksToInches(8000);
+    public static double MAX_ACCELERATION = 8;
 
     /**
      *  The magazine feeder's reference position for zero in inches
      */
-    public static double ZERO_HOME = 0;
+    public static double ZERO_HOME = 0.1;
 
     /**
      *  Max capacity of magazine in clips.

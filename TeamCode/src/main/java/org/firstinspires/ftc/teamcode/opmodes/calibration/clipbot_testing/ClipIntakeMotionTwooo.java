@@ -65,7 +65,7 @@ public class ClipIntakeMotionTwooo extends LinearOpMode {
     private static final double INTAKE_ARM = 1.05;
     private static final int TRANSFER_EXTENDO = 200;
 
-    public static double FEEDER_ENCODERS_PER_CLIP = 5.5;
+    public static double FEEDER_ENCODERS_PER_CLIP = 1;
 
     public static double M_INTAKE_OPEN = 0.5;
     public static double M_INTAKE_UP = 0.7;

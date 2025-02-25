@@ -14,7 +14,7 @@ public class MoveKlipper extends Movement {
     private final KlipperState state;
 
     public MoveKlipper(TimeSpan timeSpan, KlipperState targetState) {
-        super(MovementType.MAGAZINE_INTAKE);
+        super(MovementType.KLIPPER);
         this.state = targetState;
         this.timeSpan = timeSpan;
     }
@@ -24,7 +24,7 @@ public class MoveKlipper extends Movement {
     }
 
     public MoveKlipper(double startTime, KlipperState targetState) {
-        super(MovementType.MAGAZINE_INTAKE);
+        super(MovementType.KLIPPER);
         this.state = targetState;
         timeSpan = new TimeSpan(startTime, startTime + duration);
     }

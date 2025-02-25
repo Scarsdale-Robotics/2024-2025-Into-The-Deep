@@ -46,9 +46,6 @@ public class ClipFeedMotion extends LinearOpMode {
     public void runOpMode() throws InterruptedException {
         initSubsystems();
 
-        clipbot.setMagazineIntakePosition(MIntakeConstants.outPosition);
-        clipbot.setMagazineLoaderPosition(MLoaderConstants.upPosition);
-
         loopTicks = new ArrayDeque<>();
         runtime = new ElapsedTime(0);
         runtime.reset();
@@ -83,8 +80,8 @@ public class ClipFeedMotion extends LinearOpMode {
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
 
         magazineIntake = hardwareMap.get(ServoImplEx.class, "magazineIntake");
-        magazineLoader1 = hardwareMap.get(ServoImplEx.class, "magazineLoader1");
-        magazineLoader2 = hardwareMap.get(ServoImplEx.class, "magazineLoader2");
+        magazineLoader1 = hardwareMap.get(ServoImplEx.class, "magazineLoaderClose");
+        magazineLoader2 = hardwareMap.get(ServoImplEx.class, "magazineLoaderFar");
 
         magazineFeeder = new MotorEx(hardwareMap, "magazineFeeder", Motor.GoBILDA.RPM_1620);
         magazineFeeder.motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);

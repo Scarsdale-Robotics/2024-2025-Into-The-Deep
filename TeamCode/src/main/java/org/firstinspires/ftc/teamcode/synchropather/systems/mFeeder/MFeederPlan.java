@@ -18,11 +18,11 @@ public class MFeederPlan extends Plan<MFeederState> {
     //TODO: TUNE
     public static double kS = 0;
     public static double kV = 1;
-    public static double kA = 0;
+    public static double kA = 0.1;
 
     // Positional SQUID constants
     //TODO: TUNE
-    public static double kSQU = 8;
+    public static double kSQU = 6;
     public static double kI = 0;
     public static double kD = 0;
 
@@ -33,18 +33,18 @@ public class MFeederPlan extends Plan<MFeederState> {
     private final ClipbotSubsystem clipbot;
 
     private ElapsedTime runtime;
-//    private final Telemetry telemetry;
+    private final Telemetry telemetry;
 
     public MFeederPlan(ClipbotSubsystem clipbot, Movement... movements) {
         super(MovementType.MAGAZINE_FEEDER, movements);
         this.clipbot = clipbot;
         this.eHistory = new ArrayList<>();
         this.dtHistory = new ArrayList<>();
-//        this.telemetry = clipbot.telemetry;
-//        robot.telemetry.addData("[SYNCHROPATHER] MFeederPlan leftHeight", 0);
-//        robot.telemetry.addData("[SYNCHROPATHER] MFeederPlan rightHeight", 0);
-//        robot.telemetry.addData("[SYNCHROPATHER] MFeederPlan desiredState.getHeight()", 0);
-//        robot.telemetry.update();
+        this.telemetry = clipbot.telemetry;
+        telemetry.addData("[SYNCHROPATHER] MFeederPlan leftHeight", 0);
+        telemetry.addData("[SYNCHROPATHER] MFeederPlan rightHeight", 0);
+        telemetry.addData("[SYNCHROPATHER] MFeederPlan desiredState.getHeight()", 0);
+        telemetry.update();
     }
 
     public void loop() {
@@ -116,12 +116,12 @@ public class MFeederPlan extends Plan<MFeederState> {
         // Set motor power
         clipbot.setMagazineFeederPower(u);
 
-//        telemetry.addData("[SYNCHROPATHER] MFeederPlan feederPosition", feederPosition);
-//        telemetry.addData("[SYNCHROPATHER] MFeederPlan error", e);
-//        telemetry.addData("[SYNCHROPATHER] MFeederPlan desiredState.getLength()", desiredState.getPosition());
-//        telemetry.addData("[SYNCHROPATHER] MFeederPlan dedt", dedt);
-//        telemetry.addData("[SYNCHROPATHER] MFeederPlan intedt", intedt);
-//        telemetry.update();
+        telemetry.addData("[SYNCHROPATHER] MFeederPlan feederPosition", feederPosition);
+        telemetry.addData("[SYNCHROPATHER] MFeederPlan error", e);
+        telemetry.addData("[SYNCHROPATHER] MFeederPlan desiredState.getLength()", desiredState.getPosition());
+        telemetry.addData("[SYNCHROPATHER] MFeederPlan dedt", dedt);
+        telemetry.addData("[SYNCHROPATHER] MFeederPlan intedt", intedt);
+        telemetry.update();
 
     }
 
