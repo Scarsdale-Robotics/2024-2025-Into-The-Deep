@@ -46,7 +46,7 @@ public class ClipIntakeMotion extends LinearOpMode {
         initSubsystems();
         initSynchronizer();
 
-        clipbot.setMagazineIntakePosition(MIntakeConstants.outPosition);
+        clipbot.setMagazineIntakePosition(MIntakeConstants.openPosition);
         clipbot.setMagazineLoaderPosition(MLoaderConstants.upPosition);
 
         loopTicks = new ArrayDeque<>();
@@ -114,7 +114,7 @@ public class ClipIntakeMotion extends LinearOpMode {
         // servo starting positions
         double startTime = 0;
         MoveMIntake intakeStart = new MoveMIntake(new TimeSpan(startTime,startTime),
-                MIntakeConstants.outPosition
+                MIntakeConstants.openPosition
         );
         MoveMLoader loaderStart = new MoveMLoader(new TimeSpan(startTime,startTime),
                 MLoaderConstants.upPosition
@@ -122,7 +122,7 @@ public class ClipIntakeMotion extends LinearOpMode {
 
         // intake and load clips
         MoveMIntake intakeIn = new MoveMIntake(startTime,
-                MIntakeConstants.inPosition
+                MIntakeConstants.closedPosition
         );
         MoveMLoader loaderDown = new MoveMLoader(intakeIn.getEndTime(),
                 MLoaderConstants.downPosition
@@ -133,7 +133,7 @@ public class ClipIntakeMotion extends LinearOpMode {
                 MLoaderConstants.upPosition
         );
         MoveMIntake intakeOut = new MoveMIntake(loaderUp.getEndTime(),
-                MIntakeConstants.outPosition
+                MIntakeConstants.openPosition
         );
 
 

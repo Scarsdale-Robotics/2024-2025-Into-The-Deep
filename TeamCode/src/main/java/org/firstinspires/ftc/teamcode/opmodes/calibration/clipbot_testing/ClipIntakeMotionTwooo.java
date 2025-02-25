@@ -18,16 +18,20 @@ import org.firstinspires.ftc.teamcode.synchropather.subsystemclasses.LinearSlide
 import org.firstinspires.ftc.teamcode.synchropather.subsystemclasses.OverheadCameraSubsystem;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.Synchronizer;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.TimeSpan;
+import org.firstinspires.ftc.teamcode.synchropather.systems.klipper.KlipperConstants;
 import org.firstinspires.ftc.teamcode.synchropather.systems.klipper.KlipperPlan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.klipper.KlipperState;
 import org.firstinspires.ftc.teamcode.synchropather.systems.klipper.movements.MoveKlipper;
+import org.firstinspires.ftc.teamcode.synchropather.systems.mFeeder.MFeederConstants;
 import org.firstinspires.ftc.teamcode.synchropather.systems.mFeeder.MFeederPlan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.mFeeder.MFeederState;
 import org.firstinspires.ftc.teamcode.synchropather.systems.mFeeder.movements.LinearMFeeder;
+import org.firstinspires.ftc.teamcode.synchropather.systems.mIntake.MIntakeConstants;
 import org.firstinspires.ftc.teamcode.synchropather.systems.mIntake.MIntakePlan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.mIntake.MIntakeState;
 import org.firstinspires.ftc.teamcode.synchropather.systems.mIntake.movements.LinearMIntake;
 import org.firstinspires.ftc.teamcode.synchropather.systems.mIntake.movements.MoveMIntake;
+import org.firstinspires.ftc.teamcode.synchropather.systems.mLoader.MLoaderConstants;
 import org.firstinspires.ftc.teamcode.synchropather.systems.mLoader.MLoaderPlan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.mLoader.movements.MoveMLoader;
 
@@ -47,39 +51,6 @@ public class ClipIntakeMotionTwooo extends LinearOpMode {
     private Synchronizer feederResetSynchronizer;
     private Synchronizer openKlipperSynchronizer;
     private Synchronizer closeKlipperSynchronizer;
-
-    private double wristPos = 0;
-    private double extendoPos = 0;
-
-    private static final int MAX_WRIST = 1;
-    private static final int MIN_WRIST = 0;
-
-    private static final double EXTENDO_SPEED = 3.0;
-
-    private static final int MAX_EXTENDO = 2000;
-    private static final int MIN_EXTENDO = 200;  // pos must be safe to flip arm
-
-    private static final double TRANSFER_ARM = 0.2;
-    private static final double TRANSFER_WRIST = 0;
-    private static final double APPROACH_ARM = 0.95;
-    private static final double INTAKE_ARM = 1.05;
-    private static final int TRANSFER_EXTENDO = 200;
-
-    public static double FEEDER_ENCODERS_PER_CLIP = 1;
-
-    public static double M_INTAKE_OPEN = 0.5;
-    public static double M_INTAKE_UP = 0.7;
-    public static double M_INTAKE_CLOSED = 0.21;
-    public static double M_LOADER_OPEN = 0.86;
-    public static double M_LOADER_CLOSED_MAX = 0.22;
-    public static double M_LOADER_CLOSED_PARTIAL = 0.1;
-    public static int M_FEEDER_MAX = 10000;
-    public static int M_FEEDER_MIN = 0;
-    public static double KLIPPER_CLOSED = 0.0;
-    public static double KLIPPER_OPEN = 1.0;
-
-    private static boolean RUN_INTAKE = true;
-    private static boolean RUN_CLIPBOT = true;
 
     private LinearSlidesSubsystem linearSlides;
     private HorizontalIntakeSubsystem horizontalIntake;
@@ -167,15 +138,15 @@ public class ClipIntakeMotionTwooo extends LinearOpMode {
 
     private void updateIntakeSyncs() {
         Supplier<Synchronizer> TEST_NO_TRANSLATION_clipIntake = () -> {
-            MoveMIntake intakeOpen = new MoveMIntake(0, M_INTAKE_OPEN);
-            MoveMLoader loaderOpen = new MoveMLoader(0, M_LOADER_OPEN);
+            MoveMIntake intakeOpen = new MoveMIntake(0, MIntakeConstants.openPosition);
+            MoveMLoader loaderOpen = new MoveMLoader(0, MLoaderConstants.openPosition);
 
             MoveMIntake intakeUp = new MoveMIntake(
                     Math.max(
                             intakeOpen.getEndTime(),
                             loaderOpen.getEndTime()
                     ) + 5,
-                    M_INTAKE_UP
+                    MIntakeConstants.upPosition
             );
 
             LinearMIntake intakeClose = new LinearMIntake(
@@ -183,18 +154,18 @@ public class ClipIntakeMotionTwooo extends LinearOpMode {
                             intakeUp.getEndTime() + 5,
                             intakeUp.getEndTime() + 10
                     ),
-                    new MIntakeState(M_INTAKE_UP),
-                    new MIntakeState(M_INTAKE_CLOSED)
+                    new MIntakeState(MIntakeConstants.upPosition),
+                    new MIntakeState(MIntakeConstants.closedPosition)
             );
 
             MoveMLoader loaderClose = new MoveMLoader(
                     intakeClose.getEndTime(),
-                    M_LOADER_CLOSED_MAX
+                    MLoaderConstants.maxClosedPosition
             );
 
             MoveMLoader loaderRelease = new MoveMLoader(
-                    loaderClose.getEndTime() + 5,
-                    M_LOADER_CLOSED_PARTIAL
+                    loaderClose.getEndTime() + 1,
+                    MLoaderConstants.partialClosedPosition
             );
 
             MIntakePlan intakePlan = new MIntakePlan(
@@ -221,7 +192,7 @@ public class ClipIntakeMotionTwooo extends LinearOpMode {
             LinearMFeeder shiftFeeder = new LinearMFeeder(
                     0,
                     currentPos,
-                    currentPos.plus(new MFeederState(FEEDER_ENCODERS_PER_CLIP))
+                    currentPos.plus(new MFeederState(MFeederConstants.INCHES_PER_CLIP))
             );
 
             MFeederPlan feederPlan = new MFeederPlan(
@@ -239,7 +210,7 @@ public class ClipIntakeMotionTwooo extends LinearOpMode {
 
     private void updateKlipperSyncs() {
         Supplier<Synchronizer> closeKlipper = () -> {
-            MoveKlipper klipperClose = new MoveKlipper(0, KLIPPER_CLOSED);
+            MoveKlipper klipperClose = new MoveKlipper(0, KlipperConstants.closedPosition);
             KlipperPlan klipperPlan = new KlipperPlan(
                     clipbot,
                     klipperClose
@@ -249,7 +220,7 @@ public class ClipIntakeMotionTwooo extends LinearOpMode {
         };
 
         Supplier<Synchronizer> openKlipper = () -> {
-            MoveKlipper klipperOpen = new MoveKlipper(0, KLIPPER_OPEN);
+            MoveKlipper klipperOpen = new MoveKlipper(0, KlipperConstants.openPosition);
             KlipperPlan klipperPlan = new KlipperPlan(
                     clipbot,
                     klipperOpen
