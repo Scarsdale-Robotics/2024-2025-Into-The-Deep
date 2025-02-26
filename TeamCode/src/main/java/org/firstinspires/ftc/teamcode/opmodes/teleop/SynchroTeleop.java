@@ -43,6 +43,7 @@ import org.firstinspires.ftc.teamcode.synchropather.systems.translation.movement
 
 import java.util.function.Supplier;
 
+@Deprecated
 @TeleOp(name = "SynchroTeleop")
 public class SynchroTeleop extends LinearOpMode {
     private boolean lastAutoIntakeCommand = false;
