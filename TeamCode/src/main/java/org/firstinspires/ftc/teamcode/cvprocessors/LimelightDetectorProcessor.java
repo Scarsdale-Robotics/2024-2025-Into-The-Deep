@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.cvprocessors;
 import android.graphics.Canvas;
 
 import com.acmerobotics.dashboard.config.Config;
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 import org.firstinspires.ftc.robotcore.internal.camera.calibration.CameraCalibration;
 import org.firstinspires.ftc.vision.VisionProcessor;
@@ -24,7 +25,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class LimelightDetectorProcessor implements VisionProcessor {
 
     public static boolean SHOW_SAMPLE_DISTRIBUTION = true;
-    public static double FIELD_RESOLUTION = 0.5; // inches
+    public static double FIELD_RESOLUTION = 0.75; // inches
     public static double DECAY_TIME = 0.5;
     public static final int RESOLUTION_N = (int) (144.0 / FIELD_RESOLUTION);
     public static double DETECTION_COVARIANCE = 0.25;
@@ -47,7 +48,10 @@ public class LimelightDetectorProcessor implements VisionProcessor {
     private CopyOnWriteArrayList<double[]> redSamplePositions;
 
 
-    public LimelightDetectorProcessor() {
+    private final LinearOpMode opMode;
+
+
+    public LimelightDetectorProcessor(LinearOpMode opMode) {
         // Initialize an n x n single-channel matrix filled with zeros
         yellowDistribution = Mat.zeros(RESOLUTION_N, RESOLUTION_N, CvType.CV_64F);
         blueDistribution = Mat.zeros(RESOLUTION_N, RESOLUTION_N, CvType.CV_64F);
@@ -78,6 +82,8 @@ public class LimelightDetectorProcessor implements VisionProcessor {
 
         redSamplePositions = new CopyOnWriteArrayList<>();
         redProbabilityPeaks = new ArrayList<>();
+
+        this.opMode = opMode;
     }
 
 
@@ -107,17 +113,19 @@ public class LimelightDetectorProcessor implements VisionProcessor {
 
         // Visual telemetry
         if (SHOW_SAMPLE_DISTRIBUTION) {
+
             // Normalize to 8-bit range for display
             Mat viewable = new Mat();
             Core.add(yellowDistribution, blueDistribution, viewable);
             Core.add(viewable, redDistribution, viewable);
             Core.normalize(viewable, viewable, 0, 255, Core.NORM_MINMAX);
             viewable.convertTo(viewable, CvType.CV_8U);  // Convert to 8-bit grayscale
-            Imgproc.cvtColor(viewable, viewable, Imgproc.COLOR_GRAY2BGR);
-            for (Point peak : yellowProbabilityPeaks) Imgproc.circle(viewable,peak,1,new Scalar(255,255,0),-1);
-            for (Point peak : blueProbabilityPeaks) Imgproc.circle(viewable,peak,1,new Scalar(0,0,255),-1);
-            for (Point peak : redProbabilityPeaks) Imgproc.circle(viewable,peak,1,new Scalar(255,0,0),-1);
-            return viewable;
+            Imgproc.cvtColor(viewable, input, Imgproc.COLOR_GRAY2BGR);
+            for (Point peak : yellowProbabilityPeaks) Imgproc.circle(input,peak,1,new Scalar(255,255,0),-1);
+            for (Point peak : blueProbabilityPeaks) Imgproc.circle(input,peak,1,new Scalar(0,0,255),-1);
+            for (Point peak : redProbabilityPeaks) Imgproc.circle(input,peak,1,new Scalar(255,0,0),-1);
+
+            return input;
         }
         return input;
     }
@@ -134,26 +142,27 @@ public class LimelightDetectorProcessor implements VisionProcessor {
      * 2: Red
      * @param samplePosition {x, y, sample color}
      */
-    public void addSamplePosition(double[] samplePosition) {
+    public synchronized void addSamplePosition(double[] samplePosition) {
         if (samplePosition.length!=3) return;
         samplePositionsToProcess.add(samplePosition);
     }
 
-    public List<double[]> getYellowSamplePositions() {
+    public synchronized List<double[]> getYellowSamplePositions() {
         return new CopyOnWriteArrayList<>(yellowSamplePositions);
     }
 
-    public List<double[]> getBlueSamplePositions() {
+    public synchronized List<double[]> getBlueSamplePositions() {
         return new CopyOnWriteArrayList<>(blueSamplePositions);
     }
 
-    public List<double[]> getRedSamplePositions() {
+    public synchronized List<double[]> getRedSamplePositions() {
         return new CopyOnWriteArrayList<>(redSamplePositions);
     }
 
     private void processSamplePositions() {
-        while (!samplePositionsToProcess.isEmpty()) {
+        while (opMode.opModeIsActive() && !samplePositionsToProcess.isEmpty()) {
             double[] samplePosition = samplePositionsToProcess.pollFirst();
+            if (samplePosition==null) return;
             int c = RESOLUTION_N/2 + (int)(samplePosition[0]/FIELD_RESOLUTION);
             int r = RESOLUTION_N/2 + (int)(samplePosition[1]/FIELD_RESOLUTION);
             if (r<0 || RESOLUTION_N-1<r || c<0 || RESOLUTION_N-1<c) continue;

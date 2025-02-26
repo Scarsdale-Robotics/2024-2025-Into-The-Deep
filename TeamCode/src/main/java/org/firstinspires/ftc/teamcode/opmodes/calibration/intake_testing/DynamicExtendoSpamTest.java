@@ -92,7 +92,7 @@ public class DynamicExtendoSpamTest extends LinearOpMode {
         horizontalIntake.setArmPosition(0.5);
 
         // init linear slides
-        Motor extendo = new MotorEx(hardwareMap, "extendo", Motor.GoBILDA.RPM_1620);
+        Motor extendo = new MotorEx(hardwareMap, "extendo", Motor.GoBILDA.RPM_312);
         Motor leftLift = new MotorEx(hardwareMap, "leftLift", Motor.GoBILDA.RPM_312);
         Motor rightLift = new MotorEx(hardwareMap, "rightLift", Motor.GoBILDA.RPM_312);
 

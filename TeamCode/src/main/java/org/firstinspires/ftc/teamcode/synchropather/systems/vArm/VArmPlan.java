@@ -22,7 +22,7 @@ public class VArmPlan extends Plan<VArmState> {
         this.verticalDeposit = verticalDeposit;
         this.telemetry = telemetry;
         if (telemetry != null) {
-            telemetry.addData("[SYNCHROPATHER] HArmPlan desiredState.getPosition()", "-");
+            telemetry.addData("[SYNCHROPATHER] VArmPlan desiredState.getPosition()", "-");
             telemetry.update();
         }
     }
@@ -38,7 +38,7 @@ public class VArmPlan extends Plan<VArmState> {
         verticalDeposit.setArmPosition(desiredState.getPosition());
 
         if (telemetry != null) {
-            telemetry.addData("[SYNCHROPATHER] HArmPlan desiredState.getPosition()", desiredState.getPosition());
+            telemetry.addData("[SYNCHROPATHER] VArmPlan desiredState.getPosition()", desiredState.getPosition());
             telemetry.update();
         }
     }

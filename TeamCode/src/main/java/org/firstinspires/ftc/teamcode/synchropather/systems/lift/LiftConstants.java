@@ -20,7 +20,9 @@ public class LiftConstants {
     /**
      *  Max lift velocity in inches/s.
      */
-    public static double MAX_VELOCITY = ticksToInches(2200);
+    public static double MAX_MOTOR_VELOCITY = 51;
+
+    public static double MAX_PATHING_VELOCITY = 40;
 
     /**
      *  Max lift acceleration in inches/s^2.

@@ -35,7 +35,7 @@ public class ExtendoLogger extends LinearOpMode {
 
     private void initSubsystems() {
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
-        extendo = new MotorEx(hardwareMap, "extendo", Motor.GoBILDA.RPM_1620);
+        extendo = new MotorEx(hardwareMap, "extendo", Motor.GoBILDA.RPM_312);
         extendo.motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         extendo.motor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         extendo.setRunMode(Motor.RunMode.RawPower);

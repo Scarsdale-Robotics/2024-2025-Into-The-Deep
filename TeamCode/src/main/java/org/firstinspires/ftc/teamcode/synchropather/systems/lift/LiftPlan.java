@@ -15,15 +15,15 @@ import java.util.ArrayList;
 public class LiftPlan extends Plan<LiftState> {
     // Feedforward constants
     //TODO: TUNE
-    public static double kS = 0;
+    public static double kG = 0.1; // Gravity feedforward
     public static double kV = 1;
-    public static double kA = 0.05;
+    public static double kA = 0.075;
 
     // Positional SQUID constants
     //TODO: TUNE
     public static double kSQU = 16;
     public static double kI = 0.0;
-    public static double kD = 0.2;
+    public static double kD = 0;
 
     private double lintedt = 0;
     private double rintedt = 0;
@@ -43,10 +43,12 @@ public class LiftPlan extends Plan<LiftState> {
         this.reHistory = new ArrayList<>();
         this.dtHistory = new ArrayList<>();
         this.telemetry = linearSlides.telemetry;
-//        robot.telemetry.addData("[SYNCHROPATHER] LiftPlan leftHeight", 0);
-//        robot.telemetry.addData("[SYNCHROPATHER] LiftPlan rightHeight", 0);
-//        robot.telemetry.addData("[SYNCHROPATHER] LiftPlan desiredState.getHeight()", 0);
-//        robot.telemetry.update();
+        if (telemetry!=null) {
+            telemetry.addData("[SYNCHROPATHER] LiftPlan leftHeight", 0);
+            telemetry.addData("[SYNCHROPATHER] LiftPlan rightHeight", 0);
+            telemetry.addData("[SYNCHROPATHER] LiftPlan desiredState.getHeight()", 0);
+            telemetry.update();
+        }
     }
 
     public void loop() {
@@ -108,7 +110,7 @@ public class LiftPlan extends Plan<LiftState> {
         if (kI != 0) {
             // Limit integrator to prevent windup
             double integralPowerThreshold = 0.25;
-            double integralThresholdBound = Math.abs(integralPowerThreshold * LiftConstants.MAX_VELOCITY / kI);
+            double integralThresholdBound = Math.abs(integralPowerThreshold * LiftConstants.MAX_MOTOR_VELOCITY / kI);
             lintedt = bound(lintedt, -integralThresholdBound, integralThresholdBound);
             rintedt = bound(rintedt, -integralThresholdBound, integralThresholdBound);
         }
@@ -132,11 +134,11 @@ public class LiftPlan extends Plan<LiftState> {
         // Lift SQUID
         double lsqu = Math.signum(le)*Math.sqrt(Math.abs(le));
         double rsqu = Math.signum(re)*Math.sqrt(Math.abs(re));
-        lu += (kSQU*lsqu + kI*lintedt + kD*ldedt) / LiftConstants.MAX_VELOCITY;
-        ru += (kSQU*rsqu + kI*rintedt + kD*rdedt) / LiftConstants.MAX_VELOCITY;
+        lu += (kSQU*lsqu + kI*lintedt + kD*ldedt) / LiftConstants.MAX_MOTOR_VELOCITY;
+        ru += (kSQU*rsqu + kI*rintedt + kD*rdedt) / LiftConstants.MAX_MOTOR_VELOCITY;
 
         // Feedforward
-        double fu = (kS*Math.signum(dv) + kV*dv + kA*da) / LiftConstants.MAX_VELOCITY;
+        double fu = kG*Math.abs(Math.signum(desiredState.getHeight())) + (kV*dv + kA*da) / LiftConstants.MAX_MOTOR_VELOCITY;
         lu += fu;
         ru += fu;
 
@@ -153,6 +155,9 @@ public class LiftPlan extends Plan<LiftState> {
         telemetry.addData("[SYNCHROPATHER] LiftPlan rdedt", rdedt);
         telemetry.addData("[SYNCHROPATHER] LiftPlan lintedt", lintedt);
         telemetry.addData("[SYNCHROPATHER] LiftPlan rintedt", rintedt);
+        telemetry.addData("[SYNCHROPATHER] LiftPlan fu", fu);
+        telemetry.addData("[SYNCHROPATHER] LiftPlan dv", dv);
+        telemetry.addData("[SYNCHROPATHER] LiftPlan da", da);
         telemetry.update();
 
     }

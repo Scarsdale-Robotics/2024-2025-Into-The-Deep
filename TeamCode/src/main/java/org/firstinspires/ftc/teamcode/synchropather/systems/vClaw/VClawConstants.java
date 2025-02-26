@@ -9,13 +9,13 @@ import com.acmerobotics.dashboard.config.Config;
 public class VClawConstants {
 
     // Claw positions
-    public static double GRAB_POSITION = 0.5;
-    public static double RELEASE_POSITION = 0.22;
+    public static double GRAB_POSITION = 0.72;
+    public static double RELEASE_POSITION = 1;
 
     /**
      * in servo/sec
      */
-    public static double MAX_SPEED = 2;
+    public static double MAX_SPEED = 8;
 
     public static double MOVEMENT_TIME = Math.abs(GRAB_POSITION - RELEASE_POSITION) / MAX_SPEED;
 

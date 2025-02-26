@@ -31,6 +31,7 @@ public class SampleDataBufferFilter {
     private final double timeBuffer;
     private final ArrayList<double[]> bufferedExtendoPositions;  // [{position, timestamp}, ...]
     private final ArrayList<Pose2d> bufferedBotPoses;
+    private final ArrayList<Double> bufferedBotPoseTimes;
     private ExtendoState lastBufferedExtendoPosition;
     private Pose2d lastBufferedBotPose;
 
@@ -51,6 +52,7 @@ public class SampleDataBufferFilter {
         this.timeBuffer = timeBuffer;
         bufferedExtendoPositions = new ArrayList<>();
         bufferedBotPoses = new ArrayList<>();
+        bufferedBotPoseTimes = new ArrayList<>();
         lastBufferedExtendoPosition = null;
         lastBufferedBotPose = null;
 
@@ -255,27 +257,47 @@ public class SampleDataBufferFilter {
         double currentTime = runtime.seconds();
 
         // extendo
-        double currentExtendoPosition = linearSlides.getExtendoPosition();
-        bufferedExtendoPositions.add(new double[]{
-                currentExtendoPosition,
-                currentTime
-        });
+        if (linearSlides!=null) {
+            double currentExtendoPosition = linearSlides.getExtendoPosition();
+            bufferedExtendoPositions.add(new double[]{
+                    currentExtendoPosition,
+                    currentTime
+            });
+        }
 
         // botpose
-        Pose2d currentBotPose = localization.getPose();
-        bufferedBotPoses.add(
-                currentBotPose
-        );
+        if (localization!=null) {
+            Pose2d currentBotPose = localization.getPose();
+            bufferedBotPoses.add(
+                    currentBotPose
+            );
+            bufferedBotPoseTimes.add(
+                    currentTime
+            );
+        }
 
+        //// UPDATE EXTENDO POSITIONS
         // clear data outside buffer
-        while (currentTime - bufferedExtendoPositions.get(0)[1] > timeBuffer) {
+        while (!bufferedExtendoPositions.isEmpty() && currentTime - bufferedExtendoPositions.get(0)[1] > timeBuffer) {
             bufferedExtendoPositions.remove(0);
-            bufferedBotPoses.remove(0);
         }
 
         // store latest data
-        lastBufferedExtendoPosition = new ExtendoState(bufferedExtendoPositions.get(0)[0]);
-        lastBufferedBotPose = bufferedBotPoses.get(0);
+        if (!bufferedExtendoPositions.isEmpty()) {
+            lastBufferedExtendoPosition = new ExtendoState(bufferedExtendoPositions.get(0)[0]);
+        }
+
+        //// UPDATE BOT POSES
+        // clear data outside buffer
+        while (!bufferedBotPoses.isEmpty() && currentTime - bufferedBotPoseTimes.get(0) > timeBuffer) {
+            bufferedBotPoses.remove(0);
+            bufferedBotPoseTimes.remove(0);
+        }
+
+        // store latest data
+        if (!bufferedBotPoses.isEmpty()) {
+            lastBufferedBotPose = bufferedBotPoses.get(0);
+        }
     }
 
 

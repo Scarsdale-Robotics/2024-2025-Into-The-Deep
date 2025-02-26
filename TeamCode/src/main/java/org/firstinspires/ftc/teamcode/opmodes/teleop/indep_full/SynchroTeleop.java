@@ -101,7 +101,7 @@ public class SynchroTeleop extends LinearOpMode {
 
         // TODO: check motor types are correct
         linearSlides = new LinearSlidesSubsystem(
-                initMotor(hardwareMap, "extendo", Motor.GoBILDA.RPM_1620),
+                initMotor(hardwareMap, "extendo", Motor.GoBILDA.RPM_312),
                 initMotor(hardwareMap, "leftLift", Motor.GoBILDA.RPM_312),
                 initMotor(hardwareMap, "rightLift", Motor.GoBILDA.RPM_312),
                 telemetry

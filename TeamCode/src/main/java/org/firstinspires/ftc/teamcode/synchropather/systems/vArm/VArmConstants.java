@@ -9,17 +9,22 @@ import com.acmerobotics.dashboard.config.Config;
 public class VArmConstants {
 
     // Left servo arm homing positions
-    public static double armLeftZeroPosition = 0.85;
-    public static double armLeftPiPosition = 0.15;
+    public static double armLeftClipperPosition = 0.8;
+    public static double armLeftTransferPosition = 0.94;
 
     // Right servo arm homing positions
-    public static double armRightZeroPosition = 0.16;
-    public static double armRightPiPosition = 0.86;
+    public static double armRightClipperPosition = 0.65;
+    public static double armRightTransferPosition = 0.79;
+
+    /**
+     * How much is needed to be added onto the left arm's position to get the right arm's position.
+     */
+    public static double SERVO_DIFFERENCE = -0.15;
 
     /**
      *  Max elbow velocity in servo/sec.
      */
-    public static double MAX_VELOCITY = positionToScaled(2);
+    public static double MAX_VELOCITY = positionToScaled(4);
 
     /**
      *  Max elbow acceleration in servo/sec^2.
@@ -27,7 +32,7 @@ public class VArmConstants {
     public static double MAX_ACCELERATION = positionToScaled(4);
 
     private static double positionToScaled(double position) {
-        return position / Math.abs(armLeftPiPosition - armLeftZeroPosition);
+        return position / Math.abs(armLeftClipperPosition - armLeftTransferPosition);
     }
 
 }

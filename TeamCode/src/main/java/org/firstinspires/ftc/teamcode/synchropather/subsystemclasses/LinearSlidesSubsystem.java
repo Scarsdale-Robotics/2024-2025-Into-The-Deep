@@ -34,9 +34,15 @@ public class LinearSlidesSubsystem {
      * Performs a bulk hardware call and gets current motor positions.
      */
     public void update() {
-        extendoPosition = extendo.getCurrentPosition();
-        leftLiftPosition = leftLift.getCurrentPosition();
-        rightLiftPosition = rightLift.getCurrentPosition();
+        if (extendo!=null) {
+            extendoPosition = extendo.getCurrentPosition();
+        }
+        if (leftLift!=null) {
+            leftLiftPosition = leftLift.getCurrentPosition();
+        }
+        if (rightLift!=null) {
+            rightLiftPosition = rightLift.getCurrentPosition();
+        }
     }
 
     /**

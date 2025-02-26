@@ -14,10 +14,7 @@ public class VerticalDepositSubsystem {
     private final Servo rightVerticalArm;
     private final Servo verticalClaw;
 
-    private final double armLeftZeroPosition = VArmConstants.armLeftZeroPosition;
-    private final double armLeftPiPosition = VArmConstants.armLeftPiPosition;
-    private final double armRightZeroPosition = VArmConstants.armRightZeroPosition;
-    private final double armRightPiPosition = VArmConstants.armRightPiPosition;
+    private final double SERVO_DIFFERENCE = VArmConstants.SERVO_DIFFERENCE;
     private final double clawGrabPosition = VClawConstants.GRAB_POSITION;
     private final double clawReleasePosition = VClawConstants.RELEASE_POSITION;
 
@@ -54,35 +51,13 @@ public class VerticalDepositSubsystem {
     }
 
     /**
-//     * 0 is back into the robot (never use)
-//     * 1 is pickup position
-     * @param armPosition between [0, 1]
+     * Sets the left arm position to the given value and the right arm position to
+     * leftArmPosition + SERVO_DIFFERENCE.
+     * @param leftArmPosition between [0, 1]
      */
-    public void setArmPosition(double armPosition) {
-        double[] armServoPositions = toArmServoPositions(armPosition);
-        leftVerticalArm.setPosition(armServoPositions[0]);
-        rightVerticalArm.setPosition(armServoPositions[1]);
-    }
-
-    /**
-     * @param verticalArmPosition between [0, 1]
-     * @return {leftVerticalArmPosition, rightVerticalArmPosition}
-     */
-    private double[] toArmServoPositions(double verticalArmPosition) {
-        double leftVerticalArmPosition = armLeftZeroPosition + verticalArmPosition*(armLeftPiPosition - armLeftZeroPosition);
-        double rightVerticalArmPosition = armRightZeroPosition + verticalArmPosition*(armRightPiPosition - armRightZeroPosition);
-        return new double[]{leftVerticalArmPosition, rightVerticalArmPosition};
-    }
-
-    /**
-     * Normalizes a given angle to (-pi,pi] radians.
-     * @param radians the given angle in radians.
-     * @return the normalized angle in radians.
-     */
-    private static double normalizeAngle(double radians) {
-        while (radians >= Math.PI) radians -= 2*Math.PI;
-        while (radians < -Math.PI) radians += 2*Math.PI;
-        return radians;
+    public void setArmPosition(double leftArmPosition) {
+        leftVerticalArm.setPosition(leftArmPosition);
+        rightVerticalArm.setPosition(leftArmPosition+SERVO_DIFFERENCE);
     }
 
 }

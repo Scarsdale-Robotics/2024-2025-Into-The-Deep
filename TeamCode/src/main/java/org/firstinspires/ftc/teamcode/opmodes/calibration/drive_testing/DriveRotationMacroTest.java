@@ -63,7 +63,7 @@ public class DriveRotationMacroTest extends LinearOpMode {
     /**
      * Between 0 and 1 (please).
      */
-    public static double searchSpeedFactor = 0.67;
+    public static double searchSpeedFactor = 1;
 
     public static double driveSpeed = 1;
 
@@ -92,7 +92,6 @@ public class DriveRotationMacroTest extends LinearOpMode {
                 // init search
                 search = new SearchMacro(
                         ExtendoConstants.MAX_EXTENSION,
-                        searchSpeedFactor,
                         linearSlides,
                         horizontalIntake
                 );
@@ -328,14 +327,11 @@ public class DriveRotationMacroTest extends LinearOpMode {
                 rotationTarget
         );
 
-        double previousMaxVelocity = ExtendoConstants.MAX_PATHING_VELOCITY;
-        ExtendoConstants.MAX_PATHING_VELOCITY = previousMaxVelocity / 3;
         DynamicLinearExtendo extendoOut = new DynamicLinearExtendo(0,
                 extendoPosition,
                 extendoTarget,
                 extendoVelocity
         );
-        ExtendoConstants.MAX_PATHING_VELOCITY = previousMaxVelocity;
 
         telemetry.addData("extendoPosition.getLength()", extendoPosition.getLength());
         telemetry.addData("extendoTarget.getLength()", extendoTarget.getLength());

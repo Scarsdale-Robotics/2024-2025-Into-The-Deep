@@ -26,6 +26,7 @@ import org.firstinspires.ftc.teamcode.synchropather.subsystemclasses.HorizontalI
 import org.firstinspires.ftc.teamcode.synchropather.subsystemclasses.LimelightSubsystem;
 import org.firstinspires.ftc.teamcode.synchropather.subsystemclasses.LinearSlidesSubsystem;
 import org.firstinspires.ftc.teamcode.synchropather.subsystemclasses.OverheadCameraSubsystem;
+import org.firstinspires.ftc.teamcode.synchropather.subsystemclasses.VerticalDepositSubsystem;
 import org.firstinspires.ftc.vision.VisionPortal;
 
 // TODO: merge with robotsystem later(?)
@@ -45,6 +46,7 @@ public class AutonomousRobot {
     public final DriveSubsystem drive;
     public final LocalizationSubsystem localization;
     public final HorizontalIntakeSubsystem horizontalIntake;
+    public final VerticalDepositSubsystem verticalDeposit;
     public final OverheadCameraSubsystem overheadCamera;
     public final LinearSlidesSubsystem linearSlides;
     public final LimelightSubsystem limelightSubsystem;
@@ -53,6 +55,7 @@ public class AutonomousRobot {
     public final VisionPortal visionPortal;
     public final SampleOrientationProcessor sampleOrientationProcessor;
     public final LimelightDetectorProcessor limelightDetectorProcessor;
+    public SampleDataBufferFilter.SampleTargetingMethod sampleTargetingMethod;
 
     public SampleDataBufferFilter overheadSampleData;
     public SampleDataBufferFilter limelightSampleData;
@@ -82,8 +85,19 @@ public class AutonomousRobot {
         );
 
 
+        // init vertical deposit
+        Servo leftDepositArm = hardwareMap.get(ServoImplEx.class, "leftDepositArm");
+        Servo rightDepositArm = hardwareMap.get(ServoImplEx.class, "rightDepositArm");
+        Servo depositClaw = hardwareMap.get(ServoImplEx.class, "depositClaw");
+        this.verticalDeposit = new VerticalDepositSubsystem(
+                leftDepositArm,
+                rightDepositArm,
+                depositClaw
+        );
+
+
         // init linear slides
-        Motor extendo = new MotorEx(hardwareMap, "extendo", Motor.GoBILDA.RPM_1620);
+        Motor extendo = new MotorEx(hardwareMap, "extendo", Motor.GoBILDA.RPM_312);
         Motor leftLift = new MotorEx(hardwareMap, "leftLift", Motor.GoBILDA.RPM_312);
         Motor rightLift = new MotorEx(hardwareMap, "rightLift", Motor.GoBILDA.RPM_312);
 
@@ -158,7 +172,7 @@ public class AutonomousRobot {
         // init VisionPortal
         WebcamName cameraName = hardwareMap.get(WebcamName.class, "Webcam 1");
         this.sampleOrientationProcessor = new SampleOrientationProcessor();
-        this.limelightDetectorProcessor = new LimelightDetectorProcessor();
+        this.limelightDetectorProcessor = new LimelightDetectorProcessor(this.opMode);
         this.visionPortal = buildVisionPortal(cameraName);
 
         // init overhead camera
@@ -181,17 +195,18 @@ public class AutonomousRobot {
 
 
         // init sample data buffer filters
+        this.sampleTargetingMethod = targetingMethod;
         overheadSampleData = new SampleDataBufferFilter(
                 linearSlides,
                 localization,
                 0.04375,
-                3,  // TODO: TRY SETTING TO 1
+                3,
                 targetingMethod
         );
         limelightSampleData = new SampleDataBufferFilter(
                 linearSlides,
                 localization,
-                0, // TODO: tune
+                0.15, // TODO: tune
                 1,
                 targetingMethod
         );
@@ -224,6 +239,7 @@ public class AutonomousRobot {
         localization.update();
         linearSlides.update();
         overheadSampleData.updateBufferData();
+        limelightSampleData.updateBufferData();
         limelightSubsystem.update(limelightSampleData);
     }
 

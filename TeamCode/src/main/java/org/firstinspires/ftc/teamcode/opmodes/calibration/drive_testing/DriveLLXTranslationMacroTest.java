@@ -14,6 +14,7 @@ import org.firstinspires.ftc.teamcode.opmodes.calibration.Drawing;
 import org.firstinspires.ftc.teamcode.subsystems.DriveSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.LocalizationSubsystem;
 import org.firstinspires.ftc.teamcode.synchropather.AutonomousRobot;
+import org.firstinspires.ftc.teamcode.synchropather.macros.EducatedSearchMacro;
 import org.firstinspires.ftc.teamcode.synchropather.macros.ExtendoRetractMacro;
 import org.firstinspires.ftc.teamcode.synchropather.macros.SearchMacro;
 import org.firstinspires.ftc.teamcode.synchropather.subsystemclasses.HorizontalIntakeSubsystem;
@@ -21,6 +22,7 @@ import org.firstinspires.ftc.teamcode.synchropather.subsystemclasses.LinearSlide
 import org.firstinspires.ftc.teamcode.synchropather.subsystemclasses.OverheadCameraSubsystem;
 import org.firstinspires.ftc.teamcode.synchropather.systems.MovementType;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.Synchronizer;
+import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.TimeSpan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.extendo.ExtendoConstants;
 import org.firstinspires.ftc.teamcode.synchropather.systems.extendo.ExtendoPlan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.extendo.ExtendoState;
@@ -34,6 +36,9 @@ import org.firstinspires.ftc.teamcode.synchropather.systems.hClaw.HClawPlan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.hClaw.movements.GrabHClaw;
 import org.firstinspires.ftc.teamcode.synchropather.systems.hWrist.HWristPlan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.hWrist.movements.MoveHWrist;
+import org.firstinspires.ftc.teamcode.synchropather.systems.limelight.LimelightPipeline;
+import org.firstinspires.ftc.teamcode.synchropather.systems.limelight.LimelightPlan;
+import org.firstinspires.ftc.teamcode.synchropather.systems.limelight.movements.EnableLimelight;
 import org.firstinspires.ftc.teamcode.synchropather.systems.rotation.RotationPlan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.rotation.RotationState;
 import org.firstinspires.ftc.teamcode.synchropather.systems.rotation.movements.LinearRotation;
@@ -41,9 +46,12 @@ import org.firstinspires.ftc.teamcode.synchropather.systems.translation.Translat
 import org.firstinspires.ftc.teamcode.synchropather.systems.translation.TranslationState;
 import org.firstinspires.ftc.teamcode.synchropather.systems.translation.movements.LinearTranslation;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Config
-@TeleOp(name="Drive X Translation Macro Test", group = "Calibration")
-public class DriveXTranslationMacroTest extends LinearOpMode {
+@TeleOp(name="Drive Limelight X Translation Macro Test", group = "Calibration")
+public class DriveLLXTranslationMacroTest extends LinearOpMode {
 
     private Synchronizer search, pickup;
     private Synchronizer extendoRetract;
@@ -60,11 +68,6 @@ public class DriveXTranslationMacroTest extends LinearOpMode {
 
     public static double armDownPosition = 1.04;
 
-    /**
-     * Between 0 and 1 (please).
-     */
-    public static double searchSpeedFactor = 0.67;
-
     public static double driveSpeed = 1;
 
     public static double intakeDelay = 0.25;
@@ -75,29 +78,60 @@ public class DriveXTranslationMacroTest extends LinearOpMode {
 
         waitForStart();
 
+
+        EnableLimelight enableLimelight = new EnableLimelight(new TimeSpan(0,10), LimelightPipeline.SAMPLE_DETECTOR);
+        LimelightPlan limelightPlan = new LimelightPlan(robot.limelightSubsystem, enableLimelight);
+        Synchronizer limelightAction = new Synchronizer(limelightPlan);
+        limelightAction.start();
+
         boolean toggleTriangle = false;
         boolean sampleMacroRunning = false;
         boolean clawGrabbed = false;
         ExtendoState extendoVelocity = null;
         while (opModeIsActive()) {
+            limelightAction.update();
             robot.update();
-            handleGamepadColor();
             boolean driverControlling = controlDrive(sampleMacroRunning);
 
+
+            // Look for limelight samples
+            Pose2d botPose = localization.getPose();
+            List<double[]> samplePositions;
+            if (robot.teamColor==AutonomousRobot.TeamColor.BLUE) {
+                samplePositions = robot.limelightSubsystem.getBlueSamplePositions();
+            } else {
+                samplePositions = robot.limelightSubsystem.getRedSamplePositions();
+            }
+            double[] foundSample = null;
+            if (!samplePositions.isEmpty()) {
+                double closestDistance = Double.MAX_VALUE;
+                double[] closestSample = null;
+                for (double[] samplePosition : samplePositions) {
+                    double distance = Math.hypot(samplePosition[0]-botPose.getX(), samplePosition[1]-botPose.getY());
+                    if (distance < closestDistance) {
+                        closestDistance = distance;
+                        closestSample = samplePosition;
+                    }
+                }
+                foundSample = closestSample;
+            }
+
+            handleGamepadColor();
 
             //// Triangle button
             // Case: Init search macro
             if (gamepad1.triangle && !toggleTriangle && !sampleMacroRunning && !clawGrabbed) {
                 drive.stopController();
-                // init search
-                search = new SearchMacro(
-                        ExtendoConstants.MAX_EXTENSION,
-                        linearSlides,
-                        horizontalIntake
-                );
-                search.start();
-                sampleData.clearFilterData();
-                sampleMacroRunning = true;
+                if (foundSample!=null) {
+                    // init search
+                    search = new EducatedSearchMacro(
+                            foundSample,
+                            robot
+                    );
+                    search.start();
+                    sampleData.clearFilterData();
+                    sampleMacroRunning = true;
+                }
             }
             // Case: Drop off sample
             else if (gamepad1.triangle && !toggleTriangle && !sampleMacroRunning && clawGrabbed) {
@@ -196,13 +230,10 @@ public class DriveXTranslationMacroTest extends LinearOpMode {
      * Sets the gamepad led color to the cv sample color
      */
     private void handleGamepadColor() {
-        if (gamepad1.dpad_up) {
-            SampleOrientationProcessor.colorType = SampleOrientationProcessor.SampleColor.YELLOW;
-        }
-        if (gamepad1.dpad_left) {
+        if (robot.teamColor == AutonomousRobot.TeamColor.BLUE) {
             SampleOrientationProcessor.colorType = SampleOrientationProcessor.SampleColor.BLUE;
         }
-        if (gamepad1.dpad_right) {
+        else {
             SampleOrientationProcessor.colorType = SampleOrientationProcessor.SampleColor.RED;
         }
 
@@ -227,7 +258,7 @@ public class DriveXTranslationMacroTest extends LinearOpMode {
         this.robot = new AutonomousRobot(
                 hardwareMap,
                 new Pose2d(1,1,new Rotation2d(Math.PI/2)),
-                AutonomousRobot.TeamColor.BLUE,
+                AutonomousRobot.TeamColor.RED,
                 this,
                 SampleDataBufferFilter.SampleTargetingMethod.TRANSLATION
         );
@@ -238,7 +269,7 @@ public class DriveXTranslationMacroTest extends LinearOpMode {
         this.localization = robot.localization;
         this.drive = robot.drive;
         this.sampleData = robot.overheadSampleData;
-        OverheadCameraSubsystem.CLAW_OFFSET[0] = -2;
+        OverheadCameraSubsystem.CLAW_OFFSET[0] = -2.5;
 
         // init extendo retract macro
         extendoRetract = new ExtendoRetractMacro(linearSlides);
@@ -301,14 +332,14 @@ public class DriveXTranslationMacroTest extends LinearOpMode {
                 rotationTarget
         );
 
-        double previousMaxVelocity = ExtendoConstants.MAX_PATHING_VELOCITY;
-        ExtendoConstants.MAX_PATHING_VELOCITY = previousMaxVelocity / 3;
+//        double previousMaxVelocity = ExtendoConstants.MAX_PATHING_VELOCITY;
+//        ExtendoConstants.MAX_PATHING_VELOCITY = previousMaxVelocity / 3;
         DynamicLinearExtendo extendoOut = new DynamicLinearExtendo(0,
                 extendoPosition,
                 extendoTarget,
                 extendoVelocity
         );
-        ExtendoConstants.MAX_PATHING_VELOCITY = previousMaxVelocity;
+//        ExtendoConstants.MAX_PATHING_VELOCITY = previousMaxVelocity;
 
         // Move arm down
         LinearHArm h_arm_down = new LinearHArm(intakeDelay+Math.max(Math.max(extendoOut.getEndTime(), rotation.getEndTime()), translation.getEndTime()),
@@ -329,7 +360,7 @@ public class DriveXTranslationMacroTest extends LinearOpMode {
         // Retract extendo
         LinearExtendo extendoIn = new LinearExtendo(h_wrist_reset.getStartTime(),
                 extendoTarget,
-                new ExtendoState(0)
+                new ExtendoState(LinearSlidesSubsystem.extendoOffset)
         );
 
         // Create Plans

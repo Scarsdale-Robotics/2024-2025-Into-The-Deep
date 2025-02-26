@@ -17,13 +17,11 @@ import org.firstinspires.ftc.teamcode.synchropather.systems.hWrist.movements.Mov
 
 public class SearchMacro extends Synchronizer {
 
-    public SearchMacro(double searchDistance, double speedFactor, LinearSlidesSubsystem linearSlides, HorizontalIntakeSubsystem horizontalIntake) {
+    public SearchMacro(double searchDistance, LinearSlidesSubsystem linearSlides, HorizontalIntakeSubsystem horizontalIntake) {
         double extendoTarget = bound(searchDistance, 0, ExtendoConstants.MAX_EXTENSION);
         double currentExtendoPosition = linearSlides.getExtendoPosition();
 
         // Extend and retract
-        double previousMaxVelocity = ExtendoConstants.MAX_PATHING_VELOCITY;
-        ExtendoConstants.MAX_PATHING_VELOCITY = speedFactor*previousMaxVelocity;
         LinearExtendo extendoOut = new LinearExtendo(0,
                 new ExtendoState(currentExtendoPosition),
                 new ExtendoState(extendoTarget)
@@ -32,7 +30,6 @@ public class SearchMacro extends Synchronizer {
                 new ExtendoState(extendoTarget),
                 new ExtendoState(LinearSlidesSubsystem.extendoOffset)
         );
-        ExtendoConstants.MAX_PATHING_VELOCITY = previousMaxVelocity;
 
         // Keep other subsystems still
         MoveHWrist h_wrist_reset = new MoveHWrist(0, 0);

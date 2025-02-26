@@ -16,7 +16,7 @@ public class LinearVArm extends Movement {
     private SymmetricMotionProfile1D motionProfile;
 
     public LinearVArm(TimeSpan timeSpan, VArmState start, VArmState end) {
-        super(timeSpan, MovementType.HORIZONTAL_ARM);
+        super(timeSpan, MovementType.VERTICAL_ARM);
         this.start = start;
         this.end = end;
         init(false, 0);
@@ -29,7 +29,7 @@ public class LinearVArm extends Movement {
      * @param end
      */
     public LinearVArm(double startTime, VArmState start, VArmState end) {
-        super(MovementType.HORIZONTAL_ARM);
+        super(MovementType.VERTICAL_ARM);
         this.start = start;
         this.end = end;
         init(true, startTime);
@@ -43,7 +43,7 @@ public class LinearVArm extends Movement {
      * @param alignToEndTime if this Movement should end at the given time
      */
     public LinearVArm(double endTime, VArmState start, VArmState end, boolean alignToEndTime) {
-        super(MovementType.HORIZONTAL_ARM);
+        super(MovementType.VERTICAL_ARM);
         this.start = start;
         this.end = end;
         init(true, endTime);

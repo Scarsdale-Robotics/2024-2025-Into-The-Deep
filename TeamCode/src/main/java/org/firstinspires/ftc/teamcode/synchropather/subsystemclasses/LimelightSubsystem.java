@@ -61,8 +61,12 @@ public class LimelightSubsystem {
         this.currentState = currentState;
     }
 
-    public void update(SampleDataBufferFilter limelightSampleData) {
-        if (currentState.getPipeline()==null || !currentState.getEnabled() || !limelight.isRunning()) return;
+    public LimelightState getCurrentState() {
+        return currentState;
+    }
+
+    public void update(Pose2d botPose) {
+        if (botPose==null || currentState==null || currentState.getPipeline()==null || !currentState.getEnabled() || !limelight.isRunning()) return;
 
         // Pipeline-specific actions
         if (currentState.getPipeline() == LimelightPipeline.SAMPLE_DETECTOR) {
@@ -71,7 +75,7 @@ public class LimelightSubsystem {
             for (LLResultTypes.DetectorResult detection : detections) {
                 double[] relativePosition = calculateSampleRelativePosition(detection, LimelightConstants.FOV, LimelightConstants.cz, LimelightConstants.theta_incline);
                 if (relativePosition != null) {
-                    double[] fieldPosition = calculateFieldPosition(limelightSampleData.getLastBufferedBotPose(), relativePosition);
+                    double[] fieldPosition = calculateFieldPosition(botPose, relativePosition);
                     processor.addSamplePosition(fieldPosition);
                 }
             }
@@ -83,13 +87,17 @@ public class LimelightSubsystem {
         redSamplePositions = processor.getRedSamplePositions();
     }
 
+    public void update(SampleDataBufferFilter limelightSampleData) {
+        update(limelightSampleData.getLastBufferedBotPose());
+    }
+
     /**
      * Estimates the sample's position relative to the robot given the midpoint of its bounding box's top edge.
      *
      * @param detection The Limelight3A detector result for this sample.
      * @return the estimated position.
      */
-    private double[] calculateSampleRelativePosition(LLResultTypes.DetectorResult detection, double FOV, double cz, double theta_incline) {
+    public double[] calculateSampleRelativePosition(LLResultTypes.DetectorResult detection, double FOV, double cz, double theta_incline) {
 
         // math: https://docs.google.com/document/d/1hrrhX6M2sVAjVzJZFjrWjbrTWbZSyLkcwsaZOKVoI-A/edit?usp=sharing
 
@@ -143,7 +151,7 @@ public class LimelightSubsystem {
      * @param relativePosition
      * @return the object's global Pose2d.
      */
-    private double[] calculateFieldPosition(Pose2d robotPose, double[] relativePosition) {
+    public double[] calculateFieldPosition(Pose2d robotPose, double[] relativePosition) {
         Pose2d limelightPosition = LimelightConstants.limelightPosition;
         double[] globalPose = relativePosition;
         double dTheta;

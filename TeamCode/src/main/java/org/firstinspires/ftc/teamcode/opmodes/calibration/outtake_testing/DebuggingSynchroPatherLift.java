@@ -100,11 +100,12 @@ public class DebuggingSynchroPatherLift extends LinearOpMode {
         while (!loopTicks.isEmpty() && currentTime - loopTicks.getFirst() > 1d) loopTicks.removeFirst();
         telemetry.addData("[MAIN] TPS", loopTicks.size());
         telemetry.update();
+        linearSlides.update();
     }
 
 
     private void initSynchronizer() {
-        double targetHeight = LiftConstants.MAX_HEIGHT;
+        double targetHeight = 0.65*LiftConstants.MAX_HEIGHT;
 
         // Translation plan
         LinearLift lift1 = new LinearLift(0,

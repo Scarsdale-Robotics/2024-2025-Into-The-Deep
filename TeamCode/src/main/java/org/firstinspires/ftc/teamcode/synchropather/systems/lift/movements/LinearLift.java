@@ -136,7 +136,7 @@ public class LinearLift extends Movement {
     private void init(boolean startTimeConstructor, double startTime, boolean useDifferentDeceleration) {
         distance = end.minus(start).abs();
 
-        double v_max = LiftConstants.MAX_VELOCITY;
+        double v_max = LiftConstants.MAX_PATHING_VELOCITY;
         double a_max_1 = LiftConstants.MAX_ACCELERATION;
         double a_max_2 = LiftConstants.MAX_DECELERATION;
 
