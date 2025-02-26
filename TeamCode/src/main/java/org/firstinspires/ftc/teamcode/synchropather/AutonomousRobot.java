@@ -1,5 +1,8 @@
 package org.firstinspires.ftc.teamcode.synchropather;
 
+import static org.firstinspires.ftc.teamcode.Auxiliary.initMotor;
+import static org.firstinspires.ftc.teamcode.Auxiliary.initServo;
+
 import android.util.Size;
 
 import com.acmerobotics.dashboard.FtcDashboard;
@@ -22,6 +25,7 @@ import org.firstinspires.ftc.teamcode.opmodes.algorithms.SampleDataBufferFilter;
 import org.firstinspires.ftc.teamcode.subsystems.DriveSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.GoBildaPinpointDriver;
 import org.firstinspires.ftc.teamcode.subsystems.LocalizationSubsystem;
+import org.firstinspires.ftc.teamcode.synchropather.subsystemclasses.ClipbotSubsystem;
 import org.firstinspires.ftc.teamcode.synchropather.subsystemclasses.HorizontalIntakeSubsystem;
 import org.firstinspires.ftc.teamcode.synchropather.subsystemclasses.LimelightSubsystem;
 import org.firstinspires.ftc.teamcode.synchropather.subsystemclasses.LinearSlidesSubsystem;
@@ -49,6 +53,7 @@ public class AutonomousRobot {
     public final VerticalDepositSubsystem verticalDeposit;
     public final OverheadCameraSubsystem overheadCamera;
     public final LinearSlidesSubsystem linearSlides;
+    public final ClipbotSubsystem clipbot;
     public final LimelightSubsystem limelightSubsystem;
 
     private final Size CAMERA_RESOLUTION = new Size(320, 240);
@@ -209,6 +214,20 @@ public class AutonomousRobot {
                 0.15, // TODO: tune
                 1,
                 targetingMethod
+        );
+
+
+        // Clipbot
+        Servo magazineIntake = hardwareMap.get(ServoImplEx.class, "magazineIntake");
+        Servo magazineLoader1 = hardwareMap.get(ServoImplEx.class, "magazineLoaderClose");
+        Servo magazineLoader2 = hardwareMap.get(ServoImplEx.class, "magazineLoaderFar");
+        this.clipbot = new ClipbotSubsystem(
+                magazineIntake,
+                magazineLoader1,
+                magazineLoader2,
+                initServo(hardwareMap, "klipper"),
+                initMotor(hardwareMap, "magazineFeeder", Motor.GoBILDA.RPM_1620),
+                telemetry
         );
 
 

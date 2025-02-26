@@ -158,8 +158,6 @@ public class SynchroTeleop extends LinearOpMode {
         horizontalIntake.setWristAngle(0);
         horizontalIntake.setArmPosition(0.5);
 
-        clipbot.homeMagazineFeeder(this, telemetry);  // TODO: TEST IF HOMING HERE IS HELPFUL
-
         boolean autoIntakeRunning = false;
         boolean manualIntakeRunning = false;
         boolean clipIntakeRunning = false;
