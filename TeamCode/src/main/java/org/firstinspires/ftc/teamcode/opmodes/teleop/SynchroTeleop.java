@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.opmodes.teleop.indep_full;
+package org.firstinspires.ftc.teamcode.opmodes.teleop;
 
 import static org.firstinspires.ftc.teamcode.Auxiliary.initMotor;
 import static org.firstinspires.ftc.teamcode.Auxiliary.initPinpoint;

@@ -413,13 +413,13 @@ public class DriveXTranslationTransferMacroTest extends LinearOpMode {
                 new HArmState(0.9)
         );
 
-        // Deposit arm prepares to meet clipper
+        // Deposit arm prepares for clip zone
         LinearVArm toClipperVArm = new LinearVArm(hArmDown.getEndTime(),
                 new VArmState(VArmConstants.armLeftUpPosition),
                 new VArmState(VArmConstants.armLeftTransferPosition)
         );
 
-        // Lift approaches to meet clipper
+        // Lift approaches clip zone
         LinearLift toClipperLift = new LinearLift(hArmDown.getEndTime(),
                 new LiftState(robot.linearSlides.getLeftLiftPosition()),
                 new LiftState(LiftConstants.specMakerPosition)
