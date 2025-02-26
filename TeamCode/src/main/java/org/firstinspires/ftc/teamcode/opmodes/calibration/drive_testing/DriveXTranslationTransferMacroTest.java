@@ -35,6 +35,7 @@ import org.firstinspires.ftc.teamcode.synchropather.systems.hClaw.movements.Grab
 import org.firstinspires.ftc.teamcode.synchropather.systems.hClaw.movements.ReleaseHClaw;
 import org.firstinspires.ftc.teamcode.synchropather.systems.hWrist.HWristPlan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.hWrist.movements.MoveHWrist;
+import org.firstinspires.ftc.teamcode.synchropather.systems.lift.LiftConstants;
 import org.firstinspires.ftc.teamcode.synchropather.systems.lift.LiftPlan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.lift.LiftState;
 import org.firstinspires.ftc.teamcode.synchropather.systems.lift.movements.LinearLift;
@@ -379,7 +380,7 @@ public class DriveXTranslationTransferMacroTest extends LinearOpMode {
 
         LinearLift liftUp = new LinearLift(0,
                 new LiftState(robot.linearSlides.getLeftLiftPosition()),
-                new LiftState(9.1464859)
+                new LiftState(LiftConstants.transferPosition)
         );
 
         // Horizontal arm goes up
@@ -401,19 +402,28 @@ public class DriveXTranslationTransferMacroTest extends LinearOpMode {
         ReleaseHClaw releaseHClaw = new ReleaseHClaw(grabVClaw.getEndTime());
 
         // Deposit arm moves out of the way
-        LinearVArm toClipperVArm = new LinearVArm(releaseHClaw.getEndTime(),
+        LinearVArm upVArm = new LinearVArm(releaseHClaw.getEndTime(),
                 new VArmState(VArmConstants.armLeftTransferPosition),
-                new VArmState(VArmConstants.armLeftClipperPosition)
+                new VArmState(VArmConstants.armLeftUpPosition)
         );
 
         // Intake arm moves back down
-        LinearHArm hArmDown = new LinearHArm(toClipperVArm.getEndTime(),
+        LinearHArm hArmDown = new LinearHArm(upVArm.getEndTime(),
                 new HArmState(0.48),
                 new HArmState(0.9)
         );
 
+        // Deposit arm prepares to meet clipper
+        LinearVArm toClipperVArm = new LinearVArm(hArmDown.getEndTime(),
+                new VArmState(VArmConstants.armLeftUpPosition),
+                new VArmState(VArmConstants.armLeftTransferPosition)
+        );
 
-
+        // Lift approaches to meet clipper
+        LinearLift toClipperLift = new LinearLift(hArmDown.getEndTime(),
+                new LiftState(robot.linearSlides.getLeftLiftPosition()),
+                new LiftState(LiftConstants.specMakerPosition)
+        );
 
         // Create Plans
         TranslationPlan translationPlan = new TranslationPlan(drive, localization,
@@ -441,10 +451,12 @@ public class DriveXTranslationTransferMacroTest extends LinearOpMode {
                 releaseHClaw
         );
         LiftPlan liftPlan = new LiftPlan(robot.linearSlides,
-                liftUp
+                liftUp,
+                toClipperLift
         );
         VArmPlan vArmPlan = new VArmPlan(robot.verticalDeposit,
                 vArmDown,
+                upVArm,
                 toClipperVArm
         );
         VClawPlan vClawPlan = new VClawPlan(robot.verticalDeposit,

@@ -8,6 +8,10 @@ import com.acmerobotics.dashboard.config.Config;
 @Config
 public class LiftConstants {
 
+
+    public static double specMakerPosition = 0.0;
+    public static double transferPosition = 9.1464859;
+
     /**
      *  Conversion factor
      */
