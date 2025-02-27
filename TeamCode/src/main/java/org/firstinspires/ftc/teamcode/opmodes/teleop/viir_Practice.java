@@ -29,7 +29,7 @@ public class viir_Practice extends LinearOpMode {
                 breakLoopHehe = true;
             }
             if (breakLoopHehe) {
-                telemetry.addData("You have been hacked", 9);
+                telemetry.addData("sigma sigma boy sigma boy sigma boy", 9);
                 telemetry.update();
             }
             if (!gamepad1.square) {
@@ -45,6 +45,9 @@ public class viir_Practice extends LinearOpMode {
                 senseChangeActivated = true;
             }
             if (senseChangeActivated) {
+                strafe = -gamepad1.left_stick_x + buffer;
+                turn = -gamepad1.right_stick_x - buffer;
+                forward = gamepad1.left_stick_y - buffer;
             }
             if (senseChangeActivated && gamepad1.circle) {
                 senseChangeActivated = false;
