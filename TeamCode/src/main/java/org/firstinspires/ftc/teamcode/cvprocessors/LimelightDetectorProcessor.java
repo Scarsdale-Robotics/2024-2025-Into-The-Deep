@@ -24,7 +24,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 @Config
 public class LimelightDetectorProcessor implements VisionProcessor {
 
-    public static boolean SHOW_SAMPLE_DISTRIBUTION = true;
+    public static boolean SHOW_SAMPLE_DISTRIBUTION = false;
     public static double FIELD_RESOLUTION = 0.75; // inches
     public static double DECAY_TIME = 0.5;
     public static final int RESOLUTION_N = (int) (144.0 / FIELD_RESOLUTION);

@@ -19,10 +19,21 @@ import org.firstinspires.ftc.teamcode.opmodes.algorithms.SampleDataBufferFilter;
 import org.firstinspires.ftc.teamcode.synchropather.AutonomousRobot;
 import org.firstinspires.ftc.teamcode.synchropather.subsystemclasses.ClipbotSubsystem;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.Synchronizer;
+import org.firstinspires.ftc.teamcode.synchropather.systems.klipper.KlipperConstants;
+import org.firstinspires.ftc.teamcode.synchropather.systems.klipper.KlipperPlan;
+import org.firstinspires.ftc.teamcode.synchropather.systems.klipper.movements.MoveKlipper;
 import org.firstinspires.ftc.teamcode.synchropather.systems.mFeeder.MFeederConstants;
 import org.firstinspires.ftc.teamcode.synchropather.systems.mFeeder.MFeederPlan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.mFeeder.MFeederState;
 import org.firstinspires.ftc.teamcode.synchropather.systems.mFeeder.movements.LinearMFeeder;
+import org.firstinspires.ftc.teamcode.synchropather.systems.vArm.VArmConstants;
+import org.firstinspires.ftc.teamcode.synchropather.systems.vArm.VArmPlan;
+import org.firstinspires.ftc.teamcode.synchropather.systems.vArm.VArmState;
+import org.firstinspires.ftc.teamcode.synchropather.systems.vArm.movements.LinearVArm;
+import org.firstinspires.ftc.teamcode.synchropather.systems.vClaw.VClawConstants;
+import org.firstinspires.ftc.teamcode.synchropather.systems.vClaw.VClawPlan;
+import org.firstinspires.ftc.teamcode.synchropather.systems.vClaw.movements.GrabVClaw;
+import org.firstinspires.ftc.teamcode.synchropather.systems.vClaw.movements.ReleaseVClaw;
 
 import java.util.ArrayDeque;
 
@@ -34,6 +45,7 @@ public class TransferAndClipMotion extends LinearOpMode {
     private AutonomousRobot robot;
 
     private int clipInventory = MFeederConstants.MAX_CAPACITY;
+    private boolean inventoryStocked = true;
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -73,10 +85,18 @@ public class TransferAndClipMotion extends LinearOpMode {
                 this,
                 SampleDataBufferFilter.SampleTargetingMethod.TRANSLATION
         );
+
+        robot.verticalDeposit.setArmPosition(0.5);
+        robot.verticalDeposit.setClawPosition(VClawConstants.RELEASE_POSITION);
+        robot.clipbot.setKlipperPosition(KlipperConstants.openPosition);
     }
 
     private void initAdvanceMagazineMotion() {
-        if (clipInventory <= 0) return;
+        if (!inventoryStocked) return;
+        if (clipInventory <= 0) {
+            inventoryStocked = false;
+            return;
+        }
 
         // Get target states
         double maxClips = MFeederConstants.MAX_CAPACITY;
@@ -90,22 +110,80 @@ public class TransferAndClipMotion extends LinearOpMode {
         );
 
 
-        // Movements
-        LinearMFeeder advanceFeeder = new LinearMFeeder(0,
+        // Grab onto sample
+        GrabVClaw grabVClaw = new GrabVClaw(0);
+
+        // Keep klipper open
+        MoveKlipper initKlipper = new MoveKlipper(0, KlipperConstants.openPosition);
+
+        // Lower v arm to spec maker
+        LinearVArm lowerVArm = new LinearVArm(0,
+                new VArmState(0.5),
+                new VArmState(VArmConstants.armLeftClipperPosition)
+        );
+
+        // Advance feeder
+        LinearMFeeder advanceFeeder = new LinearMFeeder(lowerVArm.getEndTime(),
                 currentFeederPosition,
                 targetFeederPosition
         );
 
+        // KLIP
+        MoveKlipper klipSample = new MoveKlipper(advanceFeeder.getEndTime(), KlipperConstants.closedPosition);
 
-        // Plans
-        MFeederPlan mFeederPlan = new MFeederPlan(robot.clipbot,
-                advanceFeeder
+        // UNKLIP
+        MoveKlipper unklipSample = new MoveKlipper(klipSample.getEndTime(), KlipperConstants.openPosition);
+
+        // Take specimen out
+        LinearVArm raiseVArm = new LinearVArm(unklipSample.getEndTime(),
+                new VArmState(VArmConstants.armLeftClipperPosition),
+                new VArmState(0.5)
         );
 
+        // Release specimen
+        ReleaseVClaw releaseVClaw = new ReleaseVClaw(raiseVArm.getEndTime());
+
+
+        //// Plans
+        MFeederPlan mFeederPlan;
+        if (clipInventory==0) {
+            LinearMFeeder resetFeeder = new LinearMFeeder(advanceFeeder.getEndTime(),
+                    targetFeederPosition,
+                    new MFeederState(0)
+            );
+            mFeederPlan = new MFeederPlan(robot.clipbot,
+                    advanceFeeder,
+                    resetFeeder
+            );
+            inventoryStocked = false;
+            clipInventory = MFeederConstants.MAX_CAPACITY;
+        } else {
+            mFeederPlan = new MFeederPlan(robot.clipbot,
+                    advanceFeeder
+            );
+        }
+
+        VArmPlan vArmPlan = new VArmPlan(robot.verticalDeposit,
+                lowerVArm,
+                raiseVArm
+        );
+        VClawPlan vClawPlan = new VClawPlan(robot.verticalDeposit,
+                grabVClaw,
+                releaseVClaw
+        );
+
+        KlipperPlan klipperPlan = new KlipperPlan(robot.clipbot,
+                initKlipper,
+                klipSample,
+                unklipSample
+        );
 
         // Synchronizer
         this.synchronizer = new Synchronizer(
-                mFeederPlan
+                mFeederPlan,
+                vArmPlan,
+                vClawPlan,
+                klipperPlan
         );
     }
 

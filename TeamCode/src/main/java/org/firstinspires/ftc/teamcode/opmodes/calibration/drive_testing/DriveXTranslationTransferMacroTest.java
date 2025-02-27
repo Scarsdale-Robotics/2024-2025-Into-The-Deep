@@ -404,7 +404,7 @@ public class DriveXTranslationTransferMacroTest extends LinearOpMode {
         // Deposit arm moves out of the way
         LinearVArm upVArm = new LinearVArm(releaseHClaw.getEndTime(),
                 new VArmState(VArmConstants.armLeftTransferPosition),
-                new VArmState(VArmConstants.armLeftUpPosition)
+                new VArmState(VArmConstants.armLeftClipperPosition)
         );
 
         // Intake arm moves back down
@@ -415,7 +415,7 @@ public class DriveXTranslationTransferMacroTest extends LinearOpMode {
 
         // Deposit arm prepares for clip zone
         LinearVArm toClipperVArm = new LinearVArm(hArmDown.getEndTime(),
-                new VArmState(VArmConstants.armLeftUpPosition),
+                new VArmState(VArmConstants.armLeftClipperPosition),
                 new VArmState(VArmConstants.armLeftTransferPosition)
         );
 

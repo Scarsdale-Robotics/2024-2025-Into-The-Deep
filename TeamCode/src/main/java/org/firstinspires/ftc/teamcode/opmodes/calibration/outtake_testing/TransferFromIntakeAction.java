@@ -90,7 +90,7 @@ public class TransferFromIntakeAction extends LinearOpMode {
         // Deposit arm moves out of the way
         LinearVArm toClipperVArm = new LinearVArm(releaseHClaw.getEndTime(),
                 new VArmState(VArmConstants.armLeftTransferPosition),
-                new VArmState(VArmConstants.armLeftUpPosition)
+                new VArmState(VArmConstants.armLeftClipperPosition)
         );
 
         // Intake arm moves back down

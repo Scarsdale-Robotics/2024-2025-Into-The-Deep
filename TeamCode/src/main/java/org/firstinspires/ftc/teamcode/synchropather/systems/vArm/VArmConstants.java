@@ -9,12 +9,12 @@ import com.acmerobotics.dashboard.config.Config;
 public class VArmConstants {
 
     // Left servo arm homing positions
-    public static double armLeftUpPosition = 0.8;
+    public static double armLeftClipperPosition = 0.8;
     public static double armLeftTransferPosition = 0.94;
 
-//    // Right servo arm homing positions
-//    public static double armRightClipperPosition = 0.65;
-//    public static double armRightTransferPosition = 0.79;
+    // Right servo arm homing positions
+    public static double armRightClipperPosition = 0.65;
+    public static double armRightTransferPosition = 0.79;
 
     /**
      * How much is needed to be added onto the left arm's position to get the right arm's position.
@@ -32,7 +32,7 @@ public class VArmConstants {
     public static double MAX_ACCELERATION = positionToScaled(4);
 
     private static double positionToScaled(double position) {
-        return position / Math.abs(armLeftUpPosition - armLeftTransferPosition);
+        return position / Math.abs(armLeftClipperPosition - armLeftTransferPosition);
     }
 
 }
