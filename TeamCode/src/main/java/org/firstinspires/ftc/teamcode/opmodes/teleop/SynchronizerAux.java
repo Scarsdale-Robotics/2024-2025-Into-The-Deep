@@ -109,6 +109,12 @@ public class SynchronizerAux {
         );
     }
 
+    /**
+     * also happens to do klipper job
+     * @param targetClipCount
+     * @param clipbot
+     * @return
+     */
     public static Synchronizer getFeederSync(
             int targetClipCount,
             ClipbotSubsystem clipbot
@@ -132,16 +138,31 @@ public class SynchronizerAux {
                 targetFeederPosition
         );
 
+        MoveKlipper klipperClose = new MoveKlipper(
+                advanceFeeder.getEndTime() + 1,
+                KlipperConstants.closedPosition
+        );
+        MoveKlipper klipperOpen = new MoveKlipper(
+                klipperClose.getEndTime(),
+                KlipperConstants.openPosition
+        );
+
 
         // Plans
         MFeederPlan mFeederPlan = new MFeederPlan(clipbot,
                 advanceFeeder
         );
 
+        KlipperPlan klipperPlan = new KlipperPlan(
+                clipbot,
+                klipperClose, klipperOpen
+        );
+
 
         // Synchronizer
         return new Synchronizer(
-                mFeederPlan
+                mFeederPlan,
+                klipperPlan
         );
     }
 
