@@ -11,6 +11,7 @@ public class VArmConstants {
     // Left servo arm homing positions
     public static double armLeftClipperPosition = 0.8;
     public static double armLeftTransferPosition = 0.94;
+    public static double armLeftBackPosition = 0.4;  // TODO: TUNE
 
     // Right servo arm homing positions
     public static double armRightClipperPosition = 0.65;

@@ -21,6 +21,7 @@ import org.firstinspires.ftc.teamcode.synchropather.subsystemclasses.ClipbotSubs
 import org.firstinspires.ftc.teamcode.synchropather.subsystemclasses.HorizontalIntakeSubsystem;
 import org.firstinspires.ftc.teamcode.synchropather.subsystemclasses.LinearSlidesSubsystem;
 import org.firstinspires.ftc.teamcode.synchropather.subsystemclasses.OverheadCameraSubsystem;
+import org.firstinspires.ftc.teamcode.synchropather.subsystemclasses.VerticalDepositSubsystem;
 import org.firstinspires.ftc.teamcode.synchropather.systems.MovementType;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.Synchronizer;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.TimeSpan;
@@ -67,11 +68,13 @@ public class Teleop extends LinearOpMode {
 
     private Synchronizer search, pickup, transfer;
     private Synchronizer extendoRetract, feederMotion, clipIntakeMotion;
+    private Synchronizer depositExtend, depositAction;
 
     private AutonomousRobot robot;
 
     private HorizontalIntakeSubsystem horizontalIntake;
     private ClipbotSubsystem clipbot;
+    private VerticalDepositSubsystem verticalDeposit;
     private OverheadCameraSubsystem overheadCamera;
     private LinearSlidesSubsystem linearSlides;
     private LocalizationSubsystem localization;
@@ -95,10 +98,17 @@ public class Teleop extends LinearOpMode {
 
         boolean toggleTriangle = false;
         boolean toggleSquare = false;
+        boolean toggleIntake = false;
+        boolean toggleFeed = false;
+
         boolean sampleMacroRunning = false;
         boolean transferMacroRunning = false;
         boolean feederMacroRunning = false;
         boolean extendoRetractRunning = false;
+        boolean depositExtendRunning = false;
+        boolean depositActionRunning = false;
+
+        boolean g1IsIntake = true;
 
         onStart();
         extendoRetractRunning = true;
@@ -111,6 +121,7 @@ public class Teleop extends LinearOpMode {
         int clipInventory = MAX_CLIPS;
         boolean clipIntakeMacroRunning = false;
         boolean clawGrabbed = false;
+        boolean depositUp = false;
         ExtendoState extendoVelocity = null;
         while (opModeIsActive()) {
             limelightAction.update();
@@ -142,85 +153,111 @@ public class Teleop extends LinearOpMode {
 
             handleGamepadColor();
 
-            //// Triangle button
-            // Case: Init search macro
-            if (
-                    gamepad1.triangle &&
-                    !toggleTriangle &&
-                    !sampleMacroRunning &&
-                    !transferMacroRunning &&
-                    !clawGrabbed
-            ) {
-                drive.stopController();
-                if (foundSample!=null) {
-                    // init search
-                    search = new EducatedSearchMacro(
-                            foundSample,
-                            robot
-                    );
-                    search.start();
-                    sampleData.clearFilterData();
-                    sampleMacroRunning = true;
+            if (g1IsIntake) {
+                // Case: Init search macro
+                if (
+                        gamepad1.triangle &&
+                                !toggleTriangle &&
+                                !sampleMacroRunning &&
+                                !transferMacroRunning &&
+                                !clawGrabbed
+                ) {
+                    drive.stopController();
+                    if (foundSample!=null) {
+                        // init search
+                        search = new EducatedSearchMacro(
+                                foundSample,
+                                robot
+                        );
+                        search.start();
+                        sampleData.clearFilterData();
+                        sampleMacroRunning = true;
+                    }
                 }
+                // Case: Retract extendo
+                else if (
+                        gamepad1.square &&
+                                !toggleTriangle &&
+                                !sampleMacroRunning &&
+                                !transferMacroRunning &&
+                                !clawGrabbed
+                ) {
+                    extendoRetract.start();
+                    extendoRetractRunning = true;
+                }
+                // Case: Transfer to spec maker
+                else if (
+                        gamepad1.triangle &&
+                                !toggleTriangle &&
+                                !sampleMacroRunning &&
+                                !transferMacroRunning &&
+                                clawGrabbed
+                ) {
+                    transfer.start();
+                    transferMacroRunning = true;
+                    clawGrabbed = false;
+                }
+                // Case: Drop sample
+                else if (
+                        gamepad1.square &&
+                                !toggleSquare &&
+                                !sampleMacroRunning &&
+                                !transferMacroRunning &&
+                                clawGrabbed
+                ) {
+                    horizontalIntake.setClawPosition(HClawConstants.RELEASE_POSITION);
+                    clawGrabbed = false;
+                }
+                // Case: Cancel search macro
+                else if (
+                        gamepad1.triangle &&
+                                !toggleTriangle &&
+                                sampleMacroRunning &&
+                                !transferMacroRunning
+                ) {
+                    sampleMacroRunning = false;
+                }
+                // Case: Cancel transfer macro
+                else if (
+                        gamepad1.triangle &&
+                                !toggleTriangle &&
+                                !sampleMacroRunning &&
+                                transferMacroRunning
+                ) {
+                    transferMacroRunning = false;
+                }
+            } else {
+                // Case: Deposit up
+                if (
+                        gamepad1.triangle &&
+                                !toggleTriangle &&
+                                !depositExtendRunning &&
+                                !depositActionRunning &&
+                                !depositUp
+                ) {
+                    depositExtend.start();
+                    depositUp = true;
+                    depositExtendRunning = true;
+                }
+                // Case: Deposit act
+                else if (
+                        gamepad1.triangle &&
+                                !toggleTriangle &&
+                                !depositExtendRunning &&
+                                !depositActionRunning &&
+                                depositUp
+                ) {
+                    depositAction.start();
+                    depositUp = false;
+                    depositActionRunning = true;
+                }
+                //TODO: CONSIDER ADDING OPERATION CANCELS, LIKELY NEED FOR UP ACTION
             }
-            // Case: Retract extendo
-            else if (
-                    gamepad1.square &&
-                    !toggleTriangle &&
-                    !sampleMacroRunning &&
-                    !transferMacroRunning &&
-                    !clawGrabbed
-            ) {
-                extendoRetract.start();
-                extendoRetractRunning = true;
-            }
-            // Case: Transfer to spec maker
-            else if (
-                    gamepad1.triangle &&
-                    !toggleTriangle &&
-                    !sampleMacroRunning &&
-                    !transferMacroRunning &&
-                    clawGrabbed
-            ) {
-                transfer.start();
-                transferMacroRunning = true;
-                clawGrabbed = false;
-            }
-            // Case: Drop sample
-            else if (
-                    gamepad1.square &&
-                    !toggleSquare &&
-                    !sampleMacroRunning &&
-                    !transferMacroRunning &&
-                    clawGrabbed
-            ) {
-                horizontalIntake.setClawPosition(HClawConstants.RELEASE_POSITION);
-                clawGrabbed = false;
-            }
-            // Case: Cancel search macro
-            else if (
-                    gamepad1.triangle &&
-                    !toggleTriangle &&
-                    sampleMacroRunning &&
-                    !transferMacroRunning
-            ) {
-                sampleMacroRunning = false;
-            }
-            // Case: Cancel transfer macro
-            else if (
-                    gamepad1.triangle &&
-                    !toggleTriangle &&
-                    !sampleMacroRunning &&
-                    transferMacroRunning
-            ) {
-                transferMacroRunning = false;
-            }
-            toggleTriangle = gamepad1.triangle;
-            toggleSquare = gamepad1.square;
 
+            boolean currIntake = gamepad1.cross && gamepad1.dpad_left;
             if (
-                    gamepad1.cross &&
-                    gamepad1.dpad_left &&
+                    currIntake &&
+                    !toggleIntake &&
                     !clipIntakeMacroRunning &&
                     !feederMacroRunning
             ) {
@@ -230,9 +267,10 @@ public class Teleop extends LinearOpMode {
                 clipIntakeMacroRunning = true;
             }
 
+            boolean currFeed = gamepad2.cross && gamepad2.dpad_left;
             if (
-                    gamepad2.cross &&
-                    gamepad2.dpad_left &&
+                    currFeed &&
+                    !toggleFeed &&
                     !clipIntakeMacroRunning &&
                     !feederMacroRunning
             ) {
@@ -240,6 +278,11 @@ public class Teleop extends LinearOpMode {
                 clipInventory--;
                 feederMacroRunning = true;
             }
+
+            toggleTriangle = gamepad1.triangle;
+            toggleSquare = gamepad1.square;
+            toggleIntake = currIntake;
+            toggleFeed = currFeed;
 
             if (!transferMacroRunning) {
                 initTransferMotion();
@@ -294,10 +337,24 @@ public class Teleop extends LinearOpMode {
                 extendoRetractRunning = extendoRetract.update();
             }
 
+            if (depositExtendRunning) {
+                depositExtendRunning = depositExtend.update();
+            } else {
+                initDepositExtendMotion();
+            }
+            if (depositActionRunning) {
+                depositActionRunning = depositAction.update();
+            } else {
+                initDepositActionMotion();
+            }
+
             if (clipIntakeMacroRunning) {
                 clipIntakeMacroRunning = clipIntakeMotion.update();
             } else if (feederMacroRunning) {
                 feederMacroRunning = feederMotion.update();
+                if (!feederMacroRunning) {
+                    g1IsIntake = false;
+                }
             }
 
 
@@ -386,6 +443,7 @@ public class Teleop extends LinearOpMode {
         this.drive = robot.drive;
         this.sampleData = robot.overheadSampleData;
         this.clipbot = robot.clipbot;
+        this.verticalDeposit = robot.verticalDeposit;
         OverheadCameraSubsystem.CLAW_OFFSET[0] = -2.5;
     }
 
@@ -487,6 +545,36 @@ public class Teleop extends LinearOpMode {
                 vArmPlan,
                 vClawPlan
         );
+    }
+
+    private void initDepositExtendMotion() {
+        LinearVArm armBack = new LinearVArm(0,
+                new VArmState(VArmConstants.armLeftTransferPosition),
+                new VArmState(VArmConstants.armLeftBackPosition)
+        );
+
+        LinearLift liftUp = new LinearLift(armBack.getEndTime(),
+                new LiftState(LiftConstants.specMakerPosition),
+                new LiftState(LiftConstants.depositPosition)
+        );
+
+        VArmPlan vArmPlan = new VArmPlan(verticalDeposit,
+                armBack
+        );
+
+        LiftPlan liftPlan = new LiftPlan(linearSlides,
+                liftUp
+        );
+
+        this.depositExtend = new Synchronizer(
+                vArmPlan,
+                liftPlan
+        );
+    }
+
+    private void initDepositActionMotion() {
+        // TODO
+        this.depositAction =
     }
 
     /** ** THIS ALSO DOES KLIPPER JOB ** */
