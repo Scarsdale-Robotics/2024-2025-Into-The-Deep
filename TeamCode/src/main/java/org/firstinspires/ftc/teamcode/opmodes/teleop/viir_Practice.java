@@ -1,14 +1,11 @@
 package org.firstinspires.ftc.teamcode.opmodes.teleop;
-
 import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.teamcode.HardwareRobot;
 import org.firstinspires.ftc.teamcode.subsystems.DriveSubsystem;
-
-
-@TeleOp (name = "ViirTeleop")
+@TeleOp(name = "ViirTeleop")
 
 //don't merge changes, private branch.
 public class viir_Practice extends LinearOpMode {
@@ -52,7 +49,16 @@ public class viir_Practice extends LinearOpMode {
             if (senseChangeActivated && gamepad1.circle) {
                 senseChangeActivated = false;
             }
-
+            boolean speedUpToggled = false;
+            if (gamepad1.a && !speedUpToggled) {
+                speedUpToggled = true;
+            }
+            if (speedUpToggled) {
+                speed = 1;
+            }
+            if (!gamepad1.a) {
+                speedUpToggled = false;
+            }
         }
     }
 }
