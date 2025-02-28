@@ -6,6 +6,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import org.firstinspires.ftc.teamcode.HardwareRobot;
 import org.firstinspires.ftc.teamcode.subsystems.DriveSubsystem;
 @TeleOp(name = "ViirTeleop")
+//hello just random stuff i do here to practice, i know a lot more than i can write trust
 
 //don't merge changes, private branch.
 public class viir_Practice extends LinearOpMode {
