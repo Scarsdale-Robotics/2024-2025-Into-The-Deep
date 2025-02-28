@@ -29,7 +29,7 @@ import org.firstinspires.ftc.teamcode.synchropather.systems.translation.movement
 
 public class EducatedSearchMacro extends Synchronizer {
 
-    public EducatedSearchMacro(double[] samplePosition, AutonomousRobot robot) {
+    public EducatedSearchMacro(double[] samplePosition, AutonomousRobot robot, double speedFactor) {
         TranslationPlan translationPlan;
         RotationPlan rotationPlan;
         ExtendoPlan extendoPlan;
@@ -74,14 +74,17 @@ public class EducatedSearchMacro extends Synchronizer {
             );
 
             // Extend and retract
+            double previousMaxVelocity = ExtendoConstants.MAX_PATHING_VELOCITY;
+            ExtendoConstants.MAX_PATHING_VELOCITY = speedFactor*previousMaxVelocity;
             LinearExtendo extendoOut = new LinearExtendo(0,
-                 extendoPosition,
-                 extendoTarget
+                    extendoPosition,
+                    extendoTarget
             );
             LinearExtendo extendoIn = new LinearExtendo(extendoOut.getEndTime(),
-                 extendoTarget,
-                 new ExtendoState(LinearSlidesSubsystem.extendoOffset)
+                    extendoTarget,
+                    new ExtendoState(LinearSlidesSubsystem.extendoOffset)
             );
+            ExtendoConstants.MAX_PATHING_VELOCITY = previousMaxVelocity;
 
             // Plans
             translationPlan = new TranslationPlan(robot.drive, robot.localization,

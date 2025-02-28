@@ -40,7 +40,8 @@ public class ClipFeedMotion extends LinearOpMode {
 
     private ClipbotSubsystem clipbot;
 
-    private int clipInventory = MFeederConstants.MAX_CAPACITY;
+    private int clipInventory = MFeederConstants.RELOAD_CAPACITY;
+    private boolean inventoryStocked = true;
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -57,8 +58,14 @@ public class ClipFeedMotion extends LinearOpMode {
 
         while (opModeIsActive()) {
             // Wait for button press
-            while (opModeIsActive() && gamepad1.square) updateTPS();
-            while (opModeIsActive() && !gamepad1.square) updateTPS();
+            while (opModeIsActive() && (gamepad1.triangle || !inventoryStocked)) {
+                updateTPS();
+                if (gamepad1.square) {
+                    inventoryStocked = true;
+                    clipInventory = MFeederConstants.RELOAD_CAPACITY;
+                }
+            }
+            while (opModeIsActive() && !gamepad1.triangle) updateTPS();
             if (clipInventory <= 0) continue;
             initAdvanceMagazineMotion();
 
@@ -67,7 +74,7 @@ public class ClipFeedMotion extends LinearOpMode {
             while (opModeIsActive() && synchronizer.update()) {
                 updateTPS();
             }
-            while (opModeIsActive() && !gamepad1.square) {
+            while (opModeIsActive() && !gamepad1.triangle) {
                 updateTPS();
                 synchronizer.update();
             }
@@ -113,7 +120,11 @@ public class ClipFeedMotion extends LinearOpMode {
     }
 
     private void initAdvanceMagazineMotion() {
-        if (clipInventory <= 0) return;
+        if (!inventoryStocked) return;
+        if (clipInventory <= 0) {
+            inventoryStocked = false;
+            return;
+        }
 
         // Get target states
         double maxClips = MFeederConstants.MAX_CAPACITY;
@@ -134,10 +145,28 @@ public class ClipFeedMotion extends LinearOpMode {
         );
 
 
-        // Plans
-        MFeederPlan mFeederPlan = new MFeederPlan(clipbot,
-                advanceFeeder
-        );
+
+        //// Plans
+        MFeederPlan mFeederPlan;
+        if (clipInventory==0) {
+            telemetry.addData("Clip Inventory Is Zero!"," TRUE");
+            LinearMFeeder resetFeeder = new LinearMFeeder(advanceFeeder.getEndTime(),
+                    targetFeederPosition,
+                    new MFeederState(0)
+            );
+            mFeederPlan = new MFeederPlan(clipbot,
+                    advanceFeeder,
+                    resetFeeder
+            );
+            inventoryStocked = false;
+        } else {
+            telemetry.addData("Clip Inventory Is Zero!"," FALSE");
+            mFeederPlan = new MFeederPlan(clipbot,
+                    advanceFeeder
+            );
+        }
+
+        telemetry.update();
 
 
         // Synchronizer

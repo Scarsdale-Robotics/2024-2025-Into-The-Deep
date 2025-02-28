@@ -10,7 +10,7 @@ public class LiftConstants {
 
 
     public static double specMakerPosition = 0.0;
-    public static double transferPosition = 9.1464859;
+    public static double transferPosition = 9.45;
 
     /**
      *  Conversion factor

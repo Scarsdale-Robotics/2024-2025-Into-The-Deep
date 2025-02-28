@@ -25,6 +25,8 @@ public class LiftPlan extends Plan<LiftState> {
     public static double kI = 0.0;
     public static double kD = 0;
 
+    public static double POWER_CACHE_THRESHOLD = 0.1;
+
     private double lintedt = 0;
     private double rintedt = 0;
 
@@ -35,6 +37,8 @@ public class LiftPlan extends Plan<LiftState> {
 
     private ElapsedTime runtime;
     private final Telemetry telemetry;
+    private double lastLeftMotorOutput;
+    private double lastRightMotorOutput;
 
     public LiftPlan(LinearSlidesSubsystem linearSlides, Movement... movements) {
         super(MovementType.LIFT, movements);
@@ -43,6 +47,8 @@ public class LiftPlan extends Plan<LiftState> {
         this.reHistory = new ArrayList<>();
         this.dtHistory = new ArrayList<>();
         this.telemetry = linearSlides.telemetry;
+        this.lastLeftMotorOutput = Double.MIN_VALUE;
+        this.lastRightMotorOutput = Double.MIN_VALUE;
         if (telemetry!=null) {
             telemetry.addData("[SYNCHROPATHER] LiftPlan leftHeight", 0);
             telemetry.addData("[SYNCHROPATHER] LiftPlan rightHeight", 0);
@@ -143,8 +149,14 @@ public class LiftPlan extends Plan<LiftState> {
         ru += fu;
 
         // Set drive powers
-        linearSlides.setLeftLiftPower(lu);
-        linearSlides.setRightLiftPower(ru);
+        if (Math.abs(lu - lastLeftMotorOutput) >= POWER_CACHE_THRESHOLD || (lu==0 && lastLeftMotorOutput!=0)) {
+            linearSlides.setLeftLiftPower(lu);
+            lastLeftMotorOutput = lu;
+        }
+        if (Math.abs(ru - lastRightMotorOutput) >= POWER_CACHE_THRESHOLD || (ru==0 && lastRightMotorOutput!=0)) {
+            linearSlides.setRightLiftPower(ru);
+            lastRightMotorOutput = ru;
+        }
 
         telemetry.addData("[SYNCHROPATHER] LiftPlan leftHeight", leftHeight);
         telemetry.addData("[SYNCHROPATHER] LiftPlan rightHeight", rightHeight);

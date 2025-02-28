@@ -11,15 +11,20 @@ import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.superclasse
  */
 public class MLoaderPlan extends Plan<MLoaderState> {
 
+    public static double POSITION_CACHE_THRESHOLD = 0.01;
+
     private final ClipbotSubsystem clipbot;
 
     private final Telemetry telemetry;
+
+    private double lastServoPosition;
 
 
     public MLoaderPlan(ClipbotSubsystem clipbot, Telemetry telemetry, Movement... movements) {
         super(MovementType.MAGAZINE_LOADER, movements);
         this.clipbot = clipbot;
         this.telemetry = telemetry;
+        this.lastServoPosition = Double.MIN_VALUE;
         if (telemetry != null) {
             telemetry.addData("[SYNCHROPATHER] MLoaderPlan desiredState.getPosition()", "-");
             telemetry.update();
@@ -34,7 +39,10 @@ public class MLoaderPlan extends Plan<MLoaderState> {
         // Desired states
         MLoaderState desiredState = getCurrentState();
 
-        clipbot.setMagazineLoaderPosition(desiredState.getPosition());
+        if (Math.abs(desiredState.getPosition() - lastServoPosition) > POSITION_CACHE_THRESHOLD) {
+            clipbot.setMagazineLoaderPosition(desiredState.getPosition());
+            lastServoPosition = desiredState.getPosition();
+        }
 
         if (telemetry != null) {
             telemetry.addData("[SYNCHROPATHER] MLoaderPlan desiredState.getPosition()", desiredState.getPosition());

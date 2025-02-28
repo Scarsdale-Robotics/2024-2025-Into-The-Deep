@@ -205,13 +205,13 @@ public class AutonomousRobot {
                 linearSlides,
                 localization,
                 0.04375,
-                3,
+                1,
                 targetingMethod
         );
         limelightSampleData = new SampleDataBufferFilter(
                 linearSlides,
                 localization,
-                0.15, // TODO: tune
+                0.15,
                 1,
                 targetingMethod
         );
@@ -221,12 +221,21 @@ public class AutonomousRobot {
         Servo magazineIntake = hardwareMap.get(ServoImplEx.class, "magazineIntake");
         Servo magazineLoader1 = hardwareMap.get(ServoImplEx.class, "magazineLoaderClose");
         Servo magazineLoader2 = hardwareMap.get(ServoImplEx.class, "magazineLoaderFar");
+
+        Motor magazineFeeder = new MotorEx(hardwareMap, "magazineFeeder", Motor.GoBILDA.RPM_1620);
+        magazineFeeder.motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        magazineFeeder.motor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        magazineFeeder.setRunMode(Motor.RunMode.RawPower);
+        magazineFeeder.motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        magazineFeeder.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
+        magazineFeeder.setInverted(false);
+
         this.clipbot = new ClipbotSubsystem(
                 magazineIntake,
                 magazineLoader1,
                 magazineLoader2,
                 initServo(hardwareMap, "klipper"),
-                initMotor(hardwareMap, "magazineFeeder", Motor.GoBILDA.RPM_1620),
+                magazineFeeder,
                 telemetry
         );
 
@@ -240,7 +249,7 @@ public class AutonomousRobot {
         VisionPortal visionPortal = new VisionPortal.Builder()
                 .setCamera(cameraName)
                 .setCameraResolution(CAMERA_RESOLUTION)
-                .setAutoStopLiveView(false)
+                .setAutoStopLiveView(true)
                 .addProcessors(sampleOrientationProcessor, limelightDetectorProcessor)  // ADD PROCESSORS HERE
                 .build();
 
@@ -260,6 +269,7 @@ public class AutonomousRobot {
         overheadSampleData.updateBufferData();
         limelightSampleData.updateBufferData();
         limelightSubsystem.update(limelightSampleData);
+        clipbot.update();
     }
 
 }

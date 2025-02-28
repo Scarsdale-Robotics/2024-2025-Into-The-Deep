@@ -5,8 +5,10 @@ import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.arcrobotics.ftclib.geometry.Pose2d;
 import com.arcrobotics.ftclib.geometry.Rotation2d;
+import com.outoftheboxrobotics.photoncore.Photon;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.cvprocessors.SampleOrientationProcessor;
 import org.firstinspires.ftc.teamcode.opmodes.algorithms.SampleDataBufferFilter;
@@ -56,6 +58,7 @@ import org.firstinspires.ftc.teamcode.synchropather.systems.vClaw.VClawConstants
 import org.firstinspires.ftc.teamcode.synchropather.systems.vClaw.VClawPlan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.vClaw.movements.GrabVClaw;
 
+import java.util.ArrayDeque;
 import java.util.List;
 
 @Config
@@ -66,6 +69,8 @@ public class DriveXTranslationTransferMacroTest extends LinearOpMode {
     private Synchronizer extendoRetract;
 
     private AutonomousRobot robot;
+    private ArrayDeque<Double> loopTicks;
+    private ElapsedTime runtime;
 
     private HorizontalIntakeSubsystem horizontalIntake;
     private OverheadCameraSubsystem overheadCamera;
@@ -85,6 +90,13 @@ public class DriveXTranslationTransferMacroTest extends LinearOpMode {
     public void runOpMode() throws InterruptedException {
         initialize();
 
+        loopTicks = new ArrayDeque<>();
+        runtime = new ElapsedTime(0);
+        runtime.reset();
+
+        telemetry.addData("[MAIN] TPS", 0);
+        telemetry.update();
+
         waitForStart();
 
 
@@ -92,15 +104,19 @@ public class DriveXTranslationTransferMacroTest extends LinearOpMode {
         LimelightPlan limelightPlan = new LimelightPlan(robot.limelightSubsystem, enableLimelight);
         Synchronizer limelightAction = new Synchronizer(limelightPlan);
         limelightAction.start();
+        limelightAction.update();
 
         boolean toggleTriangle = false;
         boolean sampleMacroRunning = false;
         boolean clawGrabbed = false;
+        boolean previousDriverControlling = true;
         ExtendoState extendoVelocity = null;
         while (opModeIsActive()) {
-            limelightAction.update();
             robot.update();
-            boolean driverControlling = controlDrive(sampleMacroRunning);
+            updateTPS();
+            boolean driverControlling = controlDrive(sampleMacroRunning, previousDriverControlling);
+            previousDriverControlling = driverControlling;
+
 
 
             // Look for limelight samples
@@ -135,7 +151,8 @@ public class DriveXTranslationTransferMacroTest extends LinearOpMode {
                     // init search
                     search = new EducatedSearchMacro(
                             foundSample,
-                            robot
+                            robot,
+                            1
                     );
                     search.start();
                     sampleData.clearFilterData();
@@ -193,18 +210,24 @@ public class DriveXTranslationTransferMacroTest extends LinearOpMode {
                 extendoRetract.update();
             }
 
+            telemetry.addData("sampleData.getFilterLength()", sampleData.getFilterLength());
 
-            //// Draw detected sample position
-            TelemetryPacket packet = new TelemetryPacket();
-            packet.fieldOverlay().setStroke("#3F51B5");
-            Drawing.drawRobot(packet.fieldOverlay(), localization.getPose());
-            Pose2d samplePosition = sampleData.getFilteredSamplePosition(telemetry);
-            if (samplePosition!=null) {
-                telemetry.addData("samplePosition", samplePosition.toString());
-                Drawing.drawTargetPose(packet.fieldOverlay(), samplePosition);
+
+            if (gamepad1.cross) {
+                //// Draw detected sample position
+                TelemetryPacket packet = new TelemetryPacket();
+                packet.fieldOverlay().setStroke("#3F51B5");
+                Drawing.drawRobot(packet.fieldOverlay(), localization.getPose());
+                Pose2d samplePosition = sampleData.getFilteredSamplePosition(telemetry);
+                if (samplePosition != null) {
+                    telemetry.addData("samplePosition", samplePosition.toString());
+                    Drawing.drawSample(packet.fieldOverlay(), samplePosition, "#FF0000");
+                }
+                FtcDashboard.getInstance().sendTelemetryPacket(packet);
             }
-            FtcDashboard.getInstance().sendTelemetryPacket(packet);
 
+
+            telemetry.update();
         }
     }
 
@@ -213,11 +236,13 @@ public class DriveXTranslationTransferMacroTest extends LinearOpMode {
      * Field centric drive (based on driver POV)
      * @return whether or not the driver is giving joystick inputs
      */
-    private boolean controlDrive(boolean macroRunning) {
+    private boolean controlDrive(boolean macroRunning, boolean previousDriving) {
         double forward = gamepad1.left_stick_y;
         double strafe = gamepad1.left_stick_x;
         double turn = gamepad1.right_stick_x;
         boolean driving = !(forward==0 && strafe==0 && turn==0);
+
+        if (!driving && !previousDriving) return false;
 
         if (driving ||
                 !macroRunning || // [!driving] braking allowed when macro is deactivated
@@ -294,6 +319,15 @@ public class DriveXTranslationTransferMacroTest extends LinearOpMode {
         horizontalIntake.setClawPosition(HClawConstants.RELEASE_POSITION);
         horizontalIntake.setWristAngle(0);
         horizontalIntake.setArmPosition(0.9);
+    }
+
+    private void updateTPS() {
+        // TPS counter
+        double currentTime = runtime.seconds();
+        loopTicks.add(currentTime);
+        while (!loopTicks.isEmpty() && currentTime - loopTicks.getFirst() > 1d) loopTicks.removeFirst();
+        telemetry.addData("[MAIN] TPS", loopTicks.size());
+        telemetry.update();
     }
 
 
@@ -399,12 +433,12 @@ public class DriveXTranslationTransferMacroTest extends LinearOpMode {
         GrabVClaw grabVClaw = new GrabVClaw(vArmDown.getEndTime() + 0.25);
 
         // Intake claw releases sample
-        ReleaseHClaw releaseHClaw = new ReleaseHClaw(grabVClaw.getEndTime());
+        ReleaseHClaw releaseHClaw = new ReleaseHClaw(grabVClaw.getEndTime() + 0.25);
 
         // Deposit arm moves out of the way
         LinearVArm upVArm = new LinearVArm(releaseHClaw.getEndTime(),
                 new VArmState(VArmConstants.armLeftTransferPosition),
-                new VArmState(VArmConstants.armLeftClipperPosition)
+                new VArmState(0.5)
         );
 
         // Intake arm moves back down

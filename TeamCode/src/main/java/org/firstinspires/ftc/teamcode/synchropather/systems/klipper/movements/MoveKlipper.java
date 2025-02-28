@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.synchropather.systems.klipper.movements;
 import org.firstinspires.ftc.teamcode.synchropather.systems.MovementType;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.TimeSpan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.superclasses.Movement;
+import org.firstinspires.ftc.teamcode.synchropather.systems.klipper.KlipperConstants;
 import org.firstinspires.ftc.teamcode.synchropather.systems.klipper.KlipperState;
 
 /**
@@ -10,7 +11,7 @@ import org.firstinspires.ftc.teamcode.synchropather.systems.klipper.KlipperState
  */
 public class MoveKlipper extends Movement {
 
-    private final double duration = 0.25;
+    private final double duration = KlipperConstants.MOVEMENT_DURATION;
     private final KlipperState state;
 
     public MoveKlipper(TimeSpan timeSpan, KlipperState targetState) {

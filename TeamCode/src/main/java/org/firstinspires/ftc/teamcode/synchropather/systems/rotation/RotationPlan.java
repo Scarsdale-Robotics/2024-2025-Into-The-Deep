@@ -31,6 +31,8 @@ public class RotationPlan extends Plan<RotationState> {
 	public static double kI = 0;
 	public static double kD = 0;
 
+	public static double POWER_CACHE_THRESHOLD = 0.1;
+
 	// Integrator variable
 	private double intedt = 0;
 
@@ -42,6 +44,7 @@ public class RotationPlan extends Plan<RotationState> {
 	private LocalizationSubsystem localization;
 	private ElapsedTime runtime;
 	private Telemetry telemetry;
+	private double lastMotorOutput;
 
 	/**
 	 * Creates a new RotationPlan object with the given Movements.
@@ -149,8 +152,11 @@ public class RotationPlan extends Plan<RotationState> {
 		u += kS*Math.signum(dv) + kV*dv + kA*da;
 
 		// Set drive powers
-		drive.turnVelocity = u;
-		drive.driveFieldCentric(currentPose.getHeading());
+		if (Math.abs(u - lastMotorOutput) >= POWER_CACHE_THRESHOLD || (u==0 && lastMotorOutput!=0)) {
+			drive.turnVelocity = u;
+			drive.driveFieldCentric(currentPose.getHeading());
+			lastMotorOutput = u;
+		}
 		drive.targetH = desiredState.getHeading();
 
 		if (telemetry != null) {

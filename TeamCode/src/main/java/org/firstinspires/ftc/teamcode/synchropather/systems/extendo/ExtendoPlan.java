@@ -26,6 +26,8 @@ public class ExtendoPlan extends Plan<ExtendoState> {
     public static double kI = 0;
     public static double kD = 0;
 
+    public static double POWER_CACHE_THRESHOLD = 0.1;
+
     private double intedt = 0;
 
     private final ArrayList<Double> eHistory;
@@ -34,6 +36,7 @@ public class ExtendoPlan extends Plan<ExtendoState> {
 
     private ElapsedTime runtime;
     private final Telemetry telemetry;
+    private double lastMotorOutput;
 
     public ExtendoPlan(LinearSlidesSubsystem linearSlides, Movement... movements) {
         super(MovementType.EXTENDO, movements);
@@ -41,6 +44,7 @@ public class ExtendoPlan extends Plan<ExtendoState> {
         this.eHistory = new ArrayList<>();
         this.dtHistory = new ArrayList<>();
         this.telemetry = linearSlides.telemetry;
+        this.lastMotorOutput = Double.MIN_VALUE;
 //        robot.telemetry.addData("[SYNCHROPATHER] ExtendoPlan leftHeight", 0);
 //        robot.telemetry.addData("[SYNCHROPATHER] ExtendoPlan rightHeight", 0);
 //        robot.telemetry.addData("[SYNCHROPATHER] ExtendoPlan desiredState.getHeight()", 0);
@@ -114,7 +118,10 @@ public class ExtendoPlan extends Plan<ExtendoState> {
         u += fu;
 
         // Set drive powers
-        linearSlides.setExtendoPower(u);
+        if (Math.abs(u - lastMotorOutput) >= POWER_CACHE_THRESHOLD || (u==0 && lastMotorOutput!=0)) {
+            linearSlides.setExtendoPower(u);
+            lastMotorOutput = u;
+        }
 
         telemetry.addData("[SYNCHROPATHER] ExtendoPlan extendoLength", extendoLength);
         telemetry.addData("[SYNCHROPATHER] ExtendoPlan error", e);

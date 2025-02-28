@@ -12,15 +12,20 @@ import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.superclasse
  */
 public class VArmPlan extends Plan<VArmState> {
 
+    public static double POSITION_CACHE_THRESHOLD = 0.01;
+
     private final VerticalDepositSubsystem verticalDeposit;
 
     private final Telemetry telemetry;
+
+    private double lastServoPosition;
 
 
     public VArmPlan(VerticalDepositSubsystem verticalDeposit, Telemetry telemetry, Movement... movements) {
         super(MovementType.VERTICAL_ARM, movements);
         this.verticalDeposit = verticalDeposit;
         this.telemetry = telemetry;
+        this.lastServoPosition = Double.MIN_VALUE;
         if (telemetry != null) {
             telemetry.addData("[SYNCHROPATHER] VArmPlan desiredState.getPosition()", "-");
             telemetry.update();
@@ -35,7 +40,10 @@ public class VArmPlan extends Plan<VArmState> {
         // Desired states
         VArmState desiredState = getCurrentState();
 
-        verticalDeposit.setArmPosition(desiredState.getPosition());
+        if (Math.abs(desiredState.getPosition() - lastServoPosition) > POSITION_CACHE_THRESHOLD) {
+            verticalDeposit.setArmPosition(desiredState.getPosition());
+            lastServoPosition = desiredState.getPosition();
+        }
 
         if (telemetry != null) {
             telemetry.addData("[SYNCHROPATHER] VArmPlan desiredState.getPosition()", desiredState.getPosition());

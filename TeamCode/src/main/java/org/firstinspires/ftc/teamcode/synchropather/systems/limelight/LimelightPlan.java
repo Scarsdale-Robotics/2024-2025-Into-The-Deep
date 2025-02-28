@@ -35,10 +35,13 @@ public class LimelightPlan extends Plan<LimelightState> {
         if (lastState == null) {
             enabledChanged = true;
             pipelineChanged = true;
-        } else if (lastState.getEnabled() != currentState.getEnabled()) {
-            enabledChanged = true;
-        } else if (!lastState.getPipeline().equals(currentState.getPipeline())) {
-            pipelineChanged = true;
+        } else {
+            if (lastState.getEnabled() != currentState.getEnabled()) {
+                enabledChanged = true;
+            }
+            if (!lastState.getPipeline().equals(currentState.getPipeline())) {
+                pipelineChanged = true;
+            }
         }
 
         // Handle enabling/disabling
