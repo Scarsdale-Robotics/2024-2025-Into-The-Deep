@@ -11,6 +11,7 @@ public class HArmConstants {
     // Left servo arm homing positions
     public static double armLeftZeroPosition = 0.85;
     public static double armLeftPiPosition = 0.15;
+    public static double armLeftDownPosition = 1.04;
 
     // Right servo arm homing positions
     public static double armRightZeroPosition = 0.16;

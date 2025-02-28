@@ -185,8 +185,8 @@ public class Teleop extends LinearOpMode {
 
                 // Case: Cancel search macro (CANCELS SHOULD COME BEFORE ACTIONS)
                 if (
-                        g1PrimaryButton &&
-                                !toggleG1Primary &&
+                        g1CancelButton &&
+                                !toggleG1Cancel &&
                                 sampleMacroRunning
                 ) {
                     sampleMacroRunning = false;
@@ -246,7 +246,6 @@ public class Teleop extends LinearOpMode {
                 ) {
                     transfer.start();
                     transferMacroRunning = true;
-                    clawGrabbed = false;
                 }
                 // You can't (and never will be able to) cancel a drop sample lol
                 // Case: Drop sample
@@ -279,7 +278,6 @@ public class Teleop extends LinearOpMode {
                                 !depositUp
                 ) {
                     depositExtend.start();
-                    depositUp = true;
                     depositExtendRunning = true;
                 }
                 // Case: Cancel act
@@ -299,7 +297,6 @@ public class Teleop extends LinearOpMode {
                                 depositUp
                 ) {
                     depositAction.start();
-                    depositUp = false;
                     depositActionRunning = true;
                 }
             }
@@ -397,6 +394,9 @@ public class Teleop extends LinearOpMode {
             }
             if (transferMacroRunning) {
                 transferMacroRunning = transfer.update();
+                if (!transferMacroRunning) {
+                    clawGrabbed = false;
+                }
             }
             if (extendoRetractRunning) {
                 extendoRetractRunning = extendoRetract.update();
@@ -404,11 +404,17 @@ public class Teleop extends LinearOpMode {
 
             if (depositExtendRunning) {
                 depositExtendRunning = depositExtend.update();
+                if (!depositExtendRunning) {
+                    depositUp = true;
+                }
             } else {
                 initDepositExtendMotion();
             }
             if (depositActionRunning) {
                 depositActionRunning = depositAction.update();
+                if (!depositActionRunning) {
+                    depositUp = false;
+                }
             } else {
                 initDepositActionMotion();
             }
@@ -524,154 +530,17 @@ public class Teleop extends LinearOpMode {
     }
 
     private void initTransferMotion() {
-        // Retract extendo
-        LinearExtendo extendoIn = new LinearExtendo(0,
-                new ExtendoState(linearSlides.getExtendoPosition()),
-                new ExtendoState(4.3)
-        );
-
-        LinearLift liftUp = new LinearLift(0,
-                new LiftState(robot.linearSlides.getLeftLiftPosition()),
-                new LiftState(LiftConstants.transferPosition)
-        );
-
-        ReleaseVClaw releaseVClaw = new ReleaseVClaw(0);
-
-        // Horizontal arm goes up
-        LinearHArm hArmUp = new LinearHArm(Math.max(extendoIn.getEndTime(), liftUp.getEndTime()),
-                new HArmState(0.9),
-                new HArmState(0.48)
-        );
-
-        // Vertical arm gets ready
-        LinearVArm vArmDown = new LinearVArm(hArmUp.getEndTime(),
-                new VArmState(0.5),
-                new VArmState(VArmConstants.armLeftTransferPosition)
-        );
-
-        // Deposit claw grabs sample
-        GrabVClaw grabVClaw = new GrabVClaw(vArmDown.getEndTime() + 0.25);
-
-        // Intake claw releases sample
-        ReleaseHClaw releaseHClaw = new ReleaseHClaw(grabVClaw.getEndTime());
-
-        // Deposit arm moves out of the way
-        LinearVArm upVArm = new LinearVArm(releaseHClaw.getEndTime(),
-                new VArmState(VArmConstants.armLeftTransferPosition),
-                new VArmState(VArmConstants.armLeftClipperPosition)
-        );
-
-        // Intake arm moves back down
-        LinearHArm hArmDown = new LinearHArm(upVArm.getEndTime(),
-                new HArmState(0.48),
-                new HArmState(0.9)
-        );
-
-        // Deposit arm prepares for clip zone
-        LinearVArm toClipperVArm = new LinearVArm(hArmDown.getEndTime(),
-                new VArmState(VArmConstants.armLeftClipperPosition),
-                new VArmState(VArmConstants.armLeftTransferPosition)
-        );
-
-        // Lift approaches clip zone
-        LinearLift toClipperLift = new LinearLift(hArmDown.getEndTime(),
-                new LiftState(robot.linearSlides.getLeftLiftPosition()),
-                new LiftState(LiftConstants.specMakerPosition)
-        );
-
-        // Create Plans
-        ExtendoPlan extendo_plan = new ExtendoPlan(linearSlides,
-                extendoIn
-        );
-        HArmPlan h_arm_plan = new HArmPlan(horizontalIntake,
-                hArmUp,
-                hArmDown
-        );
-        HClawPlan h_claw_plan = new HClawPlan(horizontalIntake,
-                releaseHClaw
-        );
-        LiftPlan liftPlan = new LiftPlan(robot.linearSlides,
-                liftUp,
-                toClipperLift
-        );
-        VArmPlan vArmPlan = new VArmPlan(robot.verticalDeposit,
-                vArmDown,
-                upVArm,
-                toClipperVArm
-        );
-        VClawPlan vClawPlan = new VClawPlan(robot.verticalDeposit,
-                releaseVClaw,
-                grabVClaw
-        );
-
-        // Synchronizer
-        this.transfer = new Synchronizer(
-                extendo_plan,
-                h_arm_plan,
-                h_claw_plan,
-                liftPlan,
-                vArmPlan,
-                vClawPlan
-        );
+        this.transfer = SynchronizerAux.getTransferSync(linearSlides, horizontalIntake, verticalDeposit);
     }
 
     private void initDepositExtendMotion() {
         // TODO: TEST
-        LinearVArm armBack = new LinearVArm(0,
-                new VArmState(VArmConstants.armLeftTransferPosition),
-                new VArmState(VArmConstants.armLeftPreDepositPosition)
-        );
-
-        LinearLift liftUp = new LinearLift(armBack.getEndTime(),
-                new LiftState(LiftConstants.specMakerPosition),
-                new LiftState(LiftConstants.depositPosition)
-        );
-
-        VArmPlan vArmPlan = new VArmPlan(verticalDeposit,
-                armBack
-        );
-
-        LiftPlan liftPlan = new LiftPlan(linearSlides,
-                liftUp
-        );
-
-        this.depositExtend = new Synchronizer(
-                vArmPlan,
-                liftPlan
-        );
+        this.depositExtend = SynchronizerAux.getDepositExtend(linearSlides, verticalDeposit);
     }
 
     private void initDepositActionMotion() {
         // TODO: TEST
-        LinearVArm tiltArm = new LinearVArm(0,
-                new VArmState(VArmConstants.armLeftPreDepositPosition),
-                new VArmState(VArmConstants.armLeftDepositPosition)
-        );
-
-        LinearLift lowerLift = new LinearLift(tiltArm.getEndTime(),
-                new LiftState(LiftConstants.depositPosition),
-                new LiftState(LiftConstants.transferPosition)
-        );
-
-        LinearVArm endArm = new LinearVArm(tiltArm.getEndTime() + 1,
-                new VArmState(VArmConstants.armLeftDepositPosition),
-                new VArmState(VArmConstants.armLeftTransferPosition)
-        );
-
-        // DO NOT open claw
-        VArmPlan vArmPlan = new VArmPlan(verticalDeposit,
-                tiltArm,
-                endArm
-        );
-
-        LiftPlan liftPlan = new LiftPlan(linearSlides,
-                lowerLift
-        );
-
-        this.depositAction = new Synchronizer(
-                vArmPlan,
-                liftPlan
-        );
+        this.depositAction = SynchronizerAux.getDepositAction(verticalDeposit, linearSlides);
     }
 
     /** ** THIS ALSO DOES THE KLIPPER JOB ** */
