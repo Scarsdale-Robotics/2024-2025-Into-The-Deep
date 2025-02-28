@@ -139,6 +139,8 @@ public class Teleop extends LinearOpMode {
 
 
             // Look for limelight samples
+            // TODO: we are running limelight constantly but nobody knows why  we did this
+
             Pose2d botPose = localization.getPose();
             List<double[]> samplePositions;
             if (robot.teamColor==AutonomousRobot.TeamColor.BLUE) {
@@ -146,6 +148,7 @@ public class Teleop extends LinearOpMode {
             } else {
                 samplePositions = robot.limelightSubsystem.getRedSamplePositions();
             }
+
             double[] foundSample = null;
             if (!samplePositions.isEmpty()) {
                 double closestDistance = Double.MAX_VALUE;
@@ -449,8 +452,9 @@ public class Teleop extends LinearOpMode {
         boolean driving = !(forward==0 && strafe==0 && turn==0);
 
         if (driving ||
-                !macroRunning || // [!driving] braking allowed when macro is deactivated
+                !macroRunning || // [!driving] braking (set power = 0 using these same lines of code) when macro is deactivated
                 !sampleData.isFilterFull() // [!driving && macroRunning] braking allowed during search
+                    // this third allows for driving while the camera is still searching for samples
         ) {
             drive.driveFieldCentricPowers(
                     driveSpeed * forward,
