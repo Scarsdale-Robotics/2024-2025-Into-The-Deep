@@ -58,7 +58,7 @@ public class EducatedSearchMacro extends Synchronizer {
                  heading_bot + normalizeAngle(Math.PI/2-heading_bot)
             );
             ExtendoState extendoTarget = new ExtendoState(
-                 Math.max(0, (y_sample-y_bot) - x_extendo_min)
+                 Math.max(0, (y_sample-y_bot) - x_extendo_min + OverheadCameraSubsystem.CLAW_OFFSET[0])
             );
 
             //// SYNCHRONIZER

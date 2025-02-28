@@ -120,7 +120,7 @@ public class MFeederPlan extends Plan<MFeederState> {
         u += fu;
 
         // Set motor power
-        if (Math.abs(u - lastMotorOutput) >= POWER_CACHE_THRESHOLD || (u==0 && lastMotorOutput!=0)) {
+        if (Math.abs(u - lastMotorOutput) >= POWER_CACHE_THRESHOLD || (approxEquiv(u,0) && !approxEquiv(lastMotorOutput,0))) {
             clipbot.setMagazineFeederPower(u);
             lastMotorOutput = u;
         }
@@ -158,5 +158,9 @@ public class MFeederPlan extends Plan<MFeederState> {
      */
     private static double bound(double x, double lower, double upper) {
         return Math.max(lower, Math.min(upper, x));
+    }
+
+    private boolean approxEquiv(double a, double b) {
+        return Math.abs(a-b) <= POWER_CACHE_THRESHOLD;
     }
 }

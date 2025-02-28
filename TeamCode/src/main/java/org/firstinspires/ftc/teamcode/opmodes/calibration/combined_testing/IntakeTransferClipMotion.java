@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.opmodes.calibration.drive_testing;
+package org.firstinspires.ftc.teamcode.opmodes.calibration.combined_testing;
 
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
@@ -37,6 +37,9 @@ import org.firstinspires.ftc.teamcode.synchropather.systems.hClaw.movements.Grab
 import org.firstinspires.ftc.teamcode.synchropather.systems.hClaw.movements.ReleaseHClaw;
 import org.firstinspires.ftc.teamcode.synchropather.systems.hWrist.HWristPlan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.hWrist.movements.MoveHWrist;
+import org.firstinspires.ftc.teamcode.synchropather.systems.klipper.KlipperConstants;
+import org.firstinspires.ftc.teamcode.synchropather.systems.klipper.KlipperPlan;
+import org.firstinspires.ftc.teamcode.synchropather.systems.klipper.movements.MoveKlipper;
 import org.firstinspires.ftc.teamcode.synchropather.systems.lift.LiftConstants;
 import org.firstinspires.ftc.teamcode.synchropather.systems.lift.LiftPlan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.lift.LiftState;
@@ -44,6 +47,10 @@ import org.firstinspires.ftc.teamcode.synchropather.systems.lift.movements.Linea
 import org.firstinspires.ftc.teamcode.synchropather.systems.limelight.LimelightPipeline;
 import org.firstinspires.ftc.teamcode.synchropather.systems.limelight.LimelightPlan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.limelight.movements.EnableLimelight;
+import org.firstinspires.ftc.teamcode.synchropather.systems.mFeeder.MFeederConstants;
+import org.firstinspires.ftc.teamcode.synchropather.systems.mFeeder.MFeederPlan;
+import org.firstinspires.ftc.teamcode.synchropather.systems.mFeeder.MFeederState;
+import org.firstinspires.ftc.teamcode.synchropather.systems.mFeeder.movements.LinearMFeeder;
 import org.firstinspires.ftc.teamcode.synchropather.systems.rotation.RotationPlan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.rotation.RotationState;
 import org.firstinspires.ftc.teamcode.synchropather.systems.rotation.movements.LinearRotation;
@@ -56,14 +63,17 @@ import org.firstinspires.ftc.teamcode.synchropather.systems.vArm.VArmState;
 import org.firstinspires.ftc.teamcode.synchropather.systems.vArm.movements.LinearVArm;
 import org.firstinspires.ftc.teamcode.synchropather.systems.vClaw.VClawConstants;
 import org.firstinspires.ftc.teamcode.synchropather.systems.vClaw.VClawPlan;
+import org.firstinspires.ftc.teamcode.synchropather.systems.vClaw.VClawState;
 import org.firstinspires.ftc.teamcode.synchropather.systems.vClaw.movements.GrabVClaw;
+import org.firstinspires.ftc.teamcode.synchropather.systems.vClaw.movements.MoveVClaw;
+import org.firstinspires.ftc.teamcode.synchropather.systems.vClaw.movements.ReleaseVClaw;
 
 import java.util.ArrayDeque;
 import java.util.List;
 
 @Config
-@TeleOp(name="Drive X Translation Transfer Macro Test", group = "Calibration")
-public class DriveXTranslationTransferMacroTest extends LinearOpMode {
+@TeleOp(name="Intake, Transfer, and Clip motion", group = "Calibration")
+public class IntakeTransferClipMotion extends LinearOpMode {
 
     private Synchronizer search, pickup;
     private Synchronizer extendoRetract;
@@ -84,7 +94,16 @@ public class DriveXTranslationTransferMacroTest extends LinearOpMode {
 
     public static double driveSpeed = 1;
 
-    public static double intakeDelay = 0.25;
+    public static double intakeDelay = 0.4;
+
+
+    // For clipbot subsystem
+    private int clipInventory = MFeederConstants.RELOAD_CAPACITY;
+    private boolean inventoryStocked = true;
+
+    public static double klipperWaitTime = 0.1;
+    public static double feederDelayTime = 0.5;
+
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -117,6 +136,12 @@ public class DriveXTranslationTransferMacroTest extends LinearOpMode {
             boolean driverControlling = controlDrive(sampleMacroRunning, previousDriverControlling);
             previousDriverControlling = driverControlling;
 
+
+            // Restock option if empty
+            if (!inventoryStocked && gamepad1.square) {
+                inventoryStocked = true;
+                clipInventory = MFeederConstants.RELOAD_CAPACITY;
+            }
 
 
             // Look for limelight samples
@@ -412,6 +437,46 @@ public class DriveXTranslationTransferMacroTest extends LinearOpMode {
                 new ExtendoState(4.3)
         );
 
+        // Only pick up if mag is empty
+        if (!inventoryStocked || clipInventory <= 0) {
+            // Create Plans
+            TranslationPlan translationPlan = new TranslationPlan(drive, localization,
+                    translation
+            );
+            RotationPlan rotationPlan = new RotationPlan(drive, localization,
+                    rotation
+            );
+            ExtendoPlan extendo_plan = new ExtendoPlan(linearSlides,
+                    extendoOut,
+                    extendoIn
+            );
+            HWristPlan h_wrist_plan = new HWristPlan(horizontalIntake,
+                    h_wrist_align,
+                    h_wrist_reset
+            );
+            HArmPlan h_arm_plan = new HArmPlan(horizontalIntake,
+                    h_arm_down,
+                    h_arm_up
+            );
+            HClawPlan h_claw_plan = new HClawPlan(horizontalIntake,
+                    h_claw_grab
+            );
+
+            // Synchronizer
+            this.pickup = new Synchronizer(
+                    translationPlan,
+                    rotationPlan,
+                    extendo_plan,
+                    h_arm_plan,
+                    h_wrist_plan,
+                    h_claw_plan
+            );
+            return;
+        }
+
+
+        //// Otherwise mag has clips, do transfer and clipping sequence
+
         LinearLift liftUp = new LinearLift(0,
                 new LiftState(robot.linearSlides.getLeftLiftPosition()),
                 new LiftState(LiftConstants.transferPosition)
@@ -420,7 +485,7 @@ public class DriveXTranslationTransferMacroTest extends LinearOpMode {
         // Horizontal arm goes up
         LinearHArm hArmUp = new LinearHArm(Math.max(extendoIn.getEndTime(), liftUp.getEndTime()),
                 new HArmState(0.9),
-                new HArmState(0.48)
+                new HArmState(0.5)
         );
 
         // Vertical arm gets ready
@@ -438,7 +503,7 @@ public class DriveXTranslationTransferMacroTest extends LinearOpMode {
         // Deposit arm moves out of the way
         LinearVArm upVArm = new LinearVArm(releaseHClaw.getEndTime(),
                 new VArmState(VArmConstants.armLeftTransferPosition),
-                new VArmState(0.5)
+                new VArmState(VArmConstants.armLeftTransferPosition-0.1)
         );
 
         // Intake arm moves back down
@@ -447,17 +512,98 @@ public class DriveXTranslationTransferMacroTest extends LinearOpMode {
                 new HArmState(0.9)
         );
 
-        // Deposit arm prepares for clip zone
-        LinearVArm toClipperVArm = new LinearVArm(hArmDown.getEndTime(),
-                new VArmState(VArmConstants.armLeftClipperPosition),
-                new VArmState(VArmConstants.armLeftTransferPosition)
+        //// CLIPBOT
+        // Get target states
+        double maxClips = MFeederConstants.MAX_CAPACITY;
+        MFeederState currentFeederPosition = new MFeederState(
+                robot.clipbot.getMagazineFeederPosition()
         );
 
-        // Lift approaches clip zone
-        LinearLift toClipperLift = new LinearLift(hArmDown.getEndTime(),
-                new LiftState(robot.linearSlides.getLeftLiftPosition()),
-                new LiftState(LiftConstants.specMakerPosition)
+        clipInventory--;
+        MFeederState targetFeederPosition = new MFeederState(
+                (maxClips - clipInventory) * MFeederConstants.INCHES_PER_CLIP
         );
+
+        /// Movements
+        // Hold lift down
+        LinearLift holdLiftDown = new LinearLift(hArmDown.getEndTime(),
+                new LiftState(LiftConstants.transferPosition),
+                new LiftState(-1)
+        );
+
+        // Stationary deposit arm
+        LinearVArm lowerVArm = new LinearVArm(hArmDown.getEndTime(),
+                new VArmState(VArmConstants.armLeftTransferPosition-0.1),
+                new VArmState(VArmConstants.armLeftClipperPosition)
+        );
+
+        // Loosely hold sample
+        MoveVClaw looselyHoldSample = new MoveVClaw(lowerVArm.getEndTime(), 0.1,
+                new VClawState(VClawConstants.GRAB_POSITION),
+                new VClawState(VClawConstants.LOOSELY_GRABBED_POSITION)
+        );
+
+        // Advance feeder by one clip
+        LinearMFeeder advanceFeeder = new LinearMFeeder(looselyHoldSample.getEndTime() + feederDelayTime,
+                currentFeederPosition,
+                targetFeederPosition
+        );
+
+
+        // Feeder plan
+        MFeederPlan mFeederPlan;
+        if (clipInventory==0) {
+            LinearMFeeder resetFeeder = new LinearMFeeder(advanceFeeder.getEndTime(),
+                    targetFeederPosition,
+                    new MFeederState(0)
+            );
+            mFeederPlan = new MFeederPlan(robot.clipbot,
+                    advanceFeeder,
+                    resetFeeder
+            );
+            inventoryStocked = false;
+        } else {
+            mFeederPlan = new MFeederPlan(robot.clipbot,
+                    advanceFeeder
+            );
+        }
+
+        // Klipper action
+        MoveKlipper initKlipper = new MoveKlipper(0, KlipperConstants.openPosition);
+        MoveKlipper klipSpecimen = new MoveKlipper(advanceFeeder.getEndTime()+klipperWaitTime, KlipperConstants.closedPosition);
+        MoveKlipper unklipSpecimen = new MoveKlipper(klipSpecimen.getEndTime()+0.25, KlipperConstants.openPosition);
+
+        // Raise the lift to deposit
+        LinearLift raiseLift = new LinearLift(unklipSpecimen.getEndTime()+0.25,
+                new LiftState(0),
+                new LiftState(1)
+        );
+
+        // Raise the arm
+        LinearVArm raiseVArm = new LinearVArm(raiseLift.getEndTime(),
+                new VArmState(VArmConstants.armLeftClipperPosition),
+                new VArmState(0.5)
+        );
+
+
+        // Drop specimen
+        ReleaseVClaw releaseSample = new ReleaseVClaw(raiseVArm.getEndTime()+2);
+
+
+        // Lower lift back down to zero
+        LinearLift lowerLift = new LinearLift(releaseSample.getEndTime()+0.5,
+                new LiftState(1),
+                new LiftState(0)
+        );
+
+
+
+
+
+
+
+
+
 
         // Create Plans
         TranslationPlan translationPlan = new TranslationPlan(drive, localization,
@@ -486,15 +632,26 @@ public class DriveXTranslationTransferMacroTest extends LinearOpMode {
         );
         LiftPlan liftPlan = new LiftPlan(robot.linearSlides,
                 liftUp,
-                toClipperLift
+                holdLiftDown,
+                raiseLift,
+                lowerLift
         );
         VArmPlan vArmPlan = new VArmPlan(robot.verticalDeposit,
                 vArmDown,
                 upVArm,
-                toClipperVArm
+                lowerVArm,
+                raiseVArm
         );
         VClawPlan vClawPlan = new VClawPlan(robot.verticalDeposit,
-                grabVClaw
+                grabVClaw,
+                looselyHoldSample,
+                releaseSample
+        );
+
+        KlipperPlan klipperPlan = new KlipperPlan(robot.clipbot,
+                initKlipper,
+                klipSpecimen,
+                unklipSpecimen
         );
 
         // Synchronizer
@@ -507,7 +664,9 @@ public class DriveXTranslationTransferMacroTest extends LinearOpMode {
                 h_claw_plan,
                 liftPlan,
                 vArmPlan,
-                vClawPlan
+                vClawPlan,
+                mFeederPlan,
+                klipperPlan
         );
     }
 

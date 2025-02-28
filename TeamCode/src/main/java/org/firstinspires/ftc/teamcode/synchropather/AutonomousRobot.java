@@ -205,7 +205,7 @@ public class AutonomousRobot {
                 linearSlides,
                 localization,
                 0.04375,
-                1,
+                3,
                 targetingMethod
         );
         limelightSampleData = new SampleDataBufferFilter(

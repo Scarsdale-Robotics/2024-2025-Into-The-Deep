@@ -200,24 +200,6 @@ public class KlipperMotion extends LinearOpMode {
         }
 
 
-        // Grab claw
-        GrabVClaw grabSample = new GrabVClaw(0);
-
-
-        // Stationary deposit arm
-        LinearVArm lowerVArm = new LinearVArm(clawGrabWaitTime,
-                new VArmState(0.5),
-                new VArmState(VArmConstants.armLeftClipperPosition)
-        );
-
-
-        // Loosely hold sample
-        MoveVClaw looselyHoldSample = new MoveVClaw(lowerVArm.getEndTime(), 0.1,
-                new VClawState(VClawConstants.GRAB_POSITION),
-                new VClawState(VClawConstants.LOOSELY_GRABBED_POSITION)
-        );
-
-
         // Get target states
         double maxClips = MFeederConstants.MAX_CAPACITY;
         MFeederState currentFeederPosition = new MFeederState(
@@ -230,7 +212,22 @@ public class KlipperMotion extends LinearOpMode {
         );
 
 
-        // Movements
+        // Grab claw
+        GrabVClaw grabSample = new GrabVClaw(0);
+
+        // Stationary deposit arm
+        LinearVArm lowerVArm = new LinearVArm(clawGrabWaitTime,
+                new VArmState(0.5),
+                new VArmState(VArmConstants.armLeftClipperPosition)
+        );
+
+        // Loosely hold sample
+        MoveVClaw looselyHoldSample = new MoveVClaw(lowerVArm.getEndTime(), 0.1,
+                new VClawState(VClawConstants.GRAB_POSITION),
+                new VClawState(VClawConstants.LOOSELY_GRABBED_POSITION)
+        );
+
+        // Advance feeder by one clip
         LinearMFeeder advanceFeeder = new LinearMFeeder(looselyHoldSample.getEndTime() + feederDelayTime,
                 currentFeederPosition,
                 targetFeederPosition

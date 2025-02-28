@@ -31,6 +31,8 @@ public class TranslationPlan extends Plan<TranslationState> {
 	public static double kI = 0;
 	public static double kD = 0.125;
 
+	public static double POWER_CACHE_THRESHOLD = 0.4;
+
 	// Integrator variables
 	private double intexdt = 0;
 	private double inteydt = 0;
@@ -44,6 +46,7 @@ public class TranslationPlan extends Plan<TranslationState> {
 	private LocalizationSubsystem localization;
 	private ElapsedTime runtime;
 	private Telemetry telemetry;
+	private TranslationState lastDriveVelocity;
 
 	/**
 	 * Creates a new TranslationPlan object with the given Movements.
@@ -60,6 +63,7 @@ public class TranslationPlan extends Plan<TranslationState> {
 		this.exHistory = new ArrayList<>();
 		this.eyHistory = new ArrayList<>();
 		this.dtHistory = new ArrayList<>();
+		this.lastDriveVelocity = new TranslationState(0,0);
 
 		if (telemetry != null) {
 			telemetry.addData("[SYNCHROPATHER] Translation desiredVelocity.getX()", 0);
@@ -183,9 +187,13 @@ public class TranslationPlan extends Plan<TranslationState> {
 		TranslationState u = ut.plus(fu);
 
 		// Set drive parameters
-		drive.driveTheta = u.theta();
-		drive.driveSpeed = u.hypot();
-		drive.driveFieldCentric(currentPose.getHeading());
+		double speedDifference = u.minus(lastDriveVelocity).hypot();
+		if (speedDifference >= POWER_CACHE_THRESHOLD || (approxEquiv(u.hypot(),0) && !approxEquiv(lastDriveVelocity.hypot(),0))) {
+			drive.driveTheta = u.theta();
+			drive.driveSpeed = u.hypot();
+			drive.driveFieldCentric(currentPose.getHeading());
+			lastDriveVelocity = u;
+		}
 		drive.targetX = desiredState.getX();
 		drive.targetY = desiredState.getY();
 
@@ -226,6 +234,10 @@ public class TranslationPlan extends Plan<TranslationState> {
 	 */
 	private static double bound(double x, double lower, double upper) {
 		return Math.max(lower, Math.min(upper, x));
+	}
+
+	private boolean approxEquiv(double a, double b) {
+		return Math.abs(a-b) <= POWER_CACHE_THRESHOLD;
 	}
 
 }

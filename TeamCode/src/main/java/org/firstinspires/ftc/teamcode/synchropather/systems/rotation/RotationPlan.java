@@ -31,7 +31,7 @@ public class RotationPlan extends Plan<RotationState> {
 	public static double kI = 0;
 	public static double kD = 0;
 
-	public static double POWER_CACHE_THRESHOLD = 0.1;
+	public static double POWER_CACHE_THRESHOLD = 0.04;
 
 	// Integrator variable
 	private double intedt = 0;
@@ -44,7 +44,7 @@ public class RotationPlan extends Plan<RotationState> {
 	private LocalizationSubsystem localization;
 	private ElapsedTime runtime;
 	private Telemetry telemetry;
-	private double lastMotorOutput;
+	private double lastAngularVelocity;
 
 	/**
 	 * Creates a new RotationPlan object with the given Movements.
@@ -60,6 +60,7 @@ public class RotationPlan extends Plan<RotationState> {
 		this.telemetry = telemetry;
 		this.eHistory = new ArrayList<>();
 		this.dtHistory = new ArrayList<>();
+		this.lastAngularVelocity = Double.MIN_VALUE;
 
 		if (telemetry != null) {
 			telemetry.addData("[SYNCHROPATHER] Rotation desiredVelocity.getHeading()", 0);
@@ -152,10 +153,10 @@ public class RotationPlan extends Plan<RotationState> {
 		u += kS*Math.signum(dv) + kV*dv + kA*da;
 
 		// Set drive powers
-		if (Math.abs(u - lastMotorOutput) >= POWER_CACHE_THRESHOLD || (u==0 && lastMotorOutput!=0)) {
+		if (Math.abs(u - lastAngularVelocity) >= POWER_CACHE_THRESHOLD || (approxEquiv(u,0) && !approxEquiv(lastAngularVelocity,0))) {
 			drive.turnVelocity = u;
 			drive.driveFieldCentric(currentPose.getHeading());
-			lastMotorOutput = u;
+			lastAngularVelocity = u;
 		}
 		drive.targetH = desiredState.getHeading();
 
@@ -203,6 +204,10 @@ public class RotationPlan extends Plan<RotationState> {
 	 */
 	private static double bound(double x, double lower, double upper) {
 		return Math.max(lower, Math.min(upper, x));
+	}
+
+	private boolean approxEquiv(double a, double b) {
+		return Math.abs(a-b) <= POWER_CACHE_THRESHOLD;
 	}
 
 }

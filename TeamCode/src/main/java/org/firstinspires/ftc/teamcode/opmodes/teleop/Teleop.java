@@ -203,7 +203,8 @@ public class Teleop extends LinearOpMode {
                         // init search
                         search = new EducatedSearchMacro(
                                 foundSample,
-                                robot
+                                robot,
+                                1
                         );
                         search.start();
                         sampleData.clearFilterData();

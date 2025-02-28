@@ -118,7 +118,7 @@ public class ExtendoPlan extends Plan<ExtendoState> {
         u += fu;
 
         // Set drive powers
-        if (Math.abs(u - lastMotorOutput) >= POWER_CACHE_THRESHOLD || (u==0 && lastMotorOutput!=0)) {
+        if (Math.abs(u - lastMotorOutput) >= POWER_CACHE_THRESHOLD || (approxEquiv(u,0) && !approxEquiv(lastMotorOutput,0))) {
             linearSlides.setExtendoPower(u);
             lastMotorOutput = u;
         }
@@ -158,5 +158,9 @@ public class ExtendoPlan extends Plan<ExtendoState> {
      */
     private static double bound(double x, double lower, double upper) {
         return Math.max(lower, Math.min(upper, x));
+    }
+
+    private boolean approxEquiv(double a, double b) {
+        return Math.abs(a-b) <= POWER_CACHE_THRESHOLD;
     }
 }

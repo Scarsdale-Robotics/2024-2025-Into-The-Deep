@@ -149,11 +149,11 @@ public class LiftPlan extends Plan<LiftState> {
         ru += fu;
 
         // Set drive powers
-        if (Math.abs(lu - lastLeftMotorOutput) >= POWER_CACHE_THRESHOLD || (lu==0 && lastLeftMotorOutput!=0)) {
+        if (Math.abs(lu - lastLeftMotorOutput) >= POWER_CACHE_THRESHOLD || (approxEquiv(lu,0) && !approxEquiv(lastLeftMotorOutput,0))) {
             linearSlides.setLeftLiftPower(lu);
             lastLeftMotorOutput = lu;
         }
-        if (Math.abs(ru - lastRightMotorOutput) >= POWER_CACHE_THRESHOLD || (ru==0 && lastRightMotorOutput!=0)) {
+        if (Math.abs(ru - lastRightMotorOutput) >= POWER_CACHE_THRESHOLD || (approxEquiv(ru,0) && !approxEquiv(lastRightMotorOutput,0))) {
             linearSlides.setRightLiftPower(ru);
             lastRightMotorOutput = ru;
         }
@@ -198,5 +198,9 @@ public class LiftPlan extends Plan<LiftState> {
      */
     private static double bound(double x, double lower, double upper) {
         return Math.max(lower, Math.min(upper, x));
+    }
+
+    private boolean approxEquiv(double a, double b) {
+        return Math.abs(a-b) <= POWER_CACHE_THRESHOLD;
     }
 }
