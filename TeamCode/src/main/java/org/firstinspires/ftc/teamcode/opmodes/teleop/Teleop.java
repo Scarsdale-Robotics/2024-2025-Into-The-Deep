@@ -16,7 +16,6 @@ import org.firstinspires.ftc.teamcode.subsystems.LocalizationSubsystem;
 import org.firstinspires.ftc.teamcode.synchropather.AutonomousRobot;
 import org.firstinspires.ftc.teamcode.synchropather.macros.EducatedSearchMacro;
 import org.firstinspires.ftc.teamcode.synchropather.macros.ExtendoRetractMacro;
-import org.firstinspires.ftc.teamcode.synchropather.macros.SearchMacro;
 import org.firstinspires.ftc.teamcode.synchropather.subsystemclasses.ClipbotSubsystem;
 import org.firstinspires.ftc.teamcode.synchropather.subsystemclasses.HorizontalIntakeSubsystem;
 import org.firstinspires.ftc.teamcode.synchropather.subsystemclasses.LinearSlidesSubsystem;
@@ -25,7 +24,6 @@ import org.firstinspires.ftc.teamcode.synchropather.subsystemclasses.VerticalDep
 import org.firstinspires.ftc.teamcode.synchropather.systems.MovementType;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.Synchronizer;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.TimeSpan;
-import org.firstinspires.ftc.teamcode.synchropather.systems.extendo.ExtendoConstants;
 import org.firstinspires.ftc.teamcode.synchropather.systems.extendo.ExtendoPlan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.extendo.ExtendoState;
 import org.firstinspires.ftc.teamcode.synchropather.systems.extendo.movements.DynamicLinearExtendo;
@@ -58,8 +56,8 @@ import org.firstinspires.ftc.teamcode.synchropather.systems.vArm.VArmState;
 import org.firstinspires.ftc.teamcode.synchropather.systems.vArm.movements.LinearVArm;
 import org.firstinspires.ftc.teamcode.synchropather.systems.vClaw.VClawPlan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.vClaw.movements.GrabVClaw;
+import org.firstinspires.ftc.teamcode.synchropather.systems.vClaw.movements.ReleaseVClaw;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Config
@@ -536,6 +534,8 @@ public class Teleop extends LinearOpMode {
                 new LiftState(LiftConstants.transferPosition)
         );
 
+        ReleaseVClaw releaseVClaw = new ReleaseVClaw(0);
+
         // Horizontal arm goes up
         LinearHArm hArmUp = new LinearHArm(Math.max(extendoIn.getEndTime(), liftUp.getEndTime()),
                 new HArmState(0.9),
@@ -599,6 +599,7 @@ public class Teleop extends LinearOpMode {
                 toClipperVArm
         );
         VClawPlan vClawPlan = new VClawPlan(robot.verticalDeposit,
+                releaseVClaw,
                 grabVClaw
         );
 
@@ -614,9 +615,10 @@ public class Teleop extends LinearOpMode {
     }
 
     private void initDepositExtendMotion() {
+        // TODO: TEST
         LinearVArm armBack = new LinearVArm(0,
                 new VArmState(VArmConstants.armLeftTransferPosition),
-                new VArmState(VArmConstants.armLeftBackPosition)
+                new VArmState(VArmConstants.armLeftPreDepositPosition)
         );
 
         LinearLift liftUp = new LinearLift(armBack.getEndTime(),
@@ -639,11 +641,39 @@ public class Teleop extends LinearOpMode {
     }
 
     private void initDepositActionMotion() {
-        // TODO
-        this.depositAction =
+        // TODO: TEST
+        LinearVArm tiltArm = new LinearVArm(0,
+                new VArmState(VArmConstants.armLeftPreDepositPosition),
+                new VArmState(VArmConstants.armLeftDepositPosition)
+        );
+
+        LinearLift lowerLift = new LinearLift(tiltArm.getEndTime(),
+                new LiftState(LiftConstants.depositPosition),
+                new LiftState(LiftConstants.transferPosition)
+        );
+
+        LinearVArm endArm = new LinearVArm(tiltArm.getEndTime() + 1,
+                new VArmState(VArmConstants.armLeftDepositPosition),
+                new VArmState(VArmConstants.armLeftTransferPosition)
+        );
+
+        // DO NOT open claw
+        VArmPlan vArmPlan = new VArmPlan(verticalDeposit,
+                tiltArm,
+                endArm
+        );
+
+        LiftPlan liftPlan = new LiftPlan(linearSlides,
+                lowerLift
+        );
+
+        this.depositAction = new Synchronizer(
+                vArmPlan,
+                liftPlan
+        );
     }
 
-    /** ** THIS ALSO DOES KLIPPER JOB ** */
+    /** ** THIS ALSO DOES THE KLIPPER JOB ** */
     private void initFeederMotion(int targetClips) {
         feederMotion = SynchronizerAux.getFeederSync(targetClips, clipbot);
     }
