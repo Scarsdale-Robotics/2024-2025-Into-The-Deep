@@ -20,6 +20,7 @@ public class viir_Practice extends LinearOpMode {
         );
         waitForStart();
         while (opModeIsActive()) {
+            double majestic = 102043204.5;
             double speed = 0.9;
             boolean breakLoopHehe = false;
             if (gamepad1.square && !breakLoopHehe) {
