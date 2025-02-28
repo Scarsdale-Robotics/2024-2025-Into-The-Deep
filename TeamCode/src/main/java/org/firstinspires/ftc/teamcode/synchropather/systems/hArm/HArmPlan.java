@@ -11,15 +11,20 @@ import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.superclasse
  */
 public class HArmPlan extends Plan<HArmState> {
 
+    public static double POSITION_CACHE_THRESHOLD = 0.01;
+
     private final HorizontalIntakeSubsystem horizontalIntake;
 
     private final Telemetry telemetry;
+
+    private double lastServoPosition;
 
 
     public HArmPlan(HorizontalIntakeSubsystem horizontalIntake, Telemetry telemetry, Movement... movements) {
         super(MovementType.HORIZONTAL_ARM, movements);
         this.horizontalIntake = horizontalIntake;
         this.telemetry = telemetry;
+        this.lastServoPosition = Double.MIN_VALUE;
         if (telemetry != null) {
             telemetry.addData("[SYNCHROPATHER] HArmPlan desiredState.getPosition()", "-");
             telemetry.update();
@@ -34,7 +39,10 @@ public class HArmPlan extends Plan<HArmState> {
         // Desired states
         HArmState desiredState = getCurrentState();
 
-        horizontalIntake.setArmPosition(desiredState.getPosition());
+        if (Math.abs(desiredState.getPosition() - lastServoPosition) > POSITION_CACHE_THRESHOLD) {
+            horizontalIntake.setArmPosition(desiredState.getPosition());
+            lastServoPosition = desiredState.getPosition();
+        }
 
         if (telemetry != null) {
             telemetry.addData("[SYNCHROPATHER] HArmPlan desiredState.getPosition()", desiredState.getPosition());

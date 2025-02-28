@@ -195,6 +195,13 @@ public class SampleDataBufferFilter {
     }
 
     /**
+     * @return samplePoses.size()
+     */
+    public int getFilterLength() {
+        return samplePoses.size();
+    }
+
+    /**
      * @return the average sample position (relative to the field).
      */
     public Pose2d getFilteredSamplePosition(Telemetry telemetry) {

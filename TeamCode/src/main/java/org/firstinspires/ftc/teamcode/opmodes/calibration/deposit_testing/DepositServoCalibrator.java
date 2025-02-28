@@ -7,6 +7,9 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.Servo;
 
+import org.firstinspires.ftc.teamcode.synchropather.systems.vArm.VArmConstants;
+import org.firstinspires.ftc.teamcode.synchropather.systems.vClaw.VClawConstants;
+
 @Config
 @TeleOp(name = "Deposit Servo Calibrator", group = "Calibration")
 public class DepositServoCalibrator extends LinearOpMode {
@@ -18,20 +21,20 @@ public class DepositServoCalibrator extends LinearOpMode {
                                               // for extra tightness before deposit
                                               // and decreased tightness after deposit
 
-    public static double armPos = 0.;
-    public static double clawPos = 0.;
+    public static double armPos = VArmConstants.armLeftClipperPosition;
+    public static double clawPos = VClawConstants.GRAB_POSITION;
 
     @Override
     public void runOpMode() throws InterruptedException {
-        Servo leftArm = initServo(hardwareMap, "leftArm");
-        Servo rightArm = initServo(hardwareMap, "rightArm");
+        Servo leftArm = initServo(hardwareMap, "leftDepositArm");
+        Servo rightArm = initServo(hardwareMap, "rightDepositArm");
         Servo depositClaw = initServo(hardwareMap, "depositClaw");
 
         waitForStart();
 
         while (opModeIsActive()) {
             leftArm.setPosition(armPos);
-            rightArm.setPosition(1-armPos);
+            rightArm.setPosition(armPos-0.15);
             depositClaw.setPosition(clawPos);
         }
     }

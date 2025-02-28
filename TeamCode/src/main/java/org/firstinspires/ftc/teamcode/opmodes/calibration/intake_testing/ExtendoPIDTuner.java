@@ -67,7 +67,6 @@ public class ExtendoPIDTuner extends LinearOpMode {
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
 
         // init linear slides
-        // TODO: FIGURE OUT WHAT RPM EXTENDO MOTOR IS
         Motor extendo = new MotorEx(hardwareMap, "extendo", Motor.GoBILDA.RPM_312);
         Motor leftLift = new MotorEx(hardwareMap, "leftLift", Motor.GoBILDA.RPM_312);
         Motor rightLift = new MotorEx(hardwareMap, "rightLift", Motor.GoBILDA.RPM_312);

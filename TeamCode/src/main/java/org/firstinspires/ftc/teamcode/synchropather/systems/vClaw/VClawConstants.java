@@ -10,6 +10,7 @@ public class VClawConstants {
 
     // Claw positions
     public static double GRAB_POSITION = 0.72;
+    public static double LOOSELY_GRABBED_POSITION = 0.77;
     public static double RELEASE_POSITION = 1;
 
     /**

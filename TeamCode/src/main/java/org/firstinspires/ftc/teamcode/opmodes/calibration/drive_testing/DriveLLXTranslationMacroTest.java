@@ -7,6 +7,7 @@ import com.arcrobotics.ftclib.geometry.Pose2d;
 import com.arcrobotics.ftclib.geometry.Rotation2d;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.cvprocessors.SampleOrientationProcessor;
 import org.firstinspires.ftc.teamcode.opmodes.algorithms.SampleDataBufferFilter;
@@ -46,6 +47,7 @@ import org.firstinspires.ftc.teamcode.synchropather.systems.translation.Translat
 import org.firstinspires.ftc.teamcode.synchropather.systems.translation.TranslationState;
 import org.firstinspires.ftc.teamcode.synchropather.systems.translation.movements.LinearTranslation;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -57,6 +59,8 @@ public class DriveLLXTranslationMacroTest extends LinearOpMode {
     private Synchronizer extendoRetract;
 
     private AutonomousRobot robot;
+    private ArrayDeque<Double> loopTicks;
+    private ElapsedTime runtime;
 
     private HorizontalIntakeSubsystem horizontalIntake;
     private OverheadCameraSubsystem overheadCamera;
@@ -76,6 +80,13 @@ public class DriveLLXTranslationMacroTest extends LinearOpMode {
     public void runOpMode() throws InterruptedException {
         initialize();
 
+        loopTicks = new ArrayDeque<>();
+        runtime = new ElapsedTime(0);
+        runtime.reset();
+
+        telemetry.addData("[MAIN] TPS", 0);
+        telemetry.update();
+
         waitForStart();
 
 
@@ -91,6 +102,7 @@ public class DriveLLXTranslationMacroTest extends LinearOpMode {
         while (opModeIsActive()) {
             limelightAction.update();
             robot.update();
+            updateTPS();
             boolean driverControlling = controlDrive(sampleMacroRunning);
 
 
@@ -126,7 +138,8 @@ public class DriveLLXTranslationMacroTest extends LinearOpMode {
                     // init search
                     search = new EducatedSearchMacro(
                             foundSample,
-                            robot
+                            robot,
+                            1
                     );
                     search.start();
                     sampleData.clearFilterData();
@@ -279,6 +292,15 @@ public class DriveLLXTranslationMacroTest extends LinearOpMode {
         horizontalIntake.setClawPosition(HClawConstants.RELEASE_POSITION);
         horizontalIntake.setWristAngle(0);
         horizontalIntake.setArmPosition(0.9);
+    }
+
+    private void updateTPS() {
+        // TPS counter
+        double currentTime = runtime.seconds();
+        loopTicks.add(currentTime);
+        while (!loopTicks.isEmpty() && currentTime - loopTicks.getFirst() > 1d) loopTicks.removeFirst();
+        telemetry.addData("[MAIN] TPS", loopTicks.size());
+        telemetry.update();
     }
 
 
