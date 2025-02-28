@@ -90,16 +90,24 @@ public class Teleop extends LinearOpMode {
 
     public static double intakeDelay = 0.25;
 
+    enum MainButtonAssoc {
+        NONE,
+        PRIMARY,
+        SECONDARY
+    };
+
     @Override
     public void runOpMode() throws InterruptedException {
         initialize();
 
         waitForStart();
 
-        boolean toggleTriangle = false;
-        boolean toggleSquare = false;
-        boolean toggleIntake = false;
-        boolean toggleFeed = false;
+        boolean toggleG1Primary = false;
+        boolean toggleG1Secondary = false;
+        boolean toggleG1Cancel = false;
+        boolean toggleG2Primary = false;
+        boolean toggleG2Secondary = false;
+        boolean toggleG2Cancel = false;
 
         boolean sampleMacroRunning = false;
         boolean transferMacroRunning = false;
@@ -117,6 +125,9 @@ public class Teleop extends LinearOpMode {
         LimelightPlan limelightPlan = new LimelightPlan(robot.limelightSubsystem, enableLimelight);
         Synchronizer limelightAction = new Synchronizer(limelightPlan);
         limelightAction.start();
+
+        MainButtonAssoc g1MainButtonAssoc = MainButtonAssoc.NONE;
+        MainButtonAssoc g2MainButtonAssoc = MainButtonAssoc.NONE;
 
         int clipInventory = MAX_CLIPS;
         boolean clipIntakeMacroRunning = false;
@@ -153,13 +164,40 @@ public class Teleop extends LinearOpMode {
 
             handleGamepadColor();
 
+            if (!gamepad1.triangle) g1MainButtonAssoc = MainButtonAssoc.NONE;
+            boolean g1CancelButton = gamepad1.square;
+            boolean g1PrimaryButton = gamepad1.triangle && g1MainButtonAssoc != MainButtonAssoc.SECONDARY;
+            boolean g1SecondaryButton = gamepad1.triangle && g1MainButtonAssoc != MainButtonAssoc.PRIMARY;
+            if (g1PrimaryButton) g1MainButtonAssoc = MainButtonAssoc.PRIMARY;
+            if (g1SecondaryButton) g1MainButtonAssoc = MainButtonAssoc.SECONDARY;
+
+            if (!gamepad2.triangle) g2MainButtonAssoc = MainButtonAssoc.NONE;
+            boolean g2CancelButton = gamepad1.square;
+            boolean g2PrimaryButton = gamepad1.triangle && g2MainButtonAssoc != MainButtonAssoc.SECONDARY;
+            boolean g2SecondaryButton = gamepad1.triangle && g2MainButtonAssoc != MainButtonAssoc.PRIMARY;
+            if (g2PrimaryButton) g2MainButtonAssoc = MainButtonAssoc.PRIMARY;
+            if (g2SecondaryButton) g2MainButtonAssoc = MainButtonAssoc.SECONDARY;
+
             if (g1IsIntake) {
-                // Case: Init search macro
-                if (
-                        gamepad1.triangle &&
-                                !toggleTriangle &&
+                boolean actionReady =
+                        !toggleG1Primary &&
                                 !sampleMacroRunning &&
                                 !transferMacroRunning &&
+                                !extendoRetractRunning;
+
+                // Case: Cancel search macro (CANCELS SHOULD COME BEFORE ACTIONS)
+                if (
+                        g1PrimaryButton &&
+                                !toggleG1Primary &&
+                                sampleMacroRunning
+                ) {
+                    sampleMacroRunning = false;
+                }
+                // Case: Init search macro
+                else if (
+                        g1PrimaryButton &&
+                                !toggleG1Primary &&
+                                actionReady &&
                                 !clawGrabbed
                 ) {
                     drive.stopController();
@@ -174,92 +212,113 @@ public class Teleop extends LinearOpMode {
                         sampleMacroRunning = true;
                     }
                 }
+                // Case: Cancel retract extendo
+                else if (
+                        g1CancelButton &&
+                                !toggleG1Cancel &&
+                                extendoRetractRunning
+                ) {
+                    extendoRetractRunning = false;
+                }
                 // Case: Retract extendo
                 else if (
-                        gamepad1.square &&
-                                !toggleTriangle &&
-                                !sampleMacroRunning &&
-                                !transferMacroRunning &&
+                        g1SecondaryButton &&
+                                !toggleG1Secondary &&
+                                actionReady &&
                                 !clawGrabbed
                 ) {
                     extendoRetract.start();
                     extendoRetractRunning = true;
                 }
-                // Case: Transfer to spec maker
+                // Case: Cancel transfer macro
                 else if (
-                        gamepad1.triangle &&
-                                !toggleTriangle &&
-                                !sampleMacroRunning &&
-                                !transferMacroRunning &&
+                        g1CancelButton &&
+                                !toggleG1Cancel &&
+                                transferMacroRunning
+                ) {
+                    transferMacroRunning = false;
+                }
+                // Case: Transfer
+                else if (
+                        g1PrimaryButton &&
+                                !toggleG1Primary &&
+                                actionReady &&
                                 clawGrabbed
                 ) {
                     transfer.start();
                     transferMacroRunning = true;
                     clawGrabbed = false;
                 }
+                // You can't (and never will be able to) cancel a drop sample lol
                 // Case: Drop sample
                 else if (
-                        gamepad1.square &&
-                                !toggleSquare &&
-                                !sampleMacroRunning &&
-                                !transferMacroRunning &&
+                        g1SecondaryButton &&
+                                !toggleG1Secondary &&
+                                actionReady &&
                                 clawGrabbed
                 ) {
                     horizontalIntake.setClawPosition(HClawConstants.RELEASE_POSITION);
                     clawGrabbed = false;
                 }
-                // Case: Cancel search macro
-                else if (
-                        gamepad1.triangle &&
-                                !toggleTriangle &&
-                                sampleMacroRunning &&
-                                !transferMacroRunning
-                ) {
-                    sampleMacroRunning = false;
-                }
-                // Case: Cancel transfer macro
-                else if (
-                        gamepad1.triangle &&
-                                !toggleTriangle &&
-                                !sampleMacroRunning &&
-                                transferMacroRunning
-                ) {
-                    transferMacroRunning = false;
-                }
             } else {
-                // Case: Deposit up
+                boolean actionReady = !depositExtendRunning && !depositActionRunning;
+
+                // Case: Cancel up
                 if (
-                        gamepad1.triangle &&
-                                !toggleTriangle &&
-                                !depositExtendRunning &&
-                                !depositActionRunning &&
+                        g1CancelButton &&
+                                !toggleG1Cancel &&
+                                depositExtendRunning
+                ) {
+                    depositExtendRunning = false;
+                    depositUp = false;
+                }
+                // Case: Deposit up
+                else if (
+                        g1PrimaryButton &&
+                                !toggleG1Primary &&
+                                actionReady &&
                                 !depositUp
                 ) {
                     depositExtend.start();
                     depositUp = true;
                     depositExtendRunning = true;
                 }
+                // Case: Cancel act
+                else if (
+                        g1CancelButton &&
+                                !toggleG1Cancel &&
+                                depositActionRunning
+                ) {
+                    depositActionRunning = false;
+                    depositUp = true;
+                }
                 // Case: Deposit act
                 else if (
-                        gamepad1.triangle &&
-                                !toggleTriangle &&
-                                !depositExtendRunning &&
-                                !depositActionRunning &&
+                        g1PrimaryButton &&
+                                !toggleG1Primary &&
+                                actionReady &&
                                 depositUp
                 ) {
                     depositAction.start();
                     depositUp = false;
                     depositActionRunning = true;
                 }
-                //TODO: CONSIDER ADDING OPERATION CANCELS, LIKELY NEED FOR UP ACTION
             }
 
-            boolean currIntake = gamepad1.cross && gamepad1.dpad_left;
+            // remember to make cancels minimally restrictive
+            // my comments are infinitely worse than stephen's lol
+            boolean actionReady = !clipIntakeMacroRunning &&
+                    !feederMacroRunning;
             if (
-                    currIntake &&
-                    !toggleIntake &&
-                    !clipIntakeMacroRunning &&
-                    !feederMacroRunning
+                    g2CancelButton &&
+                            !toggleG2Cancel &&
+                            clipIntakeMacroRunning
+            ) {
+                clipIntakeMacroRunning = false;
+            } else if (
+                    g2SecondaryButton &&
+                    !toggleG2Secondary &&
+                    actionReady
             ) {
                 drive.stopController();
                 clipIntakeMotion.start();
@@ -267,22 +326,29 @@ public class Teleop extends LinearOpMode {
                 clipIntakeMacroRunning = true;
             }
 
-            boolean currFeed = gamepad2.cross && gamepad2.dpad_left;
             if (
-                    currFeed &&
-                    !toggleFeed &&
-                    !clipIntakeMacroRunning &&
-                    !feederMacroRunning
+                    g2CancelButton &&
+                            !toggleG2Cancel &&
+                            feederMacroRunning
+            ) {
+                feederMacroRunning = false;
+            } else if (
+                    g2PrimaryButton &&
+                    !toggleG2Primary &&
+                    actionReady
             ) {
                 feederMotion.start();
                 clipInventory--;
                 feederMacroRunning = true;
             }
 
-            toggleTriangle = gamepad1.triangle;
-            toggleSquare = gamepad1.square;
-            toggleIntake = currIntake;
-            toggleFeed = currFeed;
+            toggleG1Primary = g1PrimaryButton;
+            toggleG1Secondary = g1SecondaryButton;
+            toggleG1Cancel = g1CancelButton;
+
+            toggleG2Primary = g2PrimaryButton;
+            toggleG2Secondary = g2SecondaryButton;
+            toggleG2Cancel = g2CancelButton;
 
             if (!transferMacroRunning) {
                 initTransferMotion();
