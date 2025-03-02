@@ -2,6 +2,9 @@ package org.firstinspires.ftc.teamcode.opmodes.teleop;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import org.firstinspires.ftc.teamcode.HardwareRobot;
+import org.firstinspires.ftc.teamcode.subsystems.DriveSubsystem;
+
 //files to look at:
 //subsystems: sync macro
 //plans and states: specimen maker
@@ -14,6 +17,14 @@ public class Viirautopractice extends LinearOpMode {
     public void runOpMode() throws InterruptedException {
         waitForStart();
       while (opModeIsActive()) {
+          HardwareRobot robot = new HardwareRobot(hardwareMap);
+          DriveSubsystem drive = new DriveSubsystem (
+            robot.leftBack,
+            robot.leftFront,
+            robot.rightBack,
+            robot.rightFront
+          );
+          waitForStart();
 
       }
     }
