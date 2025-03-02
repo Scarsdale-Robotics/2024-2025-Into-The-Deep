@@ -168,13 +168,23 @@ public class ClipIntakeMotionTwooo extends LinearOpMode {
                     MLoaderConstants.partialClosedPosition
             );
 
+            MoveMLoader loaderClose2 = new MoveMLoader(
+                    loaderRelease.getEndTime()+0.5,
+                    MLoaderConstants.maxClosedPosition
+            );
+
+            MoveMLoader loaderRelease2 = new MoveMLoader(
+                    loaderClose2.getEndTime()+1,
+                    MLoaderConstants.partialClosedPosition
+            );
+
             MIntakePlan intakePlan = new MIntakePlan(
                     clipbot,
                     intakeOpen, intakeUp, intakeClose
             );
             MLoaderPlan loaderPlan = new MLoaderPlan(
                     clipbot,
-                    loaderOpen, loaderClose, loaderRelease
+                    loaderOpen, loaderClose, loaderRelease, loaderClose2, loaderRelease2
             );
 
             return new Synchronizer(

@@ -9,14 +9,10 @@ import com.acmerobotics.dashboard.config.Config;
 public class VArmConstants {
 
     // Left servo arm homing positions
-    public static double armLeftClipperPosition = 0.98;
+    public static double armLeftClipperPosition = 0.95;
     public static double armLeftTransferPosition = 0.96;
-    public static double armLeftPreDepositPosition = 0.4;  // TODO: TUNE
-    public static double armLeftDepositPosition = 0.6;  // TODO: TUNE
-
-    // Right servo arm homing positions
-    public static double armRightClipperPosition = 0.83;
-    public static double armRightTransferPosition = 0.81;
+    public static double armLeftPreDepositPosition = 0.6;
+    public static double armLeftDepositPosition = 0.55;
 
     private static double positionToScaled(double position) {
         return position / Math.abs(armLeftClipperPosition - armLeftTransferPosition);

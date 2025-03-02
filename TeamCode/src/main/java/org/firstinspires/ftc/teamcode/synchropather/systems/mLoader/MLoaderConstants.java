@@ -9,8 +9,8 @@ import com.acmerobotics.dashboard.config.Config;
 public class MLoaderConstants {
 
     // Magazine loader end positions
-    public static double openPosition = 0.86;
-    public static double maxClosedPosition = 0.22;
-    public static double partialClosedPosition = 0.35;
+    public static double openPosition = 0.75;
+    public static double maxClosedPosition = 0;
+    public static double partialClosedPosition = 0.5;
 
 }

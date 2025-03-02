@@ -9,7 +9,7 @@ import com.acmerobotics.dashboard.config.Config;
 public class KlipperConstants {
 
     // Klipper end positions
-    public static double closedPosition = 0.55;
+    public static double closedPosition = 0.575;
     public static double openPosition = 0;
 
     //    public static double MAX_VELOCITY = 0.5;

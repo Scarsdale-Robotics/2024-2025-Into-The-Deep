@@ -40,7 +40,7 @@ public class MFeederConstants {
     /**
      * The amount of clips that the magazine intakes.
      */
-    public static int RELOAD_CAPACITY = 5;
+    public static int RELOAD_CAPACITY = 7;
 
     /**
      * Width of one clip
