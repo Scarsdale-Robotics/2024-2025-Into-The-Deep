@@ -21,7 +21,7 @@ import org.firstinspires.ftc.teamcode.synchropather.systems.translation.movement
 
 @Config
 @TeleOp(name="Main TeleOp")
-public class BlueTeleop extends LinearOpMode {
+public class  BlueTeleop extends LinearOpMode {
 
     private RobotSystem robot;
     private Synchronizer realignMacro;
