@@ -45,7 +45,7 @@ public class viir_Practice extends LinearOpMode {
             }
             if (senseChangeActivated) {
                 strafe = -gamepad1.left_stick_x + buffer;
-                turn = -gamepad1.right_stick_x - buffer;
+                turn = gamepad1.right_stick_x - buffer;
                 forward = gamepad1.left_stick_y - buffer;
             }
             if (senseChangeActivated && gamepad1.circle) {
