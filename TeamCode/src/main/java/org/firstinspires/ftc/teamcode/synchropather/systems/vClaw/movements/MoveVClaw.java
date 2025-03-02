@@ -47,7 +47,7 @@ public class MoveVClaw extends Movement {
     public VClawState getState(double elapsedTime) {
         double clampedElapsedTime = timeSpan.clamp(elapsedTime)-getStartTime();
         if (clampedElapsedTime<=0) return getStartState();
-        return start;
+        return end;
     }
 
     /**

@@ -15,6 +15,7 @@ import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.TimeSpan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.extendo.ExtendoPlan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.extendo.ExtendoState;
 import org.firstinspires.ftc.teamcode.synchropather.systems.extendo.movements.LinearExtendo;
+import org.firstinspires.ftc.teamcode.synchropather.systems.hArm.HArmConstants;
 import org.firstinspires.ftc.teamcode.synchropather.systems.hArm.HArmPlan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.hArm.HArmState;
 import org.firstinspires.ftc.teamcode.synchropather.systems.hArm.movements.LinearHArm;
@@ -122,6 +123,8 @@ public class RedSpecimenAuto extends LinearOpMode {
         // Vertical arm ready to deposit, vertical claw grabbing
         robot.verticalDeposit.setArmPosition(VArmConstants.armLeftPreDepositPosition);
         robot.verticalDeposit.setClawPosition(VClawConstants.GRAB_POSITION);
+
+        robot.clipbot.setKlipperPosition(KlipperConstants.openPosition);
     }
 
 
@@ -141,7 +144,7 @@ public class RedSpecimenAuto extends LinearOpMode {
                 new RotationState(Math.toRadians(90)),
                 new RotationState(Math.toRadians(90))
         );
-        LinearLift liftToPreDepositPreload = new LinearLift(scorePreload.getEndTime()-0.25,
+        LinearLift liftToPreDepositPreload = new LinearLift(scorePreload.getEndTime(),
                 new LiftState(0),
                 new LiftState(LiftConstants.preDepositPosition)
         );
@@ -170,7 +173,7 @@ public class RedSpecimenAuto extends LinearOpMode {
         CRSplineTranslation intakeClipsTranslation = new CRSplineTranslation(liftDownPreload.getEndTime(),
                 new TranslationState(1, -24-9+2),
                 new TranslationState(5, -48),
-                new TranslationState(48.75, -72+9+2)
+                new TranslationState(47.75, -72+9+2)
                         // Y: -72 + 1/2 robot height + mag intake distance from wall
         );
         TranslationConstants.MAX_ACCELERATION = previousAcceleration;
@@ -180,9 +183,21 @@ public class RedSpecimenAuto extends LinearOpMode {
         MoveMIntake intakeOpen = new MoveMIntake(0, MIntakeConstants.openPosition);
         MoveMLoader loaderOpen = new MoveMLoader(0, MLoaderConstants.openPosition);
 
+
+        // Partially lift intake
+        MoveMIntake intakePartiallyUp = new MoveMIntake(
+                intakeClipsTranslation.getEndTime(),
+                MIntakeConstants.partiallyUpPosition
+        );
+
+        LinearTranslation alignClips = new LinearTranslation(intakePartiallyUp.getEndTime(),
+                new TranslationState(47.75, -72+9+2),
+                new TranslationState(48.75, -72+9+2)
+        );
+
         // Lift clips
         MoveMIntake intakeUp = new MoveMIntake(
-                intakeClipsTranslation.getEndTime(),
+                alignClips.getEndTime(),
                 MIntakeConstants.upPosition
         );
 
@@ -200,6 +215,12 @@ public class RedSpecimenAuto extends LinearOpMode {
                 new ExtendoState(extension)
         );
 
+        // Lift gets ready for transfer
+        LinearLift liftUp = new LinearLift(extendToSpikeMark.getStartTime(),
+                new LiftState(robot.linearSlides.getLeftLiftPosition()),
+                new LiftState(LiftConstants.transferPosition)
+        );
+
         // Move horizontal arm down
         LinearHArm h_arm_down = new LinearHArm(Math.max(extendToSpikeMark.getEndTime(),approachSpikeMark.getEndTime())+spikeMarkIntakeDelay/2,
                 new HArmState(0.9),
@@ -209,17 +230,17 @@ public class RedSpecimenAuto extends LinearOpMode {
         MoveHWrist h_wrist_align = new MoveHWrist(extendToSpikeMark.getStartTime(), 0);
 
         // Pick up and move horizontal arm up
-        GrabHClaw h_claw_grab = new GrabHClaw(h_arm_down.getEndTime()+spikeMarkIntakeDelay/2, true);
-        LinearHArm h_arm_up = new LinearHArm(h_claw_grab.getEndTime(),
+        GrabHClaw h_claw_grab = new GrabHClaw(h_arm_down.getEndTime()+spikeMarkIntakeDelay, true);
+        LinearHArm h_arm_up = new LinearHArm(h_claw_grab.getEndTime()+spikeMarkIntakeDelay,
                 new HArmState(armDownPosition),
-                new HArmState(0.9)
+                new HArmState(HArmConstants.armTransferPosition)
         );
         MoveHWrist h_wrist_reset = new MoveHWrist(h_arm_up.getEndTime(), 0, true);
 
         // Retract extendo
         LinearExtendo extendoIn = new LinearExtendo(h_wrist_reset.getStartTime(),
                 new ExtendoState(extension),
-                new ExtendoState(3.1)
+                new ExtendoState(3.8)
         );
 
         // Lower magazine intake
@@ -256,28 +277,32 @@ public class RedSpecimenAuto extends LinearOpMode {
         inventoryStocked = true;
 
         //// Mag has clips, do transfer and clipping sequence
-        LinearLift liftUp = new LinearLift(extendoIn.getEndTime(),
-                new LiftState(robot.linearSlides.getLeftLiftPosition()),
-                new LiftState(LiftConstants.transferPosition)
-        );
-
-        // Horizontal arm goes up
-        LinearHArm hArmUp = new LinearHArm(Math.max(extendoIn.getEndTime(), liftUp.getEndTime()),
-                new HArmState(0.9),
-                new HArmState(0.49)
-        );
-
         // Vertical arm gets ready
-        LinearVArm vArmDown = new LinearVArm(hArmUp.getEndTime(),
-                new VArmState(0.5),
+        LinearVArm vArmDown = new LinearVArm(Math.max(h_arm_up.getEndTime(), extendoIn.getEndTime())-0.25,
+                new VArmState(VArmConstants.armLeftDepositPosition),
                 new VArmState(VArmConstants.armLeftTransferPosition)
         );
 
+        // Loosely hold sample
+        MoveVClaw looselyHoldSampleTransfer = new MoveVClaw(vArmDown.getEndTime()+0.25, 0.1,
+                new VClawState(VClawConstants.RELEASE_POSITION),
+                new VClawState(VClawConstants.LOOSELY_GRABBED_POSITION)
+        );
+
+        // Pull sample in more
+        LinearExtendo pullSampleIn = new LinearExtendo(looselyHoldSampleTransfer.getEndTime(),
+                new ExtendoState(3.8),
+                new ExtendoState(0)
+        );
+
         // Deposit claw grabs sample
-        GrabVClaw grabVClaw = new GrabVClaw(vArmDown.getEndTime() + 0.25);
+        MoveVClaw grabVClaw = new MoveVClaw(pullSampleIn.getEndTime(), 0.1,
+                new VClawState(VClawConstants.LOOSELY_GRABBED_POSITION),
+                new VClawState(VClawConstants.GRAB_POSITION)
+        );
 
         // Intake claw releases sample
-        ReleaseHClaw releaseHClaw = new ReleaseHClaw(grabVClaw.getEndTime() + 0.25);
+        ReleaseHClaw releaseHClaw = new ReleaseHClaw(grabVClaw.getStartTime());
 
         // Deposit arm moves out of the way
         LinearVArm upVArm = new LinearVArm(releaseHClaw.getEndTime(),
@@ -287,7 +312,7 @@ public class RedSpecimenAuto extends LinearOpMode {
 
         // Intake arm moves back down
         LinearHArm hArmDown = new LinearHArm(upVArm.getEndTime(),
-                new HArmState(0.48),
+                new HArmState(HArmConstants.armTransferPosition),
                 new HArmState(0.9)
         );
 
@@ -311,25 +336,19 @@ public class RedSpecimenAuto extends LinearOpMode {
         );
 
         // Stationary deposit arm
-        LinearVArm lowerVArm = new LinearVArm(hArmDown.getEndTime(),
+        LinearVArm lowerVArm = new LinearVArm(holdLiftDown.getEndTime()-0.25,
                 new VArmState(VArmConstants.armLeftTransferPosition-0.1),
                 new VArmState(VArmConstants.armLeftClipperPosition)
         );
 
-        // Loosely hold sample
-        MoveVClaw looselyHoldSample = new MoveVClaw(lowerVArm.getEndTime(), 0.1,
-                new VClawState(VClawConstants.GRAB_POSITION),
-                new VClawState(VClawConstants.LOOSELY_GRABBED_POSITION)
-        );
-
         // Stationary deposit arm
-        LinearVArm pressVArm = new LinearVArm(looselyHoldSample.getEndTime(),
+        LinearVArm pressVArm = new LinearVArm(holdLiftDown.getEndTime(),
                 new VArmState(VArmConstants.armLeftClipperPosition+0.02),
                 new VArmState(VArmConstants.armLeftClipperPosition+0.02)
         );
 
         // Advance feeder by one clip
-        LinearMFeeder advanceFeeder = new LinearMFeeder(Math.max(loaderRelease2.getEndTime(), looselyHoldSample.getEndTime()) + feederDelayTime,
+        LinearMFeeder advanceFeeder = new LinearMFeeder(Math.max(loaderRelease2.getEndTime(), holdLiftDown.getEndTime()) + feederDelayTime,
                 currentFeederPosition,
                 targetFeederPosition
         );
@@ -358,13 +377,14 @@ public class RedSpecimenAuto extends LinearOpMode {
         MoveKlipper klipSpecimen = new MoveKlipper(advanceFeeder.getEndTime()+klipperWaitTime, KlipperConstants.closedPosition);
         MoveKlipper unklipSpecimen = new MoveKlipper(klipSpecimen.getEndTime()+0.25, KlipperConstants.openPosition);
 
-
         // Score specimen
+        TranslationConstants.MAX_ACCELERATION = previousAcceleration/3;
         CRSplineTranslation splineScoreSpikeMark = new CRSplineTranslation(holdLiftDown.getEndTime()-1.75,
                 new TranslationState(48.75, -72+24),
                 new TranslationState(7,-46),
-                new TranslationState(-1, -24-9+2)
+                new TranslationState(-2, -24-9+2)
         );
+        TranslationConstants.MAX_ACCELERATION = previousAcceleration;
 
         LinearVArm vArmToPreDepositSpikeMark = new LinearVArm(unklipSpecimen.getEndTime(),
                 new VArmState(VArmConstants.armLeftClipperPosition),
@@ -402,6 +422,7 @@ public class RedSpecimenAuto extends LinearOpMode {
         TranslationPlan translationPlan = new TranslationPlan(robot.drive, robot.localization,
                 scorePreload,
                 intakeClipsTranslation,
+                alignClips,
                 approachSpikeMark,
                 splineScoreSpikeMark
         );
@@ -410,7 +431,8 @@ public class RedSpecimenAuto extends LinearOpMode {
         );
         ExtendoPlan extendoPlan = new ExtendoPlan(robot.linearSlides,
                 extendToSpikeMark,
-                extendoIn
+                extendoIn,
+                pullSampleIn
         );
         HWristPlan h_wrist_plan = new HWristPlan(robot.horizontalIntake,
                 h_wrist_align,
@@ -419,7 +441,6 @@ public class RedSpecimenAuto extends LinearOpMode {
         HArmPlan h_arm_plan = new HArmPlan(robot.horizontalIntake,
                 h_arm_down,
                 h_arm_up,
-                hArmUp,
                 hArmDown
         );
         HClawPlan h_claw_plan = new HClawPlan(robot.horizontalIntake,
@@ -447,8 +468,8 @@ public class RedSpecimenAuto extends LinearOpMode {
         );
         VClawPlan vClawPlan = new VClawPlan(robot.verticalDeposit,
                 releaseVClawPreload,
+                looselyHoldSampleTransfer,
                 grabVClaw,
-                looselyHoldSample,
                 releaseVClawSpikeMark
         );
 
@@ -459,6 +480,7 @@ public class RedSpecimenAuto extends LinearOpMode {
         );
         MIntakePlan mIntakePlan = new MIntakePlan(robot.clipbot,
                 intakeOpen,
+                intakePartiallyUp,
                 intakeUp,
                 intakeClose
         );

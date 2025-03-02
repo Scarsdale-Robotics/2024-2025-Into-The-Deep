@@ -58,7 +58,7 @@ public class EducatedSearchMacro extends Synchronizer {
                  heading_bot + normalizeAngle(Math.PI/2-heading_bot)
             );
             ExtendoState extendoTarget = new ExtendoState(
-                 Math.max(0, (y_sample-y_bot) - x_extendo_min + OverheadCameraSubsystem.CLAW_OFFSET[0])
+                 Math.max(0, (y_sample-y_bot) - x_extendo_min + 2*OverheadCameraSubsystem.CLAW_OFFSET[0])
             );
 
             //// SYNCHRONIZER
@@ -80,7 +80,7 @@ public class EducatedSearchMacro extends Synchronizer {
                     extendoPosition,
                     extendoTarget
             );
-            LinearExtendo extendoIn = new LinearExtendo(extendoOut.getEndTime(),
+            LinearExtendo extendoIn = new LinearExtendo(extendoOut.getEndTime()+1,
                     extendoTarget,
                     new ExtendoState(LinearSlidesSubsystem.extendoOffset)
             );

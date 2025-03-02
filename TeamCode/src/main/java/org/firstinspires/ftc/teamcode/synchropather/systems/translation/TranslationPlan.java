@@ -31,7 +31,7 @@ public class TranslationPlan extends Plan<TranslationState> {
 	public static double kI = 0;
 	public static double kD = 0.125;
 
-	public static double POWER_CACHE_THRESHOLD = 0.4;
+	public static double POWER_CACHE_THRESHOLD = 0.01;
 
 	// Integrator variables
 	private double intexdt = 0;

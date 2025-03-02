@@ -11,7 +11,7 @@ public class LiftConstants {
 
     public static double specMakerPosition = 0.0;
     public static double transferPosition = 9.45;
-    public static double preDepositPosition = 11;
+    public static double preDepositPosition = 11.5;
     public static double depositPosition = 7;
 
     /**

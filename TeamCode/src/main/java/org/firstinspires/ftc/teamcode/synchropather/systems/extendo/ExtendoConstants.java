@@ -8,6 +8,10 @@ import com.acmerobotics.dashboard.config.Config;
 @Config
 public class ExtendoConstants {
 
+    // Transfer position
+    public static double transferPosition = 3.5;
+
+
     /**
      *  Conversion factor
      */

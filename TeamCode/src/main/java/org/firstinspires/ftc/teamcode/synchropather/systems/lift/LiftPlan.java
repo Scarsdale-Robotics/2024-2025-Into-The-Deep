@@ -21,7 +21,7 @@ public class LiftPlan extends Plan<LiftState> {
 
     // Positional SQUID constants
     //TODO: TUNE
-    public static double kSQU = 16;
+    public static double kSQU = 8;
     public static double kI = 0.0;
     public static double kD = 0;
 
