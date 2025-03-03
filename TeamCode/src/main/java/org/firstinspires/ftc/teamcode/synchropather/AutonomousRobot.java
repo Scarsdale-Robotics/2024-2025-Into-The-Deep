@@ -19,6 +19,7 @@ import com.qualcomm.robotcore.hardware.ServoImplEx;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
+import org.firstinspires.ftc.teamcode.cvprocessors.ClawVacancyProcessor;
 import org.firstinspires.ftc.teamcode.cvprocessors.LimelightDetectorProcessor;
 import org.firstinspires.ftc.teamcode.cvprocessors.SampleOrientationProcessor;
 import org.firstinspires.ftc.teamcode.opmodes.algorithms.SampleDataBufferFilter;
@@ -60,6 +61,7 @@ public class AutonomousRobot {
     public final VisionPortal visionPortal;
     public final SampleOrientationProcessor sampleOrientationProcessor;
     public final LimelightDetectorProcessor limelightDetectorProcessor;
+    public final ClawVacancyProcessor clawVacancyProcessor;
     public SampleDataBufferFilter.SampleTargetingMethod sampleTargetingMethod;
 
     public SampleDataBufferFilter overheadSampleData;
@@ -178,6 +180,7 @@ public class AutonomousRobot {
         WebcamName cameraName = hardwareMap.get(WebcamName.class, "Webcam 1");
         this.sampleOrientationProcessor = new SampleOrientationProcessor();
         this.limelightDetectorProcessor = new LimelightDetectorProcessor(this.opMode);
+        this.clawVacancyProcessor = new ClawVacancyProcessor();
         this.visionPortal = buildVisionPortal(cameraName);
 
         // init overhead camera
@@ -250,11 +253,12 @@ public class AutonomousRobot {
                 .setCamera(cameraName)
                 .setCameraResolution(CAMERA_RESOLUTION)
                 .setAutoStopLiveView(true)
-                .addProcessors(sampleOrientationProcessor, limelightDetectorProcessor)  // ADD PROCESSORS HERE
+                .addProcessors(sampleOrientationProcessor, limelightDetectorProcessor, clawVacancyProcessor)  // ADD PROCESSORS HERE
                 .build();
 
         visionPortal.setProcessorEnabled(sampleOrientationProcessor, true);
         visionPortal.setProcessorEnabled(limelightDetectorProcessor, true);
+        visionPortal.setProcessorEnabled(clawVacancyProcessor, true);
 
         return visionPortal;
     }

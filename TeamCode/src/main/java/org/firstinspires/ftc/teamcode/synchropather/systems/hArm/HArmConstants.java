@@ -18,7 +18,7 @@ public class HArmConstants {
     public static double armRightPiPosition = 0.86;
 
     // For transfer
-    public static double armTransferPosition = 0.49;
+    public static double armTransferPosition = 0.46;
 
     /**
      *  Max elbow velocity in servo/sec.

@@ -30,7 +30,7 @@ public class MFeederConstants {
     /**
      *  The magazine feeder's reference position for zero in inches
      */
-    public static double ZERO_HOME = 0.15;
+    public static double ZERO_HOME = 0.175;
 
     /**
      *  Max capacity of magazine in clips.

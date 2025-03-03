@@ -40,7 +40,7 @@ public class SampleDataBufferFilter {
     private final ArrayList<Pose2d> samplePoses; // {x_sample, y_sample, theta_sample}
     private final SampleTargetingMethod targetingMethod;
 
-    public static double FILTER_ERROR_TOLERANCE = 0.5; // inches
+    public static double FILTER_ERROR_TOLERANCE = 0.25; // inches
 
     public SampleDataBufferFilter(LinearSlidesSubsystem linearSlides, LocalizationSubsystem localization, double timeBuffer, int filterLength, SampleTargetingMethod targetingMethod) {
         this.linearSlides = linearSlides;

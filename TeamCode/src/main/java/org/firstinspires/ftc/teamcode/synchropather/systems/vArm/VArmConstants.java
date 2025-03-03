@@ -12,7 +12,7 @@ public class VArmConstants {
     public static double armLeftClipperPosition = 0.95;
     public static double armLeftTransferPosition = 0.96;
     public static double armLeftPreDepositPosition = 0.6;
-    public static double armLeftDepositPosition = 0.5;
+    public static double armLeftDepositPosition = 0.48;
 
     private static double positionToScaled(double position) {
         return position / Math.abs(armLeftClipperPosition - armLeftTransferPosition);
