@@ -17,6 +17,7 @@ public class Viirautopractice extends LinearOpMode {
     public void runOpMode() throws InterruptedException {
         waitForStart();
       while (opModeIsActive()) {
+          double asidhfsadf = 0.3;
           HardwareRobot robot = new HardwareRobot(hardwareMap);
           DriveSubsystem drive = new DriveSubsystem (
             robot.leftBack,
