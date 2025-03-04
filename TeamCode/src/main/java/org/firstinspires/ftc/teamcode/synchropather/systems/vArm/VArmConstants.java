@@ -10,7 +10,8 @@ public class VArmConstants {
 
     // Left servo arm homing positions
     public static double armLeftClipperPosition = 0.95;
-    public static double armLeftTransferPosition = 0.96;
+    public static double armLeftTransferPosition = 0.92;
+    public static double armLeftPreTransferPosition = 0.85;
     public static double armLeftPreDepositPosition = 0.6;
     public static double armLeftDepositPosition = 0.48;
 

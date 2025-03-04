@@ -9,7 +9,8 @@ import com.acmerobotics.dashboard.config.Config;
 public class ExtendoConstants {
 
     // Transfer position
-    public static double transferPosition = 4.5;
+    public static double transferPosition = 2.4;
+    public static double pullInSamplePosition = 1;
 
 
     /**

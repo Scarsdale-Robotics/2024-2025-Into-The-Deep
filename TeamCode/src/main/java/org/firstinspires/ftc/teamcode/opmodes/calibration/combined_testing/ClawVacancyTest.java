@@ -94,20 +94,22 @@ public class ClawVacancyTest extends LinearOpMode {
     public static double armDownPosition = 1.025;
 
     public static double driveSpeed = 1;
-
-    public static double intakeDelay = 0.4;
+    public static int overheadFilterLength = 3;
+    public static double intakeDelay = 0.25;
 
 
     // For clipbot subsystem
     private int clipInventory = MFeederConstants.RELOAD_CAPACITY;
     private boolean inventoryStocked = true;
 
-    public static double klipperWaitTime = 0.25;
-    public static double feederDelayTime = 0.5;
+    public static double klipperWaitTime = 0.3;
+    public static double feederDelayTime = -0.09;
+    public static double holdLiftDownPosition = -1;
 
 
 
     // Deposit
+    public static double liftUpDepositDelay = 0.25;
     public static double liftDownDelay = 0.1;
 
 
@@ -123,6 +125,10 @@ public class ClawVacancyTest extends LinearOpMode {
     public static double loaderPressurePosition = 0.075;
 
 
+
+    // Optimization
+    public static double horizontalArmRaiseDeadtime = 0.43;
+    public static double verticalLiftDownDeadtime = 0.23;
 
 
 
@@ -395,12 +401,12 @@ public class ClawVacancyTest extends LinearOpMode {
                         linearSlides,
                         localization,
                         0.04375,
-                        10,
+                        overheadFilterLength,
                         robot.sampleTargetingMethod
                 )
         );
         this.sampleData = robot.overheadSampleData;
-        OverheadCameraSubsystem.CLAW_OFFSET[0] = -3.5;
+        OverheadCameraSubsystem.CLAW_OFFSET[0] = -3;
         SampleDataBufferFilter.FILTER_ERROR_TOLERANCE = 0.15;
 
         robot.verticalDeposit.setArmPosition(0.5);
@@ -497,6 +503,11 @@ public class ClawVacancyTest extends LinearOpMode {
                 new LiftState(LiftConstants.transferPosition)
         );
 
+        LinearVArm prepareVArm = new LinearVArm(liftUp.getStartTime(),
+                new VArmState(VArmConstants.armLeftDepositPosition),
+                new VArmState(VArmConstants.armLeftPreTransferPosition)
+        );
+
         // Move arm down
         LinearHArm h_arm_down = new LinearHArm(intakeDelay+Math.max(Math.max(extendoOut.getEndTime(), rotation.getEndTime()), translation.getEndTime()),
                 new HArmState(0.9),
@@ -562,7 +573,7 @@ public class ClawVacancyTest extends LinearOpMode {
 
         //// Mag has clips, do transfer and clipping sequence
         // Horizontal arm gets ready
-        LinearHArm hArmUpTransfer = new LinearHArm(extendoIn.getEndTime(),
+        LinearHArm hArmUpTransfer = new LinearHArm(extendoIn.getEndTime()-horizontalArmRaiseDeadtime,
                 new HArmState(clawCheckPosition),
                 new HArmState(HArmConstants.armTransferPosition)
         );
@@ -578,7 +589,7 @@ public class ClawVacancyTest extends LinearOpMode {
 
         // Vertical arm gets ready
         LinearVArm vArmDown = new LinearVArm(Math.max(hArmUpTransfer.getEndTime(), extendoToTransfer.getEndTime()),
-                new VArmState(VArmConstants.armLeftDepositPosition),
+                new VArmState(VArmConstants.armLeftPreTransferPosition),
                 new VArmState(VArmConstants.armLeftTransferPosition)
         );
 
@@ -591,7 +602,7 @@ public class ClawVacancyTest extends LinearOpMode {
         // Pull sample in more
         LinearExtendo pullSampleIn = new LinearExtendo(looselyHoldSampleTransfer.getEndTime(),
                 new ExtendoState(ExtendoConstants.transferPosition),
-                new ExtendoState(0)
+                new ExtendoState(ExtendoConstants.pullInSamplePosition)
         );
 
         // Deposit claw grabs sample
@@ -604,13 +615,13 @@ public class ClawVacancyTest extends LinearOpMode {
         ReleaseHClaw releaseHClaw = new ReleaseHClaw(grabVClaw.getStartTime());
 
         // Deposit arm moves out of the way
-        LinearVArm upVArm = new LinearVArm(releaseHClaw.getEndTime(),
+        LinearVArm upVArm = new LinearVArm(grabVClaw.getStartTime(),
                 new VArmState(VArmConstants.armLeftTransferPosition),
                 new VArmState(VArmConstants.armLeftTransferPosition-0.1)
         );
 
         // Intake arm moves back down
-        LinearHArm hArmDown = new LinearHArm(upVArm.getEndTime(),
+        LinearHArm hArmDown = new LinearHArm(releaseHClaw.getEndTime(),
                 new HArmState(HArmConstants.armTransferPosition),
                 new HArmState(0.9)
         );
@@ -629,13 +640,13 @@ public class ClawVacancyTest extends LinearOpMode {
 
         /// Movements
         // Hold lift down
-        LinearLift holdLiftDown = new LinearLift(hArmDown.getEndTime(),
+        LinearLift holdLiftDown = new LinearLift(hArmDown.getEndTime() - verticalLiftDownDeadtime,
                 new LiftState(LiftConstants.transferPosition),
-                new LiftState(-1)
+                new LiftState(holdLiftDownPosition)
         );
 
         // Stationary deposit arm
-        LinearVArm lowerVArm = new LinearVArm(holdLiftDown.getEndTime()-0.25,
+        LinearVArm lowerVArm = new LinearVArm(holdLiftDown.getEndTime()-0.38,
                 new VArmState(VArmConstants.armLeftTransferPosition-0.1),
                 new VArmState(VArmConstants.armLeftClipperPosition)
         );
@@ -682,7 +693,7 @@ public class ClawVacancyTest extends LinearOpMode {
 
 
         // Score specimen
-        LinearVArm vArmToPreDepositCycle = new LinearVArm(unklipSpecimen.getEndTime(),
+        LinearVArm vArmToPreDepositCycle = new LinearVArm(unklipSpecimen.getStartTime()+liftUpDepositDelay,
                 new VArmState(VArmConstants.armLeftClipperPosition),
                 new VArmState(VArmConstants.armLeftPreDepositPosition)
         );
@@ -754,6 +765,7 @@ public class ClawVacancyTest extends LinearOpMode {
                 liftDownCycle
         );
         VArmPlan vArmPlan = new VArmPlan(robot.verticalDeposit,
+                prepareVArm,
                 vArmDown,
                 upVArm,
                 lowerVArm,
