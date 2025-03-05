@@ -49,6 +49,9 @@ import org.firstinspires.ftc.teamcode.synchropather.systems.mFeeder.MFeederPlan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.mFeeder.MFeederState;
 import org.firstinspires.ftc.teamcode.synchropather.systems.mFeeder.movements.LinearMFeeder;
 import org.firstinspires.ftc.teamcode.synchropather.systems.mLoader.MLoaderConstants;
+import org.firstinspires.ftc.teamcode.synchropather.systems.mLoader.MLoaderPlan;
+import org.firstinspires.ftc.teamcode.synchropather.systems.mLoader.MLoaderState;
+import org.firstinspires.ftc.teamcode.synchropather.systems.mLoader.movements.MoveMLoader;
 import org.firstinspires.ftc.teamcode.synchropather.systems.rotation.RotationPlan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.rotation.RotationState;
 import org.firstinspires.ftc.teamcode.synchropather.systems.rotation.movements.LinearRotation;
@@ -115,7 +118,8 @@ public class SplitGamepadsTest extends LinearOpMode {
 
 
     // loader applying pressure on clips
-    public static double loaderPressurePosition = 0.075;
+    public static double loaderPressurePosition = 0.02;
+    public static double loaderFeedingPosition = 0.075;
 
 
 
@@ -173,10 +177,12 @@ public class SplitGamepadsTest extends LinearOpMode {
             previousDriverControlling = driverControlling;
 
 
-            if (gamepad1.cross) {
+            if (gamepad1.dpad_up) {
                 robot.clipbot.setMagazineLoaderPosition(MLoaderConstants.openPosition);
             } else {
-                robot.clipbot.setMagazineLoaderPosition(loaderPressurePosition);
+                if (!makerMacroRunning) {
+                    robot.clipbot.setMagazineLoaderPosition(loaderPressurePosition);
+                }
             }
 
 
@@ -283,7 +289,7 @@ public class SplitGamepadsTest extends LinearOpMode {
                 toggleSquareG2 = true;
                 specimenMade = false;
             }
-            if (makerMacro!=null && makerMacro.getIsRunning() && specimenMade) makerMacro.update(MovementType.MAGAZINE_FEEDER);
+            if (makerMacro!=null && !makerMacroRunning) makerMacro.update(MovementType.MAGAZINE_FEEDER);
             if (!gamepad2.square) toggleSquareG2 = false;
 
 
@@ -343,10 +349,7 @@ public class SplitGamepadsTest extends LinearOpMode {
 
         if (!driving && !previousDriving) return false;
 
-        if (driving ||
-                !macroRunning || // [!driving] braking allowed when macro is deactivated
-                !sampleData.isFilterFull() // [!driving && macroRunning] braking allowed during search
-        ) {
+        if (!macroRunning) {
             drive.driveFieldCentricPowers(
                     driveSpeed * forward,
                     driveSpeed * strafe,
@@ -667,17 +670,18 @@ public class SplitGamepadsTest extends LinearOpMode {
         );
 
         // Advance feeder by one clip
-        LinearMFeeder advanceFeeder = new LinearMFeeder(holdLiftDown.getEndTime() + feederDelayTime,
-                currentFeederPosition,
-                targetFeederPosition
-        );
+        LinearMFeeder advanceFeeder;
 
 
         // Feeder plan
         MFeederPlan mFeederPlan;
         if (clipInventory-1==0) {
+            advanceFeeder = new LinearMFeeder(holdLiftDown.getEndTime() + feederDelayTime,
+                    currentFeederPosition,
+                    new MFeederState(targetFeederPosition.getPosition()+0.1)
+            );
             LinearMFeeder resetFeeder = new LinearMFeeder(advanceFeeder.getEndTime(),
-                    targetFeederPosition,
+                    new MFeederState(targetFeederPosition.getPosition()+0.1),
                     new MFeederState(0)
             );
             mFeederPlan = new MFeederPlan(robot.clipbot,
@@ -686,15 +690,31 @@ public class SplitGamepadsTest extends LinearOpMode {
             );
             inventoryStocked = false;
         } else {
+            advanceFeeder = new LinearMFeeder(holdLiftDown.getEndTime() + feederDelayTime,
+                    currentFeederPosition,
+                    targetFeederPosition
+            );
             mFeederPlan = new MFeederPlan(robot.clipbot,
                     advanceFeeder
             );
         }
 
+        MoveMLoader initLoader = new MoveMLoader(0,
+                new MLoaderState(loaderPressurePosition)
+        );
+
+        MoveMLoader loosenLoader = new MoveMLoader(advanceFeeder.getStartTime()-0.25,
+                new MLoaderState(loaderFeedingPosition)
+        );
+
+        MoveMLoader tightenLoader = new MoveMLoader(advanceFeeder.getEndTime()+0.25,
+                new MLoaderState(loaderPressurePosition)
+        );
+
         // Klipper action
         MoveKlipper initKlipper = new MoveKlipper(0, KlipperConstants.openPosition);
         MoveKlipper klipSpecimen = new MoveKlipper(advanceFeeder.getEndTime()+klipperWaitTime, KlipperConstants.closedPosition);
-        MoveKlipper unklipSpecimen = new MoveKlipper(klipSpecimen.getEndTime()+0.25, 0.7);
+        MoveKlipper unklipSpecimen = new MoveKlipper(klipSpecimen.getEndTime(), 0.7);
 
 
 
@@ -741,6 +761,12 @@ public class SplitGamepadsTest extends LinearOpMode {
                 grabVClaw
         );
 
+        MLoaderPlan mLoaderPlan = new MLoaderPlan(robot.clipbot,
+                initLoader,
+                loosenLoader,
+                tightenLoader
+        );
+
         KlipperPlan klipperPlan = new KlipperPlan(robot.clipbot,
                 initKlipper,
                 klipSpecimen,
@@ -757,6 +783,7 @@ public class SplitGamepadsTest extends LinearOpMode {
                 vArmPlan,
                 vClawPlan,
                 mFeederPlan,
+                mLoaderPlan,
                 klipperPlan
         );
 
