@@ -38,13 +38,14 @@ public class SampleOrientationProcessor implements VisionProcessor {
 
     public static double cameraHeight = 8.409; // inches (-1.5 because of sample height)
 
-    public static Scalar lowerYellow = new Scalar(15.0, 100.0, 100.1); // hsv
+
+    public static Scalar lowerYellow = new Scalar(15.0, 150.0, 160.0); // hsv
     public static Scalar upperYellow = new Scalar(30.0, 255.0, 255.0); // hsv
-    public static Scalar lowerBlue = new Scalar(90.0, 140.0, 100.0); // hsv
+    public static Scalar lowerBlue = new Scalar(90.0, 100.0, 120.0); // hsv
     public static Scalar upperBlue = new Scalar(140.0, 255.0, 255.0); // hsv
     public static Scalar lowerRedH = new Scalar(10.0, 0.0, 0.0); // hsv
     public static Scalar upperRedH = new Scalar(160.0, 255.0, 255.0); // hsv
-    public static Scalar lowerRedSV = new Scalar(0.0, 100.0, 100.0); // hsv
+    public static Scalar lowerRedSV = new Scalar(0.0, 160.0, 160.0); // hsv
     public static Scalar upperRedSV = new Scalar(255.0, 255.0, 255.0); // hsv
 
     public static double AREA_PER_SAMPLE = 6000d;
@@ -56,6 +57,10 @@ public class SampleOrientationProcessor implements VisionProcessor {
     private volatile ArrayList<Double> sampleAngles = new ArrayList<>();
 
     public static volatile SampleColor colorType = SampleColor.YELLOW;
+
+
+    public static double horizontalBiasTune = 1.2;
+
 
     public SampleOrientationProcessor() {
     }
@@ -397,12 +402,14 @@ public class SampleOrientationProcessor implements VisionProcessor {
         double canvasVertical = 1.1 * height*3.0/8.0; // inches
         double canvasHorizontal = 1.1 * height / 2;
 
+        double horizontalBias = horizontalBiasTune;//1.142857;
+
         double scaled320 = 320/scalingFactor;
         double scaled240 = 240/scalingFactor;
         for (RotatedRect i : input) {
             // real center is (320, 480), positive direction is right and down
 //            output.add(new Point(i.center.x - 320, -(i.center.y - 240)));
-            double horizontalCoordinate = (i.center.x - scaled320) / scaled320 * canvasHorizontal;
+            double horizontalCoordinate = (i.center.x - scaled320) / scaled320 * canvasHorizontal * horizontalBias;
             double verticalCoordinate = -(i.center.y - scaled240) / scaled240 * canvasVertical;
             output.add(new double[]{verticalCoordinate, -horizontalCoordinate});
 

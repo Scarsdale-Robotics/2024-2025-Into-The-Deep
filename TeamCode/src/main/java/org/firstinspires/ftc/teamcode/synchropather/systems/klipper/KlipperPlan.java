@@ -11,7 +11,7 @@ import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.superclasse
  */
 public class KlipperPlan extends Plan<KlipperState> {
 
-    public static double POSITION_CACHE_THRESHOLD = 0.01;
+    public static double POSITION_CACHE_THRESHOLD = -1;
 
     private final ClipbotSubsystem clipbot;
 

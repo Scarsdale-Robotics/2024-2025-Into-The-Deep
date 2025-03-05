@@ -11,6 +11,8 @@ import org.firstinspires.ftc.teamcode.synchropather.subsystemclasses.LinearSlide
 import org.firstinspires.ftc.teamcode.synchropather.subsystemclasses.OverheadCameraSubsystem;
 import org.firstinspires.ftc.teamcode.synchropather.systems.extendo.ExtendoConstants;
 import org.firstinspires.ftc.teamcode.synchropather.systems.extendo.ExtendoState;
+import org.firstinspires.ftc.teamcode.synchropather.systems.rotation.RotationState;
+import org.firstinspires.ftc.teamcode.synchropather.systems.translation.TranslationState;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -36,11 +38,12 @@ public class SampleDataBufferFilter {
     private Pose2d lastBufferedBotPose;
 
     // For filtering incoming cv sample data
-    private final int filterLength;
+    private int filterLength;
     private final ArrayList<Pose2d> samplePoses; // {x_sample, y_sample, theta_sample}
     private final SampleTargetingMethod targetingMethod;
 
     public static double FILTER_ERROR_TOLERANCE = 0.25; // inches
+    public static double sampleRejectionExtendoDistanceBias = 0;
 
     public SampleDataBufferFilter(LinearSlidesSubsystem linearSlides, LocalizationSubsystem localization, double timeBuffer, int filterLength, SampleTargetingMethod targetingMethod) {
         this.linearSlides = linearSlides;
@@ -67,6 +70,10 @@ public class SampleDataBufferFilter {
         return lastBufferedBotPose;
     }
 
+    public void setFilterLength(int filterLength) {
+        this.filterLength = filterLength;
+    }
+
     /**
      * Initializes with timeBuffer=0.045, and filterLength=5.
      */
@@ -86,12 +93,14 @@ public class SampleDataBufferFilter {
         if (samplePoses.isEmpty()) {
             sampleToAppend = getSampleFieldPosition(closestSamplePosition);
 
-            // TODO: add trnaslation case
             double extendoTargetDistance = 0;
             if (targetingMethod==SampleTargetingMethod.ROTATION) {
                 extendoTargetDistance = getRotationTargetExtendoDistance(sampleToAppend);
             }
-            if (extendoTargetDistance > ExtendoConstants.MAX_EXTENSION) {
+            if (targetingMethod==SampleTargetingMethod.TRANSLATION) {
+                extendoTargetDistance = getTranslationTargetExtendoDistance(sampleToAppend);
+            }
+            if (extendoTargetDistance > ExtendoConstants.MAX_EXTENSION-sampleRejectionExtendoDistanceBias) {
                 sampleToAppend = null;
             }
         }
@@ -110,12 +119,14 @@ public class SampleDataBufferFilter {
                 // calculate sample position
                 Pose2d sampleFieldPosition = getSampleFieldPosition(sampleCameraPosition);
 
-                // TODO: add trnaslation case
                 double extendoTargetDistance = 0;
                 if (targetingMethod==SampleTargetingMethod.ROTATION) {
                     extendoTargetDistance = getRotationTargetExtendoDistance(sampleFieldPosition);
                 }
-                if (extendoTargetDistance > ExtendoConstants.MAX_EXTENSION) {
+                if (targetingMethod==SampleTargetingMethod.TRANSLATION) {
+                    extendoTargetDistance = getTranslationTargetExtendoDistance(sampleFieldPosition);
+                }
+                if (extendoTargetDistance > ExtendoConstants.MAX_EXTENSION-sampleRejectionExtendoDistanceBias) {
                     continue;
                 }
 
@@ -343,6 +354,35 @@ public class SampleDataBufferFilter {
 
         ExtendoState extendoTarget = new ExtendoState(
                 d_sample_bot - (OverheadCameraSubsystem.CAMERA_OFFSET[0] + OverheadCameraSubsystem.CLAW_OFFSET[0])
+        );
+
+        return extendoTarget.getLength();
+    }
+
+    private double getTranslationTargetExtendoDistance(Pose2d samplePose) {
+        // Unpack bot pose
+        Pose2d botPose = localization.getPose();
+        double x_bot = botPose.getX();
+        double y_bot = botPose.getY();
+        double heading_bot = botPose.getHeading();
+
+        // Unpack sample pose
+        double x_sample = samplePose.getX();
+        double y_sample = samplePose.getY();
+        double theta_sample = samplePose.getHeading();
+
+        // extendo stuff
+        double x_extendo_min = OverheadCameraSubsystem.CAMERA_OFFSET[0] + OverheadCameraSubsystem.CLAW_OFFSET[0];
+
+        // Calculate target positions
+        double sin = Math.sin(heading_bot);
+        double cos = Math.cos(heading_bot);
+        double T = (x_sample-x_bot)*sin - (y_sample-y_bot)*cos;
+        double x_target_center = x_bot + T*sin;
+        double y_target_center = y_bot - T*cos;
+
+        ExtendoState extendoTarget = new ExtendoState(
+                Math.max(0, Math.hypot(x_sample-x_target_center, y_sample-y_target_center) - x_extendo_min)
         );
 
         return extendoTarget.getLength();

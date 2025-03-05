@@ -10,7 +10,7 @@ public class ExtendoConstants {
 
     // Transfer position
     public static double transferPosition = 2.4;
-    public static double pullInSamplePosition = 1;
+    public static double pullInSamplePosition = 0;
 
 
     /**

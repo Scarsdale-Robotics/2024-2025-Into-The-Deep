@@ -57,7 +57,7 @@ public class VerticalDepositSubsystem {
      */
     public void setArmPosition(double leftArmPosition) {
         leftVerticalArm.setPosition(leftArmPosition);
-        rightVerticalArm.setPosition(leftArmPosition+SERVO_DIFFERENCE);
+        rightVerticalArm.setPosition(leftArmPosition+VArmConstants.SERVO_DIFFERENCE);
     }
 
 }

@@ -34,7 +34,7 @@ public class DepositServoCalibrator extends LinearOpMode {
 
         while (opModeIsActive()) {
             leftArm.setPosition(armPos);
-            rightArm.setPosition(armPos-0.15);
+            rightArm.setPosition(armPos+VArmConstants.SERVO_DIFFERENCE);
             depositClaw.setPosition(clawPos);
         }
     }

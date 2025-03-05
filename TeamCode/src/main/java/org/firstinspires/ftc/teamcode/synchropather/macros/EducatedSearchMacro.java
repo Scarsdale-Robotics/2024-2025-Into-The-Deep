@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.synchropather.macros;
 import com.arcrobotics.ftclib.geometry.Pose2d;
 
 import org.firstinspires.ftc.teamcode.opmodes.algorithms.SampleDataBufferFilter.SampleTargetingMethod;
+import org.firstinspires.ftc.teamcode.opmodes.calibration.combined_testing.ClawVacancyTest;
 import org.firstinspires.ftc.teamcode.synchropather.AutonomousRobot;
 import org.firstinspires.ftc.teamcode.synchropather.subsystemclasses.HorizontalIntakeSubsystem;
 import org.firstinspires.ftc.teamcode.synchropather.subsystemclasses.LinearSlidesSubsystem;
@@ -49,16 +50,26 @@ public class EducatedSearchMacro extends Synchronizer {
             ExtendoState extendoPosition = new ExtendoState(x_extendo);
             double x_extendo_min = OverheadCameraSubsystem.CAMERA_OFFSET[0] + OverheadCameraSubsystem.CLAW_OFFSET[0];
 
+            // Calculate target positions
+            double sin = Math.sin(heading_bot);
+            double cos = Math.cos(heading_bot);
+            double T = (x_sample-x_bot)*sin - (y_sample-y_bot)*cos;
+            double x_target_center = x_bot + T*sin;
+            double y_target_center = y_bot - T*cos;
+            double x_target_drive = x_target_center + ClawVacancyTest.y_camera*sin;
+            double y_target_drive = y_target_center - ClawVacancyTest.y_camera*cos;
+
             // Get subsystem setpoints
             TranslationState translationTarget = new TranslationState(
-                 x_sample,
-                 y_bot + Math.min(0, (y_sample-y_bot) - x_extendo_min)
+                    x_target_drive,
+                    y_target_drive
             );
             RotationState rotationTarget = new RotationState(
-                 heading_bot + normalizeAngle(Math.PI/2-heading_bot)
+                    heading_bot
             );
             ExtendoState extendoTarget = new ExtendoState(
-                 Math.max(0, (y_sample-y_bot) - x_extendo_min + 1.5*OverheadCameraSubsystem.CLAW_OFFSET[0])
+                    Math.max(0, Math.hypot(x_sample-x_target_center, y_sample-y_target_center) - x_extendo_min)
+                    + 1.5*OverheadCameraSubsystem.CLAW_OFFSET[0]
             );
 
             //// SYNCHRONIZER

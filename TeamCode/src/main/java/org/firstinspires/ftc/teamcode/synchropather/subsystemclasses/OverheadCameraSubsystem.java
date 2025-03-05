@@ -29,11 +29,11 @@ public class OverheadCameraSubsystem {
     // (X,Y)
     // +X is forward, +Y is to the left
     // How far forward the claw (at pickup position) is from the camera, in inches
-    public static double[] CLAW_OFFSET = new double[]{-2, 0}; // TODO: TUNE THIS
+    public static double[] CLAW_OFFSET = new double[]{-3, 0}; // TODO: TUNE THIS
 
     // How far forward and to the left the camera is from the robot's center of rotation
     // when the extendo is fully retracted, in inches.
-    public static double[] CAMERA_OFFSET = new double[]{7.321, 0};//-0.57047244};
+    public static double[] CAMERA_OFFSET = new double[]{7.321, 0}; // -0.57047244};
 
 
     public OverheadCameraSubsystem(WebcamName cameraName, Telemetry telemetry) {

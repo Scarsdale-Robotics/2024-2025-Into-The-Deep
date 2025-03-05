@@ -36,9 +36,9 @@ public class RectDrawer_suspicious extends OpenCvPipeline {
 
     public static Telemetry telemetry;
 
-    public static Scalar lowerYellow = new Scalar(15.0, 180.0, 160.0); // hsv
+    public static Scalar lowerYellow = new Scalar(15.0, 150.0, 160.0); // hsv
     public static Scalar upperYellow = new Scalar(30.0, 255.0, 255.0); // hsv
-    public static Scalar lowerBlue = new Scalar(90.0, 140.0, 140.0); // hsv
+    public static Scalar lowerBlue = new Scalar(90.0, 100.0, 120.0); // hsv
     public static Scalar upperBlue = new Scalar(140.0, 255.0, 255.0); // hsv
     public static Scalar lowerRedH = new Scalar(10.0, 0.0, 0.0); // hsv
     public static Scalar upperRedH = new Scalar(160.0, 255.0, 255.0); // hsv

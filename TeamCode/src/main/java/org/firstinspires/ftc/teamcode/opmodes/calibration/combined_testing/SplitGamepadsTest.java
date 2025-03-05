@@ -1,8 +1,6 @@
 package org.firstinspires.ftc.teamcode.opmodes.calibration.combined_testing;
 
-import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
-import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.arcrobotics.ftclib.geometry.Pose2d;
 import com.arcrobotics.ftclib.geometry.Rotation2d;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
@@ -11,13 +9,9 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.cvprocessors.SampleOrientationProcessor;
 import org.firstinspires.ftc.teamcode.opmodes.algorithms.SampleDataBufferFilter;
-import org.firstinspires.ftc.teamcode.opmodes.calibration.Drawing;
 import org.firstinspires.ftc.teamcode.subsystems.DriveSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.LocalizationSubsystem;
 import org.firstinspires.ftc.teamcode.synchropather.AutonomousRobot;
-import org.firstinspires.ftc.teamcode.synchropather.macros.EducatedSearchMacro;
-import org.firstinspires.ftc.teamcode.synchropather.macros.ExtendoRetractMacro;
-import org.firstinspires.ftc.teamcode.synchropather.macros.SearchMacro;
 import org.firstinspires.ftc.teamcode.synchropather.subsystemclasses.HorizontalIntakeSubsystem;
 import org.firstinspires.ftc.teamcode.synchropather.subsystemclasses.LinearSlidesSubsystem;
 import org.firstinspires.ftc.teamcode.synchropather.subsystemclasses.OverheadCameraSubsystem;
@@ -38,6 +32,7 @@ import org.firstinspires.ftc.teamcode.synchropather.systems.hClaw.HClawPlan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.hClaw.movements.GrabHClaw;
 import org.firstinspires.ftc.teamcode.synchropather.systems.hClaw.movements.ReleaseHClaw;
 import org.firstinspires.ftc.teamcode.synchropather.systems.hWrist.HWristPlan;
+import org.firstinspires.ftc.teamcode.synchropather.systems.hWrist.HWristState;
 import org.firstinspires.ftc.teamcode.synchropather.systems.hWrist.movements.MoveHWrist;
 import org.firstinspires.ftc.teamcode.synchropather.systems.klipper.KlipperConstants;
 import org.firstinspires.ftc.teamcode.synchropather.systems.klipper.KlipperPlan;
@@ -68,17 +63,14 @@ import org.firstinspires.ftc.teamcode.synchropather.systems.vClaw.VClawConstants
 import org.firstinspires.ftc.teamcode.synchropather.systems.vClaw.VClawPlan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.vClaw.VClawState;
 import org.firstinspires.ftc.teamcode.synchropather.systems.vClaw.movements.MoveVClaw;
-import org.firstinspires.ftc.teamcode.synchropather.systems.vClaw.movements.ReleaseVClaw;
 
 import java.util.ArrayDeque;
-import java.util.List;
 
 @Config
-@TeleOp(name="Claw Vacancy Test", group = "Calibration")
-public class ClawVacancyTest extends LinearOpMode {
+@TeleOp(name="_Split Gamepads Test", group = "Calibration")
+public class SplitGamepadsTest extends LinearOpMode {
 
-    private Synchronizer search, pickup;
-    private Synchronizer extendoRetract;
+    private Synchronizer pickupMacro, makerMacro, depositMacro;
 
     private AutonomousRobot robot;
     private ArrayDeque<Double> loopTicks;
@@ -156,25 +148,29 @@ public class ClawVacancyTest extends LinearOpMode {
         limelightAction.start();
         limelightAction.update();
 
-        boolean toggleTriangle = false;
-        boolean sampleMacroRunning = false;
-        boolean clawGrabbed = false;
+        double lastRuntime = 0;
+        double lastExtendoPower = Double.MIN_VALUE;
+
+        boolean depositReadyToRelease = false;
+
+        boolean intakeMacroRunning = false;
+        boolean intookSample = false;
+        boolean toggleTriangleG2 = false;
+
+        boolean makerMacroRunning = false;
+        boolean specimenMade = false;
+        boolean toggleSquareG2 = false;
+
+        boolean depositMacroRunning = false;
+        boolean deposited = true;
+        boolean toggleTriangleG1 = false;
+
         boolean previousDriverControlling = true;
-        boolean clawHasSomething = false;
-        ExtendoState extendoVelocity = null;
-        double checkPixels = 0;
         while (opModeIsActive()) {
             robot.update();
             updateTPS();
-            boolean driverControlling = controlDrive(sampleMacroRunning, previousDriverControlling);
+            boolean driverControlling = controlDrive(intakeMacroRunning, previousDriverControlling);
             previousDriverControlling = driverControlling;
-
-
-            // Telemetry for claw vacancy processor
-            int clawPixelCount = robot.clawVacancyProcessor.getPixelCount();
-            boolean clawEmpty = robot.clawVacancyProcessor.isClawEmpty();
-            telemetry.addData("clawPixelCount", clawPixelCount);
-            telemetry.addData("clawEmpty", clawEmpty);
 
 
             if (gamepad1.cross) {
@@ -186,155 +182,151 @@ public class ClawVacancyTest extends LinearOpMode {
 
 
 
-            // Restock option if empty
+            /// Restock option if empty
             if (!inventoryStocked && gamepad1.square) {
                 inventoryStocked = true;
                 clipInventory = MFeederConstants.RELOAD_CAPACITY;
             }
 
 
-            // Look for limelight samples
-            Pose2d botPose = localization.getPose();
-            List<double[]> samplePositions;
-            if (robot.teamColor==AutonomousRobot.TeamColor.BLUE) {
-                samplePositions = robot.limelightSubsystem.getBlueSamplePositions();
-            } else {
-                samplePositions = robot.limelightSubsystem.getRedSamplePositions();
-            }
-            double[] foundSample = null;
-            if (!samplePositions.isEmpty()) {
-                double closestDistance = Double.MAX_VALUE;
-                double[] closestSample = null;
-                for (double[] samplePosition : samplePositions) {
-                    double distance = Math.hypot(samplePosition[0]-botPose.getX(), samplePosition[1]-botPose.getY());
-                    if (distance < closestDistance) {
-                        closestDistance = distance;
-                        closestSample = samplePosition;
-                    }
-                }
-                foundSample = closestSample;
-            }
 
             handleGamepadColor();
 
-            //// Triangle button
-            // Case: Init search macro
-            if (gamepad1.triangle && !toggleTriangle && !sampleMacroRunning && !clawGrabbed) {
-                drive.stopController();
-                if (foundSample!=null) {
-                    // init search
-                    search = new EducatedSearchMacro(
-                            foundSample,
-                            robot,
-                            1
-                    );
-                    sampleData.setFilterLength(7);
+            double currentTime = runtime.seconds();
+            double deltaTime = currentTime - lastRuntime;
+            lastRuntime = currentTime;
+
+
+
+            /// gamepad 2 manual control extendo
+            double totalSecondGamepadTrigger = gamepad2.right_trigger - gamepad2.left_trigger;
+            if ((totalSecondGamepadTrigger!=0 || lastExtendoPower!=0) && !(intakeMacroRunning || makerMacroRunning)) {
+                robot.linearSlides.setExtendoPower(totalSecondGamepadTrigger);
+                lastExtendoPower = totalSecondGamepadTrigger;
+            }
+            // update sample data from overhead camera
+            sampleData.updateFilterData(overheadCamera.getSamplePositions(), overheadCamera.getSampleAngles(), overheadCamera.getClosestSample()); // Can return null
+
+
+
+            /// gamepad 2 triangle activates pickup
+            if (gamepad2.triangle && !toggleTriangleG2 && sampleData.isFilterFull() && !intakeMacroRunning) {
+                initPickupMacro(new ExtendoState(0));
+                pickupMacro.start();
+                toggleTriangleG2 = true;
+                intakeMacroRunning = true;
+                intookSample = false;
+            }
+            // run synchronizer
+            if (intakeMacroRunning) {
+                if (!pickupMacro.update()) {
+                    intakeMacroRunning = false;
+                    intookSample = true;
+                    pickupMacro.stop();
                 } else {
-                    // blind search
-                    search = new SearchMacro(
-                            ExtendoConstants.MAX_EXTENSION-5,
-                            robot.linearSlides,
-                            robot.horizontalIntake
-                    );
-                    sampleData.setFilterLength(3);
-                }
-                search.start();
-                sampleData.clearFilterData();
-                sampleMacroRunning = true;
-                clawHasSomething = false;
-            }
-            // Case: Drop off sample
-            else if (gamepad1.triangle && !toggleTriangle && !sampleMacroRunning && clawGrabbed) {
-                horizontalIntake.setClawPosition(HClawConstants.RELEASE_POSITION);
-                clawGrabbed = false;
-            }
-            // Case: Cancel search macro
-            else if (gamepad1.triangle && !toggleTriangle && sampleMacroRunning) {
-                sampleMacroRunning = false;
-                if (sampleData.isFilterFull()) {
-                    clipInventory++;
-                    inventoryStocked = true;
+                    HWristState wristState = (HWristState) pickupMacro.getState(MovementType.HORIZONTAL_WRIST);
+                    telemetry.addData("wristState", wristState);
                 }
             }
-            toggleTriangle = gamepad1.triangle;
+            // second press cancels it
+            if (gamepad2.triangle && !toggleTriangleG2 && intakeMacroRunning) {
+                intakeMacroRunning = false;
+                toggleTriangleG2 = true;
+                intookSample = false;
+                pickupMacro.stop();
+                robot.horizontalIntake.setClawPosition(HClawConstants.RELEASE_POSITION);
+                robot.horizontalIntake.setArmPosition(clawCheckPosition);
+                robot.horizontalIntake.setWristAngle(0);
+            }
+            if (gamepad2.triangle && !toggleTriangleG2) {
+                robot.horizontalIntake.setClawPosition(HClawConstants.RELEASE_POSITION);
+                robot.horizontalIntake.setArmPosition(clawCheckPosition);
+                robot.horizontalIntake.setWristAngle(0);
+            }
+            if (!gamepad2.triangle) toggleTriangleG2 = false;
 
 
-            //// Sample macro control
-            if (sampleMacroRunning) {
-                // Search motion
-                if (!sampleData.isFilterFull()) {
-                    boolean searchRunning = search.update();
-                    // Did not find sample
-                    if (!searchRunning) {
-                        search.stop();
-                        sampleMacroRunning = false;
+
+
+            /// gamepad 2 square activates maker macro
+            if (gamepad2.square && !toggleSquareG2 && intookSample && !makerMacroRunning && deposited && inventoryStocked) {
+                initMakerMacro();
+                makerMacro.start();
+                toggleSquareG2 = true;
+                makerMacroRunning = true;
+                specimenMade = false;
+            }
+            // run synchronizer
+            if (makerMacroRunning) {
+                if (!makerMacro.update()) {
+                    makerMacroRunning = false;
+                    specimenMade = true;
+                    clipInventory--;
+                    if (clipInventory==0) {
+                        inventoryStocked = false;
                     }
-                    // Try to detect sample
-                    else {
-                        sampleData.updateFilterData(overheadCamera.getSamplePositions(), overheadCamera.getSampleAngles(), overheadCamera.getClosestSample()); // Can return null
-                        extendoVelocity = (ExtendoState) search.getVelocity(MovementType.EXTENDO);
-                    }
-                }
-                // Pickup motion
-                else {
-                    // Init pickup
-                    if ((pickup==null || !pickup.getIsRunning()) || search.getIsRunning()) {
-                        search.stop();
-                        initPickupMotion(extendoVelocity);
-                        pickup.start();
-                    }
-                    boolean bad = false;
-                    // Check if claw has grabbed the sample
-                    if (pickup.getElapsedTime()>pickupCheckClawTime && !clawHasSomething) {
-                        checkPixels = robot.clawVacancyProcessor.getPixelCount();
-                        telemetry.addData("ONE TIME checkPixels", checkPixels);
-                        clawHasSomething = !robot.clawVacancyProcessor.isClawEmpty();
-                        bad = !clawHasSomething;
-                    }
-                    telemetry.addData("pickup.getElapsedTime()", pickup.getElapsedTime());
-                    // Stop macro if driver took over (or macro ended)
-                    if (driverControlling || (pickup.getIsRunning() && !pickup.update()) || bad) {
-                        // re compensate mag
-                        if (pickup.getElapsedTime()>pickupCheckClawTime && !clawHasSomething) {
-                            clipInventory++;
-                            inventoryStocked = true;
-                        }
-                        pickup.stop();
-                        sampleMacroRunning = false;
-                        clawGrabbed = true;
-                        // init extendo retract macro
-                        extendoRetract = new ExtendoRetractMacro(linearSlides);
-                        extendoRetract.start();
-                    }
+                    intookSample = false;
+                    robot.clipbot.setMagazineFeederPower(0);
+                    robot.linearSlides.stopLifts();
+                    robot.linearSlides.stopExtendo();
+                } else {
+                    HWristState wristState = (HWristState) makerMacro.getState(MovementType.HORIZONTAL_WRIST);
+                    telemetry.addData("wristState", wristState);
                 }
             }
-            else {
-                extendoRetract.update();
+            // second press cancels it
+            if (gamepad2.square && !toggleSquareG2 && makerMacroRunning) {
+                robot.clipbot.setMagazineFeederPower(0);
+                robot.linearSlides.stopLifts();
+                robot.linearSlides.stopExtendo();
+                makerMacroRunning = false;
+                toggleSquareG2 = true;
+                specimenMade = false;
             }
-
-            telemetry.addData("sampleData.getFilterLength()", sampleData.getFilterLength());
-            telemetry.addData("CHECK clawPixelCount", checkPixels);
-            checkPixels *= checkPixelsDecayFactor;
-
-            telemetry.addData("pickupCheckClawTime", pickupCheckClawTime);
-            telemetry.addData("sampleMacroRunning", sampleMacroRunning);
+            if (makerMacro!=null && makerMacro.getIsRunning() && specimenMade) makerMacro.update(MovementType.MAGAZINE_FEEDER);
+            if (!gamepad2.square) toggleSquareG2 = false;
 
 
-            if (gamepad1.cross) {
-                //// Draw detected sample position
-                TelemetryPacket packet = new TelemetryPacket();
-                packet.fieldOverlay().setStroke("#3F51B5");
-                Drawing.drawRobot(packet.fieldOverlay(), localization.getPose());
-                Pose2d samplePosition = sampleData.getFilteredSamplePosition(telemetry);
-                if (samplePosition != null) {
-                    telemetry.addData("samplePosition", samplePosition.toString());
-                    Drawing.drawSample(packet.fieldOverlay(), samplePosition, "#FF0000");
+
+
+            /// gamepad 1 triangle activates deposit macro
+            if (gamepad1.triangle && !toggleTriangleG1 && specimenMade && !depositMacroRunning) {
+                initDepositMacro();
+                depositMacro.start();
+                toggleTriangleG1 = true;
+                depositMacroRunning = true;
+                deposited = false;
+            }
+            // run synchronizer
+            if (depositMacroRunning) {
+                if (!depositMacro.update()) {
+                    depositMacroRunning = false;
+                    deposited = true;
+                    depositReadyToRelease = true;
+                    specimenMade = false;
+                    robot.linearSlides.stopLifts();
                 }
-                FtcDashboard.getInstance().sendTelemetryPacket(packet);
             }
+            // second press cancels it
+            if (gamepad1.triangle && !toggleTriangleG1 && depositMacroRunning) {
+                depositMacro.stop();
+                depositMacroRunning = false;
+                toggleTriangleG1 = true;
+                deposited = false;
+            }
+            if (!gamepad1.triangle) toggleTriangleG1 = false;
+
+
+            /// gamepad 1 cross can decide when to release specimen
+            if (depositReadyToRelease && gamepad1.cross) {
+                robot.verticalDeposit.release();
+                depositReadyToRelease = false;
+            }
+
 
 
             telemetry.update();
+
         }
     }
 
@@ -371,11 +363,11 @@ public class ClawVacancyTest extends LinearOpMode {
      * Sets the gamepad led color to the cv sample color
      */
     private void handleGamepadColor() {
-        if (robot.teamColor == AutonomousRobot.TeamColor.BLUE) {
-            SampleOrientationProcessor.colorType = SampleOrientationProcessor.SampleColor.BLUE;
-        }
-        else {
+        if (gamepad1.dpad_up) {
             SampleOrientationProcessor.colorType = SampleOrientationProcessor.SampleColor.RED;
+        }
+        if (gamepad1.dpad_down) {
+            SampleOrientationProcessor.colorType = SampleOrientationProcessor.SampleColor.BLUE;
         }
 
         switch (SampleOrientationProcessor.colorType) {
@@ -419,18 +411,15 @@ public class ClawVacancyTest extends LinearOpMode {
                 )
         );
         this.sampleData = robot.overheadSampleData;
-        OverheadCameraSubsystem.CLAW_OFFSET[0] = -3;
+        OverheadCameraSubsystem.CLAW_OFFSET[0] = -2.6;
         SampleDataBufferFilter.FILTER_ERROR_TOLERANCE = 0.15;
+        SampleOrientationProcessor.colorType = SampleOrientationProcessor.SampleColor.RED;
 
         robot.verticalDeposit.setArmPosition(0.5);
         robot.verticalDeposit.setClawPosition(VClawConstants.RELEASE_POSITION);
         robot.horizontalIntake.setArmPosition(0.9);
         robot.horizontalIntake.setWristAngle(0);
         robot.horizontalIntake.setClawPosition(HClawConstants.GRAB_POSITION);
-
-        // init extendo retract macro
-        extendoRetract = new ExtendoRetractMacro(linearSlides);
-        extendoRetract.start();
 
         // init servos
         horizontalIntake.setClawPosition(HClawConstants.RELEASE_POSITION);
@@ -451,7 +440,7 @@ public class ClawVacancyTest extends LinearOpMode {
     }
 
 
-    private void initPickupMotion(ExtendoState extendoVelocity) {
+    private void initPickupMacro(ExtendoState extendoVelocity) {
         // Unpack bot pose
         Pose2d botPose = localization.getPose();
         double x_bot = botPose.getX();
@@ -511,6 +500,7 @@ public class ClawVacancyTest extends LinearOpMode {
                 rotationTarget
         );
 
+
 //        double previousMaxVelocity = ExtendoConstants.MAX_PATHING_VELOCITY;
 //        ExtendoConstants.MAX_PATHING_VELOCITY = previousMaxVelocity / 3;
         DynamicLinearExtendo extendoOut = new DynamicLinearExtendo(0,
@@ -520,16 +510,6 @@ public class ClawVacancyTest extends LinearOpMode {
         );
 //        ExtendoConstants.MAX_PATHING_VELOCITY = previousMaxVelocity;
 
-        // Lift gets ready for transfer
-        LinearLift liftUp = new LinearLift(extendoOut.getStartTime(),
-                new LiftState(robot.linearSlides.getLeftLiftPosition()),
-                new LiftState(LiftConstants.transferPosition)
-        );
-
-        LinearVArm prepareVArm = new LinearVArm(liftUp.getStartTime(),
-                new VArmState(VArmConstants.armLeftDepositPosition),
-                new VArmState(VArmConstants.armLeftPreTransferPosition)
-        );
 
         // Move arm down
         LinearHArm h_arm_down = new LinearHArm(intakeDelay+Math.max(Math.max(extendoOut.getEndTime(), rotation.getEndTime()), translation.getEndTime()),
@@ -539,64 +519,72 @@ public class ClawVacancyTest extends LinearOpMode {
         );
         MoveHWrist h_wrist_align = new MoveHWrist(extendoOut.getStartTime(), hWristTarget);
 
+
         // Pick up and move arm up
-        GrabHClaw h_claw_grab = new GrabHClaw(h_arm_down.getEndTime()+intakeDelay/2, true);
-        LinearHArm h_arm_up = new LinearHArm(Math.max(h_claw_grab.getEndTime(), h_arm_down.getEndTime()),
+        GrabHClaw h_claw_grab = new GrabHClaw(h_arm_down.getEndTime(), true);
+        LinearHArm h_arm_up = new LinearHArm(Math.max(h_claw_grab.getEndTime()+intakeDelay/2, h_arm_down.getEndTime()),
                 new HArmState(armDownPosition),
                 new HArmState(clawCheckPosition)
         );
-        MoveHWrist h_wrist_flat = new MoveHWrist(h_arm_up.getEndTime(), -Math.PI/2, true);
 
-        pickupCheckClawTime = h_wrist_flat.getEndTime()+pickupCheckClawTimeDelay;
+
+        // Create Plans
+        TranslationPlan translationPlan = new TranslationPlan(drive, localization,
+                translation
+        );
+        RotationPlan rotationPlan = new RotationPlan(drive, localization,
+                rotation
+        );
+        ExtendoPlan extendo_plan = new ExtendoPlan(linearSlides,
+                extendoOut
+        );
+        HWristPlan h_wrist_plan = new HWristPlan(horizontalIntake,
+                h_wrist_align
+        );
+        HArmPlan h_arm_plan = new HArmPlan(horizontalIntake,
+                h_arm_down,
+                h_arm_up
+        );
+        HClawPlan h_claw_plan = new HClawPlan(horizontalIntake,
+                h_claw_grab
+        );
+
+        // Synchronizer
+        this.pickupMacro = new Synchronizer(
+                translationPlan,
+                rotationPlan,
+                extendo_plan,
+                h_arm_plan,
+                h_wrist_plan,
+                h_claw_plan
+        );
+    }
+
+    private void initMakerMacro() {
+        MoveHWrist h_wrist_flat = new MoveHWrist(0, -Math.PI/2);
+
+        // Lift gets ready for transfer
+        LinearLift liftUp = new LinearLift(0,
+                new LiftState(robot.linearSlides.getLeftLiftPosition()),
+                new LiftState(LiftConstants.transferPosition)
+        );
+
+        LinearVArm prepareVArm = new LinearVArm(liftUp.getStartTime(),
+                new VArmState(VArmConstants.armLeftDepositPosition),
+                new VArmState(VArmConstants.armLeftPreTransferPosition)
+        );
 
 
         // Retract extendo
-        LinearExtendo extendoIn = new LinearExtendo(h_wrist_flat.getStartTime(),
-                extendoTarget,
+        LinearExtendo extendoIn = new LinearExtendo(liftUp.getEndTime(),
+                new ExtendoState(linearSlides.getExtendoPosition()),
                 new ExtendoState(0)
         );
-
-        // Only pick up if mag is empty
-        if (!inventoryStocked || clipInventory <= 0) {
-            // Create Plans
-            TranslationPlan translationPlan = new TranslationPlan(drive, localization,
-                    translation
-            );
-            RotationPlan rotationPlan = new RotationPlan(drive, localization,
-                    rotation
-            );
-            ExtendoPlan extendo_plan = new ExtendoPlan(linearSlides,
-                    extendoOut,
-                    extendoIn
-            );
-            HWristPlan h_wrist_plan = new HWristPlan(horizontalIntake,
-                    h_wrist_align,
-                    h_wrist_flat
-            );
-            HArmPlan h_arm_plan = new HArmPlan(horizontalIntake,
-                    h_arm_down,
-                    h_arm_up
-            );
-            HClawPlan h_claw_plan = new HClawPlan(horizontalIntake,
-                    h_claw_grab
-            );
-
-            // Synchronizer
-            this.pickup = new Synchronizer(
-                    translationPlan,
-                    rotationPlan,
-                    extendo_plan,
-                    h_arm_plan,
-                    h_wrist_plan,
-                    h_claw_plan
-            );
-            return;
-        }
 
 
         //// Mag has clips, do transfer and clipping sequence
         // Horizontal arm gets ready
-        LinearHArm hArmUpTransfer = new LinearHArm(Math.max(extendoIn.getEndTime()-horizontalArmRaiseDeadtime, h_arm_up.getEndTime()),
+        LinearHArm hArmUpTransfer = new LinearHArm(extendoIn.getEndTime()-horizontalArmRaiseDeadtime,
                 new HArmState(clawCheckPosition),
                 new HArmState(HArmConstants.armTransferPosition)
         );
@@ -655,10 +643,8 @@ public class ClawVacancyTest extends LinearOpMode {
         MFeederState currentFeederPosition = new MFeederState(
                 robot.clipbot.getMagazineFeederPosition()
         );
-
-        clipInventory--;
         MFeederState targetFeederPosition = new MFeederState(
-                (maxClips - clipInventory) * MFeederConstants.INCHES_PER_CLIP
+                (maxClips - (clipInventory-1)) * MFeederConstants.INCHES_PER_CLIP
         );
 
         /// Movements
@@ -676,8 +662,8 @@ public class ClawVacancyTest extends LinearOpMode {
 
         // Stationary deposit arm
         LinearVArm pressVArm = new LinearVArm(holdLiftDown.getEndTime(),
-                new VArmState(VArmConstants.armLeftClipperPosition+0.02),
-                new VArmState(VArmConstants.armLeftClipperPosition+0.02)
+                new VArmState(VArmConstants.armLeftClipperPosition),
+                new VArmState(VArmConstants.armLeftClipperPosition)
         );
 
         // Advance feeder by one clip
@@ -689,7 +675,7 @@ public class ClawVacancyTest extends LinearOpMode {
 
         // Feeder plan
         MFeederPlan mFeederPlan;
-        if (clipInventory==0) {
+        if (clipInventory-1==0) {
             LinearMFeeder resetFeeder = new LinearMFeeder(advanceFeeder.getEndTime(),
                     targetFeederPosition,
                     new MFeederState(0)
@@ -708,15 +694,81 @@ public class ClawVacancyTest extends LinearOpMode {
         // Klipper action
         MoveKlipper initKlipper = new MoveKlipper(0, KlipperConstants.openPosition);
         MoveKlipper klipSpecimen = new MoveKlipper(advanceFeeder.getEndTime()+klipperWaitTime, KlipperConstants.closedPosition);
-        MoveKlipper unklipSpecimen = new MoveKlipper(klipSpecimen.getEndTime()+0.25, KlipperConstants.openPosition);
+        MoveKlipper unklipSpecimen = new MoveKlipper(klipSpecimen.getEndTime()+0.25, 0.7);
 
 
 
 
 
+
+
+
+
+
+
+
+
+        // Create Plans
+        ExtendoPlan extendo_plan = new ExtendoPlan(linearSlides,
+                extendoIn,
+                extendoToTransfer,
+                pullSampleIn
+        );
+        HWristPlan h_wrist_plan = new HWristPlan(horizontalIntake,
+                h_wrist_flat,
+                h_wrist_reset
+        );
+        HArmPlan h_arm_plan = new HArmPlan(horizontalIntake,
+                hArmUpTransfer,
+                hArmDown
+        );
+        HClawPlan h_claw_plan = new HClawPlan(horizontalIntake,
+                releaseHClaw
+        );
+        LiftPlan liftPlan = new LiftPlan(robot.linearSlides,
+                liftUp,
+                holdLiftDown
+        );
+        VArmPlan vArmPlan = new VArmPlan(robot.verticalDeposit,
+                prepareVArm,
+                vArmDown,
+                upVArm,
+                lowerVArm,
+                pressVArm
+        );
+        VClawPlan vClawPlan = new VClawPlan(robot.verticalDeposit,
+                looselyHoldSampleTransfer,
+                grabVClaw
+        );
+
+        KlipperPlan klipperPlan = new KlipperPlan(robot.clipbot,
+                initKlipper,
+                klipSpecimen,
+                unklipSpecimen
+        );
+
+        // Synchronizer
+        this.makerMacro = new Synchronizer(
+                extendo_plan,
+                h_arm_plan,
+                h_wrist_plan,
+                h_claw_plan,
+                liftPlan,
+                vArmPlan,
+                vClawPlan,
+                mFeederPlan,
+                klipperPlan
+        );
+
+    }
+
+
+
+
+    private void initDepositMacro() {
 
         // Score specimen
-        LinearVArm vArmToPreDepositCycle = new LinearVArm(unklipSpecimen.getStartTime()+liftUpDepositDelay,
+        LinearVArm vArmToPreDepositCycle = new LinearVArm(0,
                 new VArmState(VArmConstants.armLeftClipperPosition),
                 new VArmState(VArmConstants.armLeftPreDepositPosition)
         );
@@ -736,91 +788,23 @@ public class ClawVacancyTest extends LinearOpMode {
                 new LiftState(LiftConstants.depositPosition)
         );
 
-        ReleaseVClaw releaseVClawCycle = new ReleaseVClaw(liftToDepositCycle.getEndTime());
-
-        LinearLift liftDownCycle = new LinearLift(releaseVClawCycle.getEndTime()+ liftDownDelay,
-                new LiftState(LiftConstants.depositPosition),
-                new LiftState(0)
-        );
-
-
-
-
-
-
-
-
 
 
         // Create Plans
-        TranslationPlan translationPlan = new TranslationPlan(drive, localization,
-                translation
-        );
-        RotationPlan rotationPlan = new RotationPlan(drive, localization,
-                rotation
-        );
-        ExtendoPlan extendo_plan = new ExtendoPlan(linearSlides,
-                extendoOut,
-                extendoIn,
-                extendoToTransfer,
-                pullSampleIn
-        );
-        HWristPlan h_wrist_plan = new HWristPlan(horizontalIntake,
-                h_wrist_align,
-                h_wrist_flat,
-                h_wrist_reset
-        );
-        HArmPlan h_arm_plan = new HArmPlan(horizontalIntake,
-                h_arm_down,
-                h_arm_up,
-                hArmUpTransfer,
-                hArmDown
-        );
-        HClawPlan h_claw_plan = new HClawPlan(horizontalIntake,
-                h_claw_grab,
-                releaseHClaw
-        );
         LiftPlan liftPlan = new LiftPlan(robot.linearSlides,
-                liftUp,
-                holdLiftDown,
                 liftToPreDepositCycle,
-                liftToDepositCycle,
-                liftDownCycle
+                liftToDepositCycle
         );
         VArmPlan vArmPlan = new VArmPlan(robot.verticalDeposit,
-                prepareVArm,
-                vArmDown,
-                upVArm,
-                lowerVArm,
-                pressVArm,
                 vArmToPreDepositCycle,
                 vArmToDepositCycle
         );
-        VClawPlan vClawPlan = new VClawPlan(robot.verticalDeposit,
-                looselyHoldSampleTransfer,
-                grabVClaw,
-                releaseVClawCycle
-        );
 
-        KlipperPlan klipperPlan = new KlipperPlan(robot.clipbot,
-                initKlipper,
-                klipSpecimen,
-                unklipSpecimen
-        );
 
         // Synchronizer
-        this.pickup = new Synchronizer(
-                translationPlan,
-                rotationPlan,
-                extendo_plan,
-                h_arm_plan,
-                h_wrist_plan,
-                h_claw_plan,
+        this.depositMacro = new Synchronizer(
                 liftPlan,
-                vArmPlan,
-                vClawPlan,
-                mFeederPlan,
-                klipperPlan
+                vArmPlan
         );
     }
 

@@ -11,7 +11,7 @@ public class VArmConstants {
     // Left servo arm homing positions
     public static double armLeftClipperPosition = 0.95;
     public static double armLeftTransferPosition = 0.92;
-    public static double armLeftPreTransferPosition = 0.85;
+    public static double armLeftPreTransferPosition = 0.8;
     public static double armLeftPreDepositPosition = 0.6;
     public static double armLeftDepositPosition = 0.48;
 
@@ -22,7 +22,7 @@ public class VArmConstants {
     /**
      * How much is needed to be added onto the left arm's position to get the right arm's position.
      */
-    public static double SERVO_DIFFERENCE = -0.15;
+    public static double SERVO_DIFFERENCE = -0.155;
 
     /**
      *  Max elbow velocity in servo/sec.

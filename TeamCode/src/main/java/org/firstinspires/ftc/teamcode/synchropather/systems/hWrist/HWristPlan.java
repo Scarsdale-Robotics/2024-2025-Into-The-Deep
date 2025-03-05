@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.synchropather.systems.hWrist;
 
+import com.acmerobotics.dashboard.config.Config;
+
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.synchropather.subsystemclasses.HorizontalIntakeSubsystem;
 import org.firstinspires.ftc.teamcode.synchropather.systems.MovementType;
@@ -9,9 +11,10 @@ import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.superclasse
 /**
  * Contains a sequence of horizontal wrist Movements.
  */
+@Config
 public class HWristPlan extends Plan<HWristState> {
 
-    public static double POSITION_CACHE_THRESHOLD = 0.01;
+    public static double POSITION_CACHE_THRESHOLD = -1;
 
     private final HorizontalIntakeSubsystem horizontalIntake;
 
