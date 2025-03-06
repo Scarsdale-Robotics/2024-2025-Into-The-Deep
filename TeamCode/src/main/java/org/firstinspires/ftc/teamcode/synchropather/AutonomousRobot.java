@@ -36,6 +36,7 @@ import org.firstinspires.ftc.vision.VisionPortal;
 
 // TODO: merge with robotsystem later(?)
 // nathan i am sorry
+//viir: pls do this, it makes the code much easier to understand.
 
 public class AutonomousRobot {
 
