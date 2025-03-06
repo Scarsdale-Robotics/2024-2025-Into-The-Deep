@@ -77,7 +77,7 @@ import org.firstinspires.ftc.teamcode.synchropather.systems.vClaw.movements.Rele
 import java.util.List;
 
 @Config
-@Disabled
+//@Disabled
 @Autonomous(name="[DISABLED] Red Specimen Auto")
 public class disabled_RedSpecimenAuto extends LinearOpMode {
 

@@ -122,7 +122,7 @@ public class RedTeleop extends LinearOpMode {
 
     // loader applying pressure on clips
     public static double loaderPressurePosition = 0.02;
-    public static double loaderFeedingPosition = 0.075;
+    public static double loaderFeedingPosition = 0.05;
 
 
 
@@ -161,6 +161,8 @@ public class RedTeleop extends LinearOpMode {
     private boolean magazineRepositionMacroRunning = false;
     private boolean toggleGamepad2DpadLeft = false;
     private boolean toggleGamepad2DpadRight = false;
+    private double magazineIntakePosition = 0;
+    public static double magazineIntakeDescentSpeed = 0.01;
 
 
 
@@ -275,7 +277,12 @@ public class RedTeleop extends LinearOpMode {
         }
         // Control servos
         else {
-            double magazineIntakePosition = MIntakeConstants.closedPosition + gamepad2.left_trigger * (MIntakeConstants.upPosition - MIntakeConstants.closedPosition);
+            double desiredMagazineIntakePosition = MIntakeConstants.closedPosition + gamepad2.left_trigger * (MIntakeConstants.upPosition - MIntakeConstants.closedPosition);
+            if (desiredMagazineIntakePosition < magazineIntakePosition) {
+                magazineIntakePosition = Math.max(desiredMagazineIntakePosition, magazineIntakePosition-magazineIntakeDescentSpeed);
+            } else {
+                magazineIntakePosition = desiredMagazineIntakePosition;
+            }
             robot.clipbot.setMagazineIntakePosition(magazineIntakePosition);
             double magazineLoaderPosition = MLoaderConstants.openPosition + gamepad2.right_trigger * (MLoaderConstants.maxClosedPosition - MLoaderConstants.openPosition);
             robot.clipbot.setMagazineLoaderPosition(magazineLoaderPosition);
@@ -824,7 +831,7 @@ public class RedTeleop extends LinearOpMode {
             );
             LinearMFeeder resetFeeder = new LinearMFeeder(advanceFeeder.getEndTime(),
                     new MFeederState(targetFeederPosition.getPosition()+0.1),
-                    new MFeederState(-MFeederConstants.ZERO_HOME)
+                    new MFeederState(-3*MFeederConstants.ZERO_HOME)
             );
             mFeederPlan = new MFeederPlan(robot.clipbot,
                     advanceFeeder,
