@@ -17,28 +17,31 @@ public class viir_Practice extends LinearOpMode {
     public void runOpMode() throws InterruptedException {
         RobotSystem robot = new RobotSystem(hardwareMap, new Pose2d(0, 0, new Rotation2d(Math.toRadians(-90))), false, this);
 
-        //telemetry stufff
+        //telemetry stufff (find out meaning of multipletelemetry)
 
         waitForStart();
         while (opModeIsActive()) {
-            double majestic = 102043204.5;
+            robot.localization.update();
+            robot.logOdometry();
             double speed = 0.9;
-            boolean breakLoopHehe = false;
-            if (gamepad1.square && !breakLoopHehe) {
-                breakLoopHehe = true;
-            }
-            if (breakLoopHehe) {
-                telemetry.addData("sigma sigma boy sigma boy sigma boy", 9);
-                telemetry.update();
-            }
-            if (!gamepad1.square) {
-                breakLoopHehe = false;
-            }
+            boolean displayTelemetry = false;
             double strafe = -gamepad1.left_stick_x * speed;
             double forward = gamepad1.left_stick_y * speed;
             double turn = gamepad1.right_stick_x * speed;
             double buffer = 0.2;
-            robot.drive.driveRobotCentric(strafe , forward, turn);
+            if (gamepad1.square && !displayTelemetry) {
+                displayTelemetry = true;
+            }
+            if (displayTelemetry) {
+                telemetry.addData("Strafe: ", strafe);
+                telemetry.addData("Turn: ", turn);
+                telemetry.addData("Forward: ", forward);
+                telemetry.update();
+            }
+            if (!gamepad1.square) {
+                displayTelemetry = false;
+            }
+            robot.drive.driveFieldCentric(strafe , forward, turn, Math.toDegrees(robot.localization.getH()));
             boolean senseChangeActivated = false;
             if (gamepad1.circle && !senseChangeActivated) {
                 senseChangeActivated = true;
