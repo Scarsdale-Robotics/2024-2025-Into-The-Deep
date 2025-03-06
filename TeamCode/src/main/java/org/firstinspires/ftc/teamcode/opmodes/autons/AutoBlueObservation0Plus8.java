@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.opmodes.autons;
 
 import com.arcrobotics.ftclib.geometry.Pose2d;
 import com.arcrobotics.ftclib.geometry.Rotation2d;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 import org.firstinspires.ftc.teamcode.opmodes.algorithms.SampleDataBufferFilter;
@@ -31,6 +32,7 @@ import org.firstinspires.ftc.teamcode.synchropather.systems.translation.movement
 
 import java.util.List;
 
+@Disabled
 public class AutoBlueObservation0Plus8 extends LinearOpMode {
 
     private AutonomousRobot robot;

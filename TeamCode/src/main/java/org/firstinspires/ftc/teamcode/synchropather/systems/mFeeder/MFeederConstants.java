@@ -25,7 +25,7 @@ public class MFeederConstants {
     /**
      *  Max magazine feeder acceleration in inches/s^2.
      */
-    public static double MAX_ACCELERATION = 24;
+    public static double MAX_ACCELERATION = 12;
 
     /**
      *  The magazine feeder's reference position for zero in inches

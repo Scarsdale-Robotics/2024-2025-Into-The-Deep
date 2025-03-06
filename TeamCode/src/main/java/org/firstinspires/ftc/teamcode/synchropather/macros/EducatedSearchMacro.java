@@ -91,10 +91,10 @@ public class EducatedSearchMacro extends Synchronizer {
                     extendoPosition,
                     extendoTarget
             );
-            LinearExtendo extendoIn = new LinearExtendo(extendoOut.getEndTime()+1,
-                    extendoTarget,
-                    new ExtendoState(LinearSlidesSubsystem.extendoOffset)
-            );
+//            LinearExtendo extendoIn = new LinearExtendo(extendoOut.getEndTime()+1,
+//                    extendoTarget,
+//                    new ExtendoState(LinearSlidesSubsystem.extendoOffset)
+//            );
             ExtendoConstants.MAX_PATHING_VELOCITY = previousMaxVelocity;
 
             // Plans
@@ -105,8 +105,8 @@ public class EducatedSearchMacro extends Synchronizer {
                     rotation
             );
             extendoPlan = new ExtendoPlan(robot.linearSlides,
-                    extendoOut,
-                    extendoIn
+                    extendoOut
+//                    ,extendoIn
             );
         }
         // Case: targeting method is ROTATION

@@ -4,6 +4,7 @@ import com.acmerobotics.dashboard.config.Config;
 import com.arcrobotics.ftclib.geometry.Pose2d;
 import com.arcrobotics.ftclib.geometry.Rotation2d;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 import org.firstinspires.ftc.teamcode.opmodes.algorithms.SampleDataBufferFilter;
@@ -40,6 +41,7 @@ import org.firstinspires.ftc.teamcode.synchropather.systems.translation.movement
 import org.firstinspires.ftc.teamcode.synchropather.systems.translation.movements.LinearTranslation;
 
 @Config
+@Disabled
 @Autonomous(name="Better sample cycle auto (trust)")
 public class BetterSampleCycleAuto extends LinearOpMode {
 

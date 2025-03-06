@@ -8,6 +8,7 @@ import com.arcrobotics.ftclib.geometry.Rotation2d;
 import com.arcrobotics.ftclib.hardware.motors.Motor;
 import com.arcrobotics.ftclib.hardware.motors.MotorEx;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
@@ -54,6 +55,7 @@ import org.firstinspires.ftc.teamcode.synchropather.systems.translation.movement
 import java.util.ArrayDeque;
 
 @Config
+@Disabled
 @Autonomous(name="Sample Cycle Auto (Net Zone)", group = "Calibration")
 public class SampleCycleAuto extends LinearOpMode {
 

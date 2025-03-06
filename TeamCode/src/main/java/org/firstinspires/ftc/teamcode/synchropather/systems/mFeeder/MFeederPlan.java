@@ -26,7 +26,7 @@ public class MFeederPlan extends Plan<MFeederState> {
     public static double kI = 0;
     public static double kD = 0;
 
-    public static double POWER_CACHE_THRESHOLD = 0.05;
+    public static double POWER_CACHE_THRESHOLD = 0.01;
 
     private double intedt = 0;
 

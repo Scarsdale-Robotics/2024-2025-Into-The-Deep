@@ -8,6 +8,7 @@ import static org.firstinspires.ftc.teamcode.Auxiliary.initWebcam;
 import com.arcrobotics.ftclib.geometry.Pose2d;
 import com.arcrobotics.ftclib.geometry.Rotation2d;
 import com.arcrobotics.ftclib.hardware.motors.Motor;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -44,6 +45,7 @@ import org.firstinspires.ftc.teamcode.synchropather.systems.translation.movement
 import java.util.function.Supplier;
 
 @Deprecated
+@Disabled
 @TeleOp(name = "SynchroTeleop")
 public class SynchroTeleop extends LinearOpMode {
     private boolean lastAutoIntakeCommand = false;

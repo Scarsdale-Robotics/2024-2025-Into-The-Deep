@@ -5,6 +5,7 @@ import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.arcrobotics.ftclib.geometry.Pose2d;
 import com.arcrobotics.ftclib.geometry.Rotation2d;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
@@ -61,6 +62,7 @@ import org.firstinspires.ftc.teamcode.synchropather.systems.vClaw.movements.Rele
 import java.util.List;
 
 @Config
+@Disabled
 @TeleOp(name="Teleop", group = "Calibration")
 public class Teleop extends LinearOpMode {
 
