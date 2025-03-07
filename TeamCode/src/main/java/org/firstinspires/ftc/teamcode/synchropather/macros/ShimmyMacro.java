@@ -17,15 +17,28 @@ import org.firstinspires.ftc.teamcode.synchropather.systems.translation.movement
 
 public class ShimmyMacro extends Synchronizer {
 
-    public ShimmyMacro(DriveSubsystem drive, LocalizationSubsystem localization) {
-        LinearTranslation shimmyRight = new LinearTranslation(0,
-                new TranslationState(localization.getPose()),
-                new TranslationState(3, -24-9+2)
-        );
-        LinearTranslation shimmyLeft = new LinearTranslation(shimmyRight.getEndTime(),
-                new TranslationState(3, -24-9+2),
-                new TranslationState(-3, -24-9+2)
-        );
+    public ShimmyMacro(DriveSubsystem drive, LocalizationSubsystem localization, boolean leftFirst) {
+        LinearTranslation shimmyRight, shimmyLeft;
+        int magnitude = 2;
+        if (leftFirst) {
+            shimmyLeft = new LinearTranslation(0,
+                    new TranslationState(localization.getPose()),
+                    new TranslationState(-magnitude, -24-9+2)
+            );
+            shimmyRight = new LinearTranslation(shimmyLeft.getEndTime(),
+                    new TranslationState(-magnitude, -24-9+2),
+                    new TranslationState(magnitude, -24-9+2)
+            );
+        } else {
+            shimmyRight = new LinearTranslation(0,
+                    new TranslationState(localization.getPose()),
+                    new TranslationState(magnitude, -24-9+2)
+            );
+            shimmyLeft = new LinearTranslation(shimmyRight.getEndTime(),
+                    new TranslationState(magnitude, -24-9+2),
+                    new TranslationState(-magnitude, -24-9+2)
+            );
+        }
 
         TranslationPlan translationPlan = new TranslationPlan(drive, localization,
                 shimmyRight,

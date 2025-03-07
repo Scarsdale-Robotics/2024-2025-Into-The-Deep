@@ -97,6 +97,10 @@ public class IntakeTransferClipDepositMotion extends LinearOpMode {
 
     public static double intakeDelay = 0.4;
 
+    public static double armUpCutSigmaEdition = 0.2;
+    public static double armUpCut = 0.1;
+    public static double vArmDownCut = 0.1;
+
 
     // For clipbot subsystem
     private int clipInventory = MFeederConstants.RELOAD_CAPACITY;
@@ -444,14 +448,15 @@ public class IntakeTransferClipDepositMotion extends LinearOpMode {
 
         // Pick up and move arm up
         GrabHClaw h_claw_grab = new GrabHClaw(h_arm_down.getEndTime()+intakeDelay/2, true);
-        LinearHArm h_arm_up = new LinearHArm(h_claw_grab.getEndTime(),
+        LinearHArm h_arm_up = new LinearHArm(h_claw_grab.getEndTime()+0.25,
                 new HArmState(armDownPosition),
-                new HArmState(0.9)
+                new HArmState(0.85)
         );
-        MoveHWrist h_wrist_flat = new MoveHWrist(h_arm_up.getEndTime(), Math.PI/2, true);
+        // CONCERN: SAMP CLOSE TO SUB CLOSE EDGE
+        MoveHWrist h_wrist_flat = new MoveHWrist(Math.min(h_arm_up.getEndTime(), h_arm_up.getStartTime()+armUpCutSigmaEdition), Math.PI/2, true);
 
         // Retract extendo
-        LinearExtendo extendoIn = new LinearExtendo(h_wrist_flat.getStartTime(),
+        LinearExtendo extendoIn = new LinearExtendo(h_arm_up.getEndTime(),
                 extendoTarget,
                 new ExtendoState(0)
         );
@@ -496,28 +501,27 @@ public class IntakeTransferClipDepositMotion extends LinearOpMode {
 
         //// Mag has clips, do transfer and clipping sequence
         // Horizontal arm gets ready
-        LinearHArm hArmUpTransfer = new LinearHArm(extendoIn.getEndTime(),
-                new HArmState(0.9),
+        LinearHArm hArmUpTransfer = new LinearHArm(extendoIn.getEndTime()-armUpCut,
+                new HArmState(0.85),
                 new HArmState(HArmConstants.armTransferPosition)
         );
 
         // wrist resets
         MoveHWrist h_wrist_reset = new MoveHWrist(hArmUpTransfer.getEndTime(), 0, true);
 
-        // Move extendo to transfer position
-        LinearExtendo extendoToTransfer = new LinearExtendo(hArmUpTransfer.getEndTime(),
+        LinearExtendo extendoToTransfer = new LinearExtendo(hArmUpTransfer.getEndTime()-0.05,
                 new ExtendoState(0),
                 new ExtendoState(ExtendoConstants.transferPosition+1)
         );
 
         // Vertical arm gets ready
-        LinearVArm vArmDown = new LinearVArm(Math.max(hArmUpTransfer.getEndTime(), extendoToTransfer.getEndTime()),
+        LinearVArm vArmDown = new LinearVArm(Math.max(hArmUpTransfer.getEndTime()-0.3, extendoToTransfer.getEndTime()-vArmDownCut),
                 new VArmState(VArmConstants.armLeftDepositPosition),
                 new VArmState(VArmConstants.armLeftTransferPosition)
         );
 
         // Loosely hold sample
-        MoveVClaw looselyHoldSampleTransfer = new MoveVClaw(vArmDown.getEndTime()+0.25, 0.1,
+        MoveVClaw looselyHoldSampleTransfer = new MoveVClaw(vArmDown.getEndTime()+0.1, 0.1,
                 new VClawState(VClawConstants.RELEASE_POSITION),
                 new VClawState(VClawConstants.LOOSELY_GRABBED_POSITION)
         );

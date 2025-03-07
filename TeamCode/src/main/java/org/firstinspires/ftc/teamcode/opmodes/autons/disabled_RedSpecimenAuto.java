@@ -126,6 +126,8 @@ public class disabled_RedSpecimenAuto extends LinearOpMode {
     public static double minSampleX = -2;
     public static double maxSampleX = 4;
 
+    public static double advanceTime = 1.0;
+
 
     // Deposit
     public static double liftUpDepositDelay = 0.25;
@@ -214,6 +216,7 @@ public class disabled_RedSpecimenAuto extends LinearOpMode {
 
 
         /// Cycling
+        boolean leftFirst = true;
         while (opModeIsActive()) {
 
             // TODO: park code? this is never going to happen probably
@@ -234,7 +237,7 @@ public class disabled_RedSpecimenAuto extends LinearOpMode {
                 enableLimelightAction.update();
                 double[] foundSample = null;
                 while (opModeIsActive()) {
-                    shimmyMacro = new ShimmyMacro(robot.drive, robot.localization);
+                    shimmyMacro = new ShimmyMacro(robot.drive, robot.localization, leftFirst);
                     shimmyMacro.start();
                     while (opModeIsActive() && shimmyMacro.update()) {
                         updateRobot();
@@ -268,6 +271,9 @@ public class disabled_RedSpecimenAuto extends LinearOpMode {
                 // check if claw has sample
                 boolean hasSample = !robot.clawVacancyProcessor.isClawEmpty();
                 if (hasSample) break;
+                else {
+                    leftFirst = !leftFirst;
+                }
             }
 
 
@@ -284,16 +290,20 @@ public class disabled_RedSpecimenAuto extends LinearOpMode {
             robot.linearSlides.stopExtendo();
 
 
+            // TODO: Consider standard end pos to prevent spec attach conflict
+
+
             // deposit
             initDepositMacro();
             depositMacro.start();
             while (opModeIsActive() && depositMacro.update()) updateRobot();
             robot.linearSlides.stopLifts();
-            shimmyMacro = new ShimmyMacro(robot.drive, robot.localization);
+            shimmyMacro = new ShimmyMacro(robot.drive, robot.localization, leftFirst);
             shimmyMacro.start();
             while (opModeIsActive() && shimmyMacro.update()) updateRobot();
             shimmyMacro.stop();
             robot.verticalDeposit.release();
+            leftFirst = !leftFirst;
 
         }
 
@@ -404,9 +414,10 @@ public class disabled_RedSpecimenAuto extends LinearOpMode {
         robot.overheadSampleData.updateFilterData(robot.overheadCamera.getSamplePositions(), robot.overheadCamera.getSampleAngles(), robot.overheadCamera.getClosestSample()); // Can return null
     }
 
+    public static double thing = 0.25;  // delay between klip and raise
 
     private void initPreloadSequence() {
-        TranslationConstants.MAX_VELOCITY = 40d;
+        TranslationConstants.MAX_VELOCITY = 60d;
         TranslationConstants.MAX_ACCELERATION = 54d;
 
         RotationConstants.MAX_ANGULAR_VELOCITY = 0.8*3.6;
@@ -450,9 +461,8 @@ public class disabled_RedSpecimenAuto extends LinearOpMode {
         // Intake clips from wall
         double previousAcceleration = TranslationConstants.MAX_ACCELERATION;
         TranslationConstants.MAX_ACCELERATION = previousAcceleration/3;
-        CRSplineTranslation intakeClipsTranslation = new CRSplineTranslation(liftDownPreload.getEndTime(),
+        LinearTranslation intakeClipsTranslation = new LinearTranslation(releaseVClawPreload.getEndTime(),
                 new TranslationState(1, -24-9+2),
-                new TranslationState(5, -48),
                 new TranslationState(47.75, -72+9+2.25)
                         // Y: -72 + 1/2 robot height + mag intake distance from wall
         );
@@ -530,7 +540,7 @@ public class disabled_RedSpecimenAuto extends LinearOpMode {
         LinearMIntake intakeClose = new LinearMIntake(
                 new TimeSpan(
                         intakeUp.getEndTime() + 1.5,
-                        intakeUp.getEndTime() + 3
+                        intakeUp.getEndTime() + 5
                 ),
                 new MIntakeState(MIntakeConstants.upPosition),
                 new MIntakeState(MIntakeConstants.closedPosition)
@@ -639,7 +649,8 @@ public class disabled_RedSpecimenAuto extends LinearOpMode {
         );
 
         // Advance feeder by one clip
-        LinearMFeeder advanceFeeder = new LinearMFeeder(Math.max(loaderRelease3.getEndTime(), holdLiftDown.getEndTime()) + feederDelayTime,
+        double ti = Math.max(loaderRelease3.getEndTime(), holdLiftDown.getEndTime()) + feederDelayTime;
+        LinearMFeeder advanceFeeder = new LinearMFeeder(new TimeSpan(ti, ti+advanceTime),
                 currentFeederPosition,
                 targetFeederPosition
         );
@@ -679,7 +690,7 @@ public class disabled_RedSpecimenAuto extends LinearOpMode {
         );
         TranslationConstants.MAX_ACCELERATION = previousAcceleration;
 
-        LinearVArm vArmToPreDepositSpikeMark = new LinearVArm(unklipSpecimen.getEndTime(),
+        LinearVArm vArmToPreDepositSpikeMark = new LinearVArm(unklipSpecimen.getEndTime()+thing,
                 new VArmState(VArmConstants.armLeftClipperPosition),
                 new VArmState(VArmConstants.armLeftPreDepositPosition)
         );
@@ -1063,13 +1074,14 @@ public class disabled_RedSpecimenAuto extends LinearOpMode {
         // Feeder plan
         MFeederPlan mFeederPlan;
         if (clipInventory-1==0) {
-            advanceFeeder = new LinearMFeeder(holdLiftDown.getEndTime() + feederDelayTime,
+            double ti = holdLiftDown.getEndTime() + feederDelayTime;
+            advanceFeeder = new LinearMFeeder(new TimeSpan(ti, ti+advanceTime),
                     currentFeederPosition,
                     new MFeederState(targetFeederPosition.getPosition()+0.1)
             );
             LinearMFeeder resetFeeder = new LinearMFeeder(advanceFeeder.getEndTime(),
                     new MFeederState(targetFeederPosition.getPosition()+0.1),
-                    new MFeederState(0)
+                    new MFeederState(-3*MFeederConstants.ZERO_HOME)
             );
             mFeederPlan = new MFeederPlan(robot.clipbot,
                     advanceFeeder,
@@ -1077,7 +1089,8 @@ public class disabled_RedSpecimenAuto extends LinearOpMode {
             );
             inventoryStocked = false;
         } else {
-            advanceFeeder = new LinearMFeeder(holdLiftDown.getEndTime() + feederDelayTime,
+            double ti = holdLiftDown.getEndTime() + feederDelayTime;
+            advanceFeeder = new LinearMFeeder(new TimeSpan(ti, ti+advanceTime),
                     currentFeederPosition,
                     targetFeederPosition
             );
@@ -1179,10 +1192,11 @@ public class disabled_RedSpecimenAuto extends LinearOpMode {
 
 
 
+    double depositStartDelay = 0.5;
     private void initDepositMacro() {
 
         // Score specimen
-        LinearVArm vArmToPreDepositCycle = new LinearVArm(0,
+        LinearVArm vArmToPreDepositCycle = new LinearVArm(depositStartDelay,
                 new VArmState(VArmConstants.armLeftClipperPosition),
                 new VArmState(VArmConstants.armLeftPreDepositPosition)
         );
