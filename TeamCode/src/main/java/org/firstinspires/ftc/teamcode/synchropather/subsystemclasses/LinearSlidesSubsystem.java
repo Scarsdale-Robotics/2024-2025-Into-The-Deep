@@ -17,6 +17,7 @@ public class LinearSlidesSubsystem {
     public final Telemetry telemetry;
 
     public static double extendoOffset = 0; // TODO: REMOVE!!!!!!!!!!! (AFTER WIRING IS FIXED)
+    public static double liftOffset = 0;
 
     private double extendoPosition;
     private double leftLiftPosition;
@@ -121,14 +122,14 @@ public class LinearSlidesSubsystem {
      * @return left lift height in inches
      */
     public double getLeftLiftPosition() {
-        return leftLiftPosition / LiftConstants.TICKS_PER_INCH;
+        return liftOffset + leftLiftPosition / LiftConstants.TICKS_PER_INCH;
     }
 
     /**
      * @return right lift height in inches
      */
     public double getRightLiftPosition() {
-        return rightLiftPosition / LiftConstants.TICKS_PER_INCH;
+        return liftOffset + rightLiftPosition / LiftConstants.TICKS_PER_INCH;
     }
 
 }
