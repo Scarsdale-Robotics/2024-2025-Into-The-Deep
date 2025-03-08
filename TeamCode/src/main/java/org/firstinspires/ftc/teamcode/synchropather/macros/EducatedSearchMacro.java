@@ -69,7 +69,7 @@ public class EducatedSearchMacro extends Synchronizer {
             );
             ExtendoState extendoTarget = new ExtendoState(
                     Math.max(0, Math.hypot(x_sample-x_target_center, y_sample-y_target_center) - x_extendo_min)
-                    + 1.5*OverheadCameraSubsystem.CLAW_OFFSET[0]
+                    + 2*OverheadCameraSubsystem.CLAW_OFFSET[0]
             );
 
             //// SYNCHRONIZER

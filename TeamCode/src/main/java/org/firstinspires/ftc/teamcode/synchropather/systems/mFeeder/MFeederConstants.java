@@ -17,6 +17,10 @@ public class MFeederConstants {
         return ticks / TICKS_PER_INCH;
     }
 
+    public static double inchesToTicks(double inches) {
+        return inches * TICKS_PER_INCH;
+    }
+
     /**
      *  Max magazine feeder velocity in inches/s.
      */
@@ -28,9 +32,14 @@ public class MFeederConstants {
     public static double MAX_ACCELERATION = 12;
 
     /**
+     *  The distance between the end of the feeder and the position of the first clip.
+     */
+    public static double INCHES_OFFSET = 0.1;
+
+    /**
      *  The magazine feeder's reference position for zero in inches
      */
-    public static double ZERO_HOME = 0.175;
+    public static double ZERO_HOME = INCHES_OFFSET;
 
     /**
      *  Max capacity of magazine in clips.

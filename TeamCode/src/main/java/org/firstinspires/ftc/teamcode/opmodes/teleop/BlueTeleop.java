@@ -98,7 +98,7 @@ public class BlueTeleop extends LinearOpMode {
 
 
     // For clipbot subsystem
-    private int clipInventory = MFeederConstants.RELOAD_CAPACITY;
+    private int clipInventory = 6;
     private boolean inventoryStocked = true;
 
     public static double klipperWaitTime = 0.3;
@@ -154,6 +154,8 @@ public class BlueTeleop extends LinearOpMode {
 
     double lastLiftPower = 0;
     double lastExtendoPower = 0;
+    public static double extendo_approach_kP = 0.5;
+    public static double extendo_overshoot_kP = 0.5;
 
 
     // magazine mode
@@ -198,6 +200,9 @@ public class BlueTeleop extends LinearOpMode {
 
             /// Claim drive control by pressing both joysticks
             if (gamepad1.left_stick_button && gamepad1.right_stick_button) {
+                if (!gamepad1HasDriveControl) {
+                    clipInventory = 6;
+                }
                 gamepad1HasDriveControl = true;
             } else if (gamepad2.left_stick_button && gamepad2.right_stick_button) {
                 gamepad1HasDriveControl = false;
@@ -274,6 +279,9 @@ public class BlueTeleop extends LinearOpMode {
                 double totalPower = gamepad2.right_trigger - gamepad2.left_trigger;
                 robot.clipbot.setMagazineFeederPower(totalPower);
             }
+            if (gamepad2.right_bumper) {
+                MFeederConstants.ZERO_HOME = robot.clipbot.getMagazineFeederPosition() + MFeederConstants.ZERO_HOME + MFeederConstants.INCHES_OFFSET;
+            }
         }
         // Control servos
         else {
@@ -347,28 +355,44 @@ public class BlueTeleop extends LinearOpMode {
             robot.clipbot.setMagazineLoaderPosition(loaderPressurePosition);
         }
 
-        /// gamepad 2 manual control extendo and lift
+        /// gamepad 1 manual control lift with triggers
+        double totalFirstGamepadTrigger = gamepad1.right_trigger - gamepad1.left_trigger;
+        if ((totalFirstGamepadTrigger!=0 || lastLiftPower!=0) && !(makerMacroRunning || depositMacroRunning)) {
+            robot.linearSlides.setLiftPowers(totalFirstGamepadTrigger);
+            lastLiftPower = totalFirstGamepadTrigger;
+        }
+
+
+        /// gamepad 2 has extendo control
         double totalSecondGamepadTrigger = gamepad2.right_trigger - gamepad2.left_trigger;
-        // left bumper = lift control
-        if (gamepad2.left_bumper) {
-            if ((totalSecondGamepadTrigger!=0 || lastLiftPower!=0) && !(makerMacroRunning || depositMacroRunning)) {
-                robot.linearSlides.setLiftPowers(totalSecondGamepadTrigger);
-                lastLiftPower = totalSecondGamepadTrigger;
+        double extendoPosition = robot.linearSlides.getExtendoPosition();
+        double error = ExtendoConstants.MAX_EXTENSION - extendoPosition;
+        double motorPower;
+        boolean driverControlled;
+        if (error < 0) {
+            if (totalSecondGamepadTrigger < 0) {
+                driverControlled = true;
+                motorPower = totalSecondGamepadTrigger;
+            } else {
+                driverControlled = false;
+                motorPower = Math.max(-1, extendo_overshoot_kP*error);
             }
-            if (!(intakeMacroRunning || makerMacroRunning)) {
-                robot.linearSlides.setExtendoPower(0);
-                lastExtendoPower = 0;
+        } else {
+            driverControlled = true;
+            if (totalSecondGamepadTrigger < 0) {
+                motorPower = totalSecondGamepadTrigger;
+            } else {
+                motorPower = totalSecondGamepadTrigger * Math.min(1, extendo_approach_kP*error);
             }
         }
-        // no bumper = extendo control
-        else {
-            if ((totalSecondGamepadTrigger!=0 || lastExtendoPower!=0) && !(intakeMacroRunning || makerMacroRunning)) {
-                robot.linearSlides.setExtendoPower(totalSecondGamepadTrigger);
-                lastExtendoPower = totalSecondGamepadTrigger;
+        if (driverControlled) {
+            if ((motorPower != 0 || lastExtendoPower != 0) && !(intakeMacroRunning || makerMacroRunning)) {
+                robot.linearSlides.setExtendoPower(motorPower);
+                lastExtendoPower = motorPower;
             }
-            if (!(makerMacroRunning || depositMacroRunning)) {
-                robot.linearSlides.setLiftPowers(0);
-                lastLiftPower = 0;
+        } else {
+            if (!(intakeMacroRunning || makerMacroRunning)) {
+                robot.linearSlides.setExtendoPower(motorPower);
             }
         }
 

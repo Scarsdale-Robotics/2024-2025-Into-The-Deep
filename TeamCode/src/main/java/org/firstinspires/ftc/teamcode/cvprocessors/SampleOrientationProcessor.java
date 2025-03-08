@@ -39,9 +39,9 @@ public class SampleOrientationProcessor implements VisionProcessor {
     public static double cameraHeight = 8.409; // inches (-1.5 because of sample height)
 
 
-    public static Scalar lowerYellow = new Scalar(15.0, 150.0, 160.0); // hsv
+    public static Scalar lowerYellow = new Scalar(15.0, 100.0, 160.0); // hsv
     public static Scalar upperYellow = new Scalar(30.0, 255.0, 255.0); // hsv
-    public static Scalar lowerBlue = new Scalar(90.0, 100.0, 120.0); // hsv
+    public static Scalar lowerBlue = new Scalar(90.0, 80.0, 100.0); // hsv
     public static Scalar upperBlue = new Scalar(140.0, 255.0, 255.0); // hsv
     public static Scalar lowerRedH = new Scalar(10.0, 0.0, 0.0); // hsv
     public static Scalar upperRedH = new Scalar(160.0, 255.0, 255.0); // hsv
@@ -49,6 +49,7 @@ public class SampleOrientationProcessor implements VisionProcessor {
     public static Scalar upperRedSV = new Scalar(255.0, 255.0, 255.0); // hsv
 
     public static double AREA_PER_SAMPLE = 6000d;
+    public static double minArea = 5000;
     public static double SAMPLE_LONG_LENGTH = 120;
     public static double SAMPLE_SHORT_LENGTH = 50;
 
@@ -60,6 +61,7 @@ public class SampleOrientationProcessor implements VisionProcessor {
 
 
     public static double horizontalBiasTune = 1.2;
+    public static double verticalBiasTune = 1;
 
 
     public SampleOrientationProcessor() {
@@ -123,7 +125,6 @@ public class SampleOrientationProcessor implements VisionProcessor {
         Imgproc.findContours(inRange, unfilteredContours, hierarchy, Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_SIMPLE);
 
         // Filter contours by size
-        int minArea = 5500;
         List<MatOfPoint> largeContours = new ArrayList<>();
         ArrayList<Integer> largeContoursSampleCount = new ArrayList<>();
         ArrayList<RotatedRect> rotatedRects = new ArrayList<>();
@@ -153,7 +154,7 @@ public class SampleOrientationProcessor implements VisionProcessor {
             }
 
             // detect if it's a large contour
-            int sampleCount = (int)Math.round(area/AREA_PER_SAMPLE);
+            int sampleCount = (int)Math.ceil(area/AREA_PER_SAMPLE);
             if (sampleCount<=1) {
                 rotatedRects.add(Imgproc.minAreaRect(new MatOfPoint2f(contour.toArray())));
             } else {
@@ -403,6 +404,7 @@ public class SampleOrientationProcessor implements VisionProcessor {
         double canvasHorizontal = 1.1 * height / 2;
 
         double horizontalBias = horizontalBiasTune;//1.142857;
+        double verticalBias = verticalBiasTune;
 
         double scaled320 = 320/scalingFactor;
         double scaled240 = 240/scalingFactor;
@@ -410,7 +412,7 @@ public class SampleOrientationProcessor implements VisionProcessor {
             // real center is (320, 480), positive direction is right and down
 //            output.add(new Point(i.center.x - 320, -(i.center.y - 240)));
             double horizontalCoordinate = (i.center.x - scaled320) / scaled320 * canvasHorizontal * horizontalBias;
-            double verticalCoordinate = -(i.center.y - scaled240) / scaled240 * canvasVertical;
+            double verticalCoordinate = -(i.center.y - scaled240) / scaled240 * canvasVertical * verticalBias;
             output.add(new double[]{verticalCoordinate, -horizontalCoordinate});
 
 

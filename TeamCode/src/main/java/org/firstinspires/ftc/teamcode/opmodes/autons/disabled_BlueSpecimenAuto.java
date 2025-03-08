@@ -4,7 +4,6 @@ import com.acmerobotics.dashboard.config.Config;
 import com.arcrobotics.ftclib.geometry.Pose2d;
 import com.arcrobotics.ftclib.geometry.Rotation2d;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 import org.firstinspires.ftc.teamcode.cvprocessors.SampleOrientationProcessor;
@@ -77,9 +76,9 @@ import org.firstinspires.ftc.teamcode.synchropather.systems.vClaw.movements.Rele
 import java.util.List;
 
 @Config
-@Disabled
-@Autonomous(name="[DISABLED] Red Specimen Auto")
-public class disabled_RedSpecimenAuto extends LinearOpMode {
+//@Disabled
+@Autonomous(name="[DISABLED] Blue Specimen Auto")
+public class disabled_BlueSpecimenAuto extends LinearOpMode {
 
     private AutonomousRobot robot;
 
@@ -372,7 +371,7 @@ public class disabled_RedSpecimenAuto extends LinearOpMode {
                 hardwareMap,
                 new Pose2d(24, -72+9, new Rotation2d(Math.toRadians(90))),
                         // back against wall, facing towards sub, centered on first seam from middle
-                AutonomousRobot.TeamColor.RED,
+                AutonomousRobot.TeamColor.BLUE,
                 this,
                 SampleDataBufferFilter.SampleTargetingMethod.TRANSLATION
         );
@@ -463,7 +462,7 @@ public class disabled_RedSpecimenAuto extends LinearOpMode {
         TranslationConstants.MAX_ACCELERATION = previousAcceleration/3;
         LinearTranslation intakeClipsTranslation = new LinearTranslation(releaseVClawPreload.getEndTime(),
                 new TranslationState(1, -24-9+2),
-                new TranslationState(47.75, -72+9+2.25)
+                new TranslationState(47.75, -72+9+2)
                         // Y: -72 + 1/2 robot height + mag intake distance from wall
         );
         TranslationConstants.MAX_ACCELERATION = previousAcceleration;
@@ -481,8 +480,8 @@ public class disabled_RedSpecimenAuto extends LinearOpMode {
         );
 
         LinearTranslation alignClips = new LinearTranslation(intakePartiallyUp.getEndTime(),
-                new TranslationState(47.75, -72+9+2.25), //TODO: changed y to -72+9+2.25
-                new TranslationState(48.75, -72+9+2.25)
+                new TranslationState(47.75, -72+9+2), //TODO: changed y to -72+9+2.25
+                new TranslationState(48.75, -72+9+2)
         );
 
         // Lift clips
@@ -493,7 +492,7 @@ public class disabled_RedSpecimenAuto extends LinearOpMode {
 
         // Move forward toward spike mark samples
         LinearTranslation approachSpikeMark = new LinearTranslation(intakeUp.getEndTime()+0.2,
-                new TranslationState(48.75, -72+9+2.25),
+                new TranslationState(48.75, -72+9+2),
                 new TranslationState(48.75, -72+24)
         );
 
@@ -574,7 +573,7 @@ public class disabled_RedSpecimenAuto extends LinearOpMode {
 
 
         // Set clipbot variables
-        clipInventory = MFeederConstants.RELOAD_CAPACITY;
+        clipInventory = 6;
         inventoryStocked = true;
 
         //// Mag has clips, do transfer and clipping sequence
