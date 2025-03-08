@@ -551,7 +551,7 @@ public class disabled_BlueSpecimenAuto extends LinearOpMode {
                 MLoaderConstants.maxClosedPosition
         );
         MoveMLoader loaderRelease = new MoveMLoader(
-                loaderClose.getEndTime() + 1,
+                loaderClose.getEndTime()+0.5,
                 MLoaderConstants.partialClosedPosition
         );
         MoveMLoader loaderClose2 = new MoveMLoader(
@@ -561,14 +561,6 @@ public class disabled_BlueSpecimenAuto extends LinearOpMode {
         MoveMLoader loaderRelease2 = new MoveMLoader(
                 loaderClose2.getEndTime()+0.5,
                 MLoaderConstants.partialClosedPosition
-        );
-        MoveMLoader loaderClose3 = new MoveMLoader(
-                loaderRelease2.getEndTime(),
-                MLoaderConstants.maxClosedPosition
-        );
-        MoveMLoader loaderRelease3 = new MoveMLoader(
-                loaderClose3.getEndTime()+0.5,
-                loaderFeedingPosition
         );
 
 
@@ -648,7 +640,7 @@ public class disabled_BlueSpecimenAuto extends LinearOpMode {
         );
 
         // Advance feeder by one clip
-        double ti = Math.max(loaderRelease3.getEndTime(), holdLiftDown.getEndTime()) + feederDelayTime;
+        double ti = Math.max(loaderRelease2.getEndTime(), holdLiftDown.getEndTime()) + feederDelayTime;
         LinearMFeeder advanceFeeder = new LinearMFeeder(new TimeSpan(ti, ti+advanceTime),
                 currentFeederPosition,
                 targetFeederPosition
@@ -683,9 +675,9 @@ public class disabled_BlueSpecimenAuto extends LinearOpMode {
         // Score specimen
         TranslationConstants.MAX_ACCELERATION = previousAcceleration/3;
         CRSplineTranslation splineScoreSpikeMark = new CRSplineTranslation(holdLiftDown.getEndTime()-1.75,
-                new TranslationState(48.75, -72+24),
-                new TranslationState(7,-46),
-                new TranslationState(-2, -24-9+2)
+                new TranslationState(48.75, -48),
+                new TranslationState(-2,-28),
+                new TranslationState(-2, -31)
         );
         TranslationConstants.MAX_ACCELERATION = previousAcceleration;
 
@@ -805,8 +797,6 @@ public class disabled_BlueSpecimenAuto extends LinearOpMode {
                 loaderRelease,
                 loaderClose2,
                 loaderRelease2,
-                loaderClose3,
-                loaderRelease3,
                 loaderApplyPressure
         );
 
