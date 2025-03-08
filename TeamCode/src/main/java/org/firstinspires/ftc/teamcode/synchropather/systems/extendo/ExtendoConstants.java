@@ -45,6 +45,6 @@ public class ExtendoConstants {
     /**
      *  Max extendo extension length in inches.
      */
-    public static double MAX_EXTENSION = ticksToInches(3350)-6;
+    public static double MAX_EXTENSION = ticksToInches(3350)-4;
 
 }
