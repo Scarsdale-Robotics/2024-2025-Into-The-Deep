@@ -14,7 +14,7 @@ import org.firstinspires.ftc.teamcode.synchropather.systems.elbow.ElbowConstants
 @TeleOp(name = "ViirTeleop")
 //hello just random stuff i do here to practice, i know a lot more than i can write trust.
 //upate 3/9 on way back from bus: we clutched up. i learned odometry, localization, and cv in one bus reide les goooo
-//TODO: ADD, COMMIT, PUSH CHANGES WHEN GET HOME AND CHECKOUT TO SYNCHRONIZER-MACRO BRANCH AFTER DONE
+//TODO: PUSH COMMIT WHEN GET HOME AND CHECKOUT TO SYNCHRONIZER-MACRO BRANCH AFTER DONE
 //TODO: Viir's code: add lift stuff.
 //TODO: Viir's code: implement control theory in some code (error and stuff) for running more complicated macros
 //IMPORTANT: don't merge changes to sync macro or main, private branch.
