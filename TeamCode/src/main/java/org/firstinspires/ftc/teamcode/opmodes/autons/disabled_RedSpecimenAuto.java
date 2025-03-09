@@ -221,110 +221,110 @@ public class disabled_RedSpecimenAuto extends LinearOpMode {
         preloadSequence.stop();
 
 
-        /// Cycling
-        boolean leftFirst = true;
-        while (opModeIsActive()) {
-
-            // TODO: park code? this is never going to happen probably
-            if (!inventoryStocked) break;
-
-            // intake
-            while (opModeIsActive()) {
-                // look for samples
-                retractMacro = new ExtendoRetractMacro(
-                        robot.linearSlides,
-                        robot.horizontalIntake
-                );
-                retractMacro.start();
-                while (opModeIsActive() && retractMacro.update()) updateRobot();
-                retractMacro.stop();
-
-                // shimmy in front of sub and look for samples
-                enableLimelightAction.update();
-                double[] foundSample = null;
-                while (opModeIsActive()) {
-                    shimmyMacro = new ShimmyMacro(robot.drive, robot.localization, leftFirst);
-                    shimmyMacro.start();
-                    while (opModeIsActive() && shimmyMacro.update()) {
-                        updateRobot();
-                        foundSample = getClosestLLSample();
-                        if (foundSample != null) break;
-                    }
-                    shimmyMacro.stop();
-                    if (foundSample != null) break;
-                }
-                disableLimelightAction.update();
-
-                // extend to sample
-                searchMacro = new EducatedSearchMacro(
-                        foundSample,
-                        robot,
-                        1
-                );
-                searchMacro.start();
-                robot.overheadSampleData.clearFilterData();
-                while (opModeIsActive() && !robot.overheadSampleData.isFilterFull()) {
-                    updateRobot();
-                    searchMacro.update();
-                }
-
-                // try to pick it up
-                initPickupMacro(new ExtendoState(0));
-                pickupMacro.start();
-                while (opModeIsActive() && pickupMacro.update()) updateRobot();
-                pickupMacro.stop();
-
-                // check if claw has sample
-                boolean hasSample = !robot.clawVacancyProcessor.isClawEmpty();
-                if (hasSample) break;
-                else {
-                    leftFirst = !leftFirst;
-                }
-            }
-
-
-            // maker
-            initMakerMacro();
-            makerMacro.start();
-            while (opModeIsActive() && makerMacro.update()) updateRobot();
-            clipInventory--;
-            if (clipInventory==0) {
-                inventoryStocked = false;
-            }
-            robot.clipbot.setMagazineFeederPower(0);
-            robot.linearSlides.stopLifts();
-            robot.linearSlides.stopExtendo();
-
-
-            // TODO: Consider standard end pos to prevent spec attach conflict
-
-
-            // move right
-            LinearTranslation linearTranslation = new LinearTranslation(0,
-                    new TranslationState(robot.localization.getPose()),
-                    new TranslationState(5,-24-9+2)
-            );
-            TranslationPlan translationPlan = new TranslationPlan(robot.drive, robot.localization, linearTranslation);
-            LinearRotation rotationStill = new LinearRotation(0, new RotationState(Math.PI/2), new RotationState(Math.PI/2));
-            RotationPlan rotationPlan = new RotationPlan(robot.drive, robot.localization, rotationStill);
-            shimmyMacro = new Synchronizer(translationPlan, rotationPlan);
-            shimmyMacro.start();
-            while (opModeIsActive() && shimmyMacro.update()) updateRobot();
-            shimmyMacro.stop();
-
-
-            // deposit
-            initDepositMacro();
-            depositMacro.start();
-            while (opModeIsActive() && depositMacro.update()) updateRobot();
-            robot.linearSlides.stopLifts();
-            robot.verticalDeposit.release();
-            leftFirst = !leftFirst;
-
-
-            if (true) break;
-
-        }
+//        /// Cycling
+//        boolean leftFirst = true;
+//        while (opModeIsActive()) {
+//
+//            // TODO: park code? this is never going to happen probably
+//            if (!inventoryStocked) break;
+//
+//            // intake
+//            while (opModeIsActive()) {
+//                // look for samples
+//                retractMacro = new ExtendoRetractMacro(
+//                        robot.linearSlides,
+//                        robot.horizontalIntake
+//                );
+//                retractMacro.start();
+//                while (opModeIsActive() && retractMacro.update()) updateRobot();
+//                retractMacro.stop();
+//
+//                // shimmy in front of sub and look for samples
+//                enableLimelightAction.update();
+//                double[] foundSample = null;
+//                while (opModeIsActive()) {
+//                    shimmyMacro = new ShimmyMacro(robot.drive, robot.localization, leftFirst);
+//                    shimmyMacro.start();
+//                    while (opModeIsActive() && shimmyMacro.update()) {
+//                        updateRobot();
+//                        foundSample = getClosestLLSample();
+//                        if (foundSample != null) break;
+//                    }
+//                    shimmyMacro.stop();
+//                    if (foundSample != null) break;
+//                }
+//                disableLimelightAction.update();
+//
+//                // extend to sample
+//                searchMacro = new EducatedSearchMacro(
+//                        foundSample,
+//                        robot,
+//                        1
+//                );
+//                searchMacro.start();
+//                robot.overheadSampleData.clearFilterData();
+//                while (opModeIsActive() && !robot.overheadSampleData.isFilterFull()) {
+//                    updateRobot();
+//                    searchMacro.update();
+//                }
+//
+//                // try to pick it up
+//                initPickupMacro(new ExtendoState(0));
+//                pickupMacro.start();
+//                while (opModeIsActive() && pickupMacro.update()) updateRobot();
+//                pickupMacro.stop();
+//
+//                // check if claw has sample
+//                boolean hasSample = !robot.clawVacancyProcessor.isClawEmpty();
+//                if (hasSample) break;
+//                else {
+//                    leftFirst = !leftFirst;
+//                }
+//            }
+//
+//
+//            // maker
+//            initMakerMacro();
+//            makerMacro.start();
+//            while (opModeIsActive() && makerMacro.update()) updateRobot();
+//            clipInventory--;
+//            if (clipInventory==0) {
+//                inventoryStocked = false;
+//            }
+//            robot.clipbot.setMagazineFeederPower(0);
+//            robot.linearSlides.stopLifts();
+//            robot.linearSlides.stopExtendo();
+//
+//
+//            // TODO: Consider standard end pos to prevent spec attach conflict
+//
+//
+//            // move right
+//            LinearTranslation linearTranslation = new LinearTranslation(0,
+//                    new TranslationState(robot.localization.getPose()),
+//                    new TranslationState(5,-24-9+2)
+//            );
+//            TranslationPlan translationPlan = new TranslationPlan(robot.drive, robot.localization, linearTranslation);
+//            LinearRotation rotationStill = new LinearRotation(0, new RotationState(Math.PI/2), new RotationState(Math.PI/2));
+//            RotationPlan rotationPlan = new RotationPlan(robot.drive, robot.localization, rotationStill);
+//            shimmyMacro = new Synchronizer(translationPlan, rotationPlan);
+//            shimmyMacro.start();
+//            while (opModeIsActive() && shimmyMacro.update()) updateRobot();
+//            shimmyMacro.stop();
+//
+//
+//            // deposit
+//            initDepositMacro();
+//            depositMacro.start();
+//            while (opModeIsActive() && depositMacro.update()) updateRobot();
+//            robot.linearSlides.stopLifts();
+//            robot.verticalDeposit.release();
+//            leftFirst = !leftFirst;
+//
+//
+//            if (true) break;
+//
+//        }
 
 
     }
@@ -491,7 +491,7 @@ public class disabled_RedSpecimenAuto extends LinearOpMode {
         TranslationConstants.MAX_ACCELERATION = previousAcceleration/3;
         LinearTranslation intakeClipsTranslation = new LinearTranslation(releaseVClawPreload.getEndTime(),
                 new TranslationState(1, -24-9+2),
-                new TranslationState(47.75, -72+9+2)
+                new TranslationState(47.75, -72+9+1.75)
                 // Y: -72 + 1/2 robot height + mag intake distance from wall
         );
         TranslationConstants.MAX_ACCELERATION = previousAcceleration;
@@ -509,8 +509,8 @@ public class disabled_RedSpecimenAuto extends LinearOpMode {
         );
 
         LinearTranslation alignClips = new LinearTranslation(intakePartiallyUp.getEndTime(),
-                new TranslationState(47.75, -72+9+2), //TODO: changed y to -72+9+2.25
-                new TranslationState(48.75, -72+9+2)
+                new TranslationState(47.75, -72+9+1.75), //TODO: changed y to -72+9+2.25
+                new TranslationState(48.75, -72+9+1.75)
         );
 
         // Lift clips
@@ -521,7 +521,7 @@ public class disabled_RedSpecimenAuto extends LinearOpMode {
 
         // Move forward toward spike mark samples
         LinearTranslation approachSpikeMark = new LinearTranslation(intakeUp.getEndTime()+0.2,
-                new TranslationState(48.75, -72+9+2),
+                new TranslationState(48.75, -72+9+1.75),
                 new TranslationState(48.75, -72+24)
         );
 

@@ -310,16 +310,30 @@ public class BlueTeleop extends LinearOpMode {
         /// Magazine reposition macro
         // dpad left is increase capacity
         if (gamepad2.dpad_left && !toggleGamepad2DpadLeft && !magazineRepositionMacroRunning && clipInventory < MFeederConstants.MAX_CAPACITY) {
-            int maxClips = MFeederConstants.MAX_CAPACITY;
-            MFeederState currentFeederPosition = new MFeederState(
-                    robot.clipbot.getMagazineFeederPosition()
-            );
-            MFeederState targetFeederPosition = new MFeederState(
-                    (maxClips - (clipInventory+1)) * MFeederConstants.INCHES_PER_CLIP
-            );
-            LinearMFeeder moveFeeder = new LinearMFeeder(0, currentFeederPosition, targetFeederPosition);
-            MFeederPlan mFeederPlan = new MFeederPlan(robot.clipbot, moveFeeder);
-            magazineRepositionMacro = new Synchronizer(mFeederPlan);
+            if (gamepad2.left_bumper) {
+                int maxClips = MFeederConstants.MAX_CAPACITY;
+                MFeederState currentFeederPosition = new MFeederState(
+                        robot.clipbot.getMagazineFeederPosition()
+                );
+                clipInventory = MFeederConstants.MAX_CAPACITY;
+                MFeederState targetFeederPosition = new MFeederState(
+                        -MFeederConstants.INCHES_OFFSET
+                );
+                LinearMFeeder moveFeeder = new LinearMFeeder(0, currentFeederPosition, targetFeederPosition);
+                MFeederPlan mFeederPlan = new MFeederPlan(robot.clipbot, moveFeeder);
+                magazineRepositionMacro = new Synchronizer(mFeederPlan);
+            } else {
+                int maxClips = MFeederConstants.MAX_CAPACITY;
+                MFeederState currentFeederPosition = new MFeederState(
+                        robot.clipbot.getMagazineFeederPosition()
+                );
+                MFeederState targetFeederPosition = new MFeederState(
+                        (maxClips - (clipInventory + 1)) * MFeederConstants.INCHES_PER_CLIP
+                );
+                LinearMFeeder moveFeeder = new LinearMFeeder(0, currentFeederPosition, targetFeederPosition);
+                MFeederPlan mFeederPlan = new MFeederPlan(robot.clipbot, moveFeeder);
+                magazineRepositionMacro = new Synchronizer(mFeederPlan);
+            }
             magazineRepositionMacro.start();
             magazineRepositionMacroRunning = true;
             toggleGamepad2DpadLeft = true;
