@@ -21,8 +21,11 @@ public class ClipbotSubsystem {
     private final Motor magazineFeeder;
 
     private double magazineFeederPosition;
+    private double lastMagazineFeederPosition = Double.MIN_VALUE;
 
     public final Telemetry telemetry;
+    public LinearOpMode opMode;
+
 
     public ClipbotSubsystem(
             Servo magazineIntake,
@@ -30,9 +33,11 @@ public class ClipbotSubsystem {
             Servo magazineLoader2,
             Servo klipper,
             Motor magazineFeeder,
-            Telemetry telemetry
+            Telemetry telemetry,
+            LinearOpMode opMode
     ) {
         this.telemetry = telemetry;
+        this.opMode = opMode;
 
         // Servo that takes clips off the wall
         this.magazineIntake = magazineIntake;
@@ -54,8 +59,12 @@ public class ClipbotSubsystem {
      * Performs a bulk hardware call and gets feeder motor position and current.
      */
     public void update() {
-        if (magazineFeeder!=null) {
-            magazineFeederPosition = magazineFeeder.getCurrentPosition();
+        if (magazineFeeder!=null && opMode!=null) {
+            double obtainedPosition = magazineFeeder.getCurrentPosition();
+            if ((obtainedPosition!=0 || lastMagazineFeederPosition==0) && !opMode.isStopRequested()) {
+                magazineFeederPosition = obtainedPosition;
+            }
+            lastMagazineFeederPosition = obtainedPosition;
         }
     }
 

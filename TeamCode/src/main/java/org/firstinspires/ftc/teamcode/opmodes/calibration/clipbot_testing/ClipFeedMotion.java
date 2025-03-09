@@ -104,7 +104,8 @@ public class ClipFeedMotion extends LinearOpMode {
                 magazineLoader2,
                 initServo(hardwareMap, "klipper"),
                 initMotor(hardwareMap, "magazineFeeder", Motor.GoBILDA.RPM_1620),
-                telemetry
+                telemetry,
+                this
         );
     }
 

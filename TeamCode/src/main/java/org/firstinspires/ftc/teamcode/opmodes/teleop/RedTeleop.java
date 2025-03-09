@@ -8,6 +8,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.cvprocessors.SampleOrientationProcessor;
+import org.firstinspires.ftc.teamcode.opmodes.AutoToTeleopData;
 import org.firstinspires.ftc.teamcode.opmodes.algorithms.SampleDataBufferFilter;
 import org.firstinspires.ftc.teamcode.subsystems.DriveSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.LocalizationSubsystem;
@@ -64,15 +65,7 @@ import org.firstinspires.ftc.teamcode.synchropather.systems.vClaw.VClawConstants
 import org.firstinspires.ftc.teamcode.synchropather.systems.vClaw.VClawPlan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.vClaw.VClawState;
 import org.firstinspires.ftc.teamcode.synchropather.systems.vClaw.movements.MoveVClaw;
-import org.firstinspires.ftc.teamcode.synchropather.systems.vClaw.movements.ReleaseVClaw;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.ArrayDeque;
 
 @Config
@@ -180,11 +173,6 @@ public class RedTeleop extends LinearOpMode {
     // reset commands
     private boolean toggleFirstGamepadReset = false;
     private boolean toggleSecondGamepadReset = false;
-
-
-
-    // Auto -> teleop transition
-    public static String filePath = "../magazine_position.txt";
 
 
 
@@ -575,7 +563,7 @@ public class RedTeleop extends LinearOpMode {
 
 
         /// gamepad 1 cross activates deposit macro
-        if (gamepad1.cross && !toggleCrossG1 && preDepositWaiting && !preDepositMacroRunning && !depositMacroRunning) {
+        if (gamepad1.cross && !toggleCrossG1 && preDepositWaiting && !preDepositMacroRunning && (gamepad1.left_bumper || !depositMacroRunning)) {
             initDepositMacro();
             depositMacro.start();
             toggleCrossG1 = true;
@@ -667,32 +655,17 @@ public class RedTeleop extends LinearOpMode {
         SampleDataBufferFilter.FILTER_ERROR_TOLERANCE = 0.15;
         SampleOrientationProcessor.colorType = SampleOrientationProcessor.SampleColor.RED;
 
-//        // check to see if there is a magazine position to read
-//        File file = new File(filePath);
-//
-//        // Step 1: Check if file exists and has exactly one line
-//        try {
-//            long lineCount = Files.lines(Paths.get(filePath)).count(); // Count lines
-//
-//            if (lineCount == 2) {
-//                // Step 2: Read the integer value
-//                try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
-//                    String line = reader.readLine(); // Read the single line
-//                    double feederPosition = Integer.parseInt(line.trim()); // Convert to integer
-//                    double inInches = MFeederConstants.ticksToInches(feederPosition) - MFeederConstants.ZERO_HOME;
-//                    MFeederConstants.ZERO_HOME = -inInches;
-//
-//                    // Step 3: Clear the file
-//                    try (FileWriter writer = new FileWriter(file, false)) { // Overwrite file
-//                        writer.write(""); // Writing an empty string clears the file
-//                    }
-//                } catch (NumberFormatException e) {
-//                    throw new RuntimeException("NUMBER NOT INTEGER! NUMBER NOT INTEGER! NUMBER NOT INTEGER! NUMBER NOT INTEGER! ");
-//                }
-//            }
-//        } catch (IOException e) {
-//            throw new RuntimeException("FILE ERROR! FILE ERROR! FILE ERROR! ");
-//        }
+        // disable sample orientation processor
+        robot.visionPortal.setProcessorEnabled(robot.sampleOrientationProcessor, false);
+
+        // check if auto was previously run
+        if (AutoToTeleopData.magazineReadRequired) {
+            MFeederConstants.ZERO_HOME = -AutoToTeleopData.magazinePositionInches;
+            clipInventory = AutoToTeleopData.magazineClipInventory;
+            AutoToTeleopData.magazineReadRequired = false;
+        } else {
+            MFeederConstants.ZERO_HOME = MFeederConstants.INCHES_OFFSET;
+        }
     }
 
     private void initServos() {
@@ -709,6 +682,11 @@ public class RedTeleop extends LinearOpMode {
 
         // pressure on clips
         robot.clipbot.setMagazineLoaderPosition(loaderPressurePosition);
+
+        // enable processors
+        robot.visionPortal.setProcessorEnabled(robot.sampleOrientationProcessor, true);
+        robot.visionPortal.setProcessorEnabled(robot.limelightDetectorProcessor, true);
+        robot.visionPortal.setProcessorEnabled(robot.clawVacancyProcessor, true);
     }
 
     private void updateTPS() {

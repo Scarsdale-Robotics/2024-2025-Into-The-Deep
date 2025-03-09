@@ -75,7 +75,8 @@ public class ClipIntakeMotionTwooo extends LinearOpMode {
                 initServo(hardwareMap, "magazineLoaderFar"),
                 initServo(hardwareMap, "klipper"),
                 initMotor(hardwareMap, "magazineFeeder", Motor.GoBILDA.RPM_312),
-                telemetry
+                telemetry,
+                this
         );
 
         waitForStart();

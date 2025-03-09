@@ -7,6 +7,7 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 import org.firstinspires.ftc.teamcode.cvprocessors.SampleOrientationProcessor;
+import org.firstinspires.ftc.teamcode.opmodes.AutoToTeleopData;
 import org.firstinspires.ftc.teamcode.opmodes.algorithms.SampleDataBufferFilter;
 import org.firstinspires.ftc.teamcode.synchropather.AutonomousRobot;
 import org.firstinspires.ftc.teamcode.synchropather.macros.EducatedSearchMacro;
@@ -160,6 +161,12 @@ public class disabled_RedSpecimenAuto extends LinearOpMode {
         waitForStart();
 
 
+        // enable processors
+        robot.visionPortal.setProcessorEnabled(robot.sampleOrientationProcessor, true);
+        robot.visionPortal.setProcessorEnabled(robot.limelightDetectorProcessor, true);
+        robot.visionPortal.setProcessorEnabled(robot.clawVacancyProcessor, true);
+
+
         /// Score preload and one spike mark
         preloadSequence.start();
         boolean foundSampleToPickup = false;
@@ -292,17 +299,30 @@ public class disabled_RedSpecimenAuto extends LinearOpMode {
             // TODO: Consider standard end pos to prevent spec attach conflict
 
 
+            // move right
+            LinearTranslation linearTranslation = new LinearTranslation(0,
+                    new TranslationState(robot.localization.getPose()),
+                    new TranslationState(5,-24-9+2)
+            );
+            TranslationPlan translationPlan = new TranslationPlan(robot.drive, robot.localization, linearTranslation);
+            LinearRotation rotationStill = new LinearRotation(0, new RotationState(Math.PI/2), new RotationState(Math.PI/2));
+            RotationPlan rotationPlan = new RotationPlan(robot.drive, robot.localization, rotationStill);
+            shimmyMacro = new Synchronizer(translationPlan, rotationPlan);
+            shimmyMacro.start();
+            while (opModeIsActive() && shimmyMacro.update()) updateRobot();
+            shimmyMacro.stop();
+
+
             // deposit
             initDepositMacro();
             depositMacro.start();
             while (opModeIsActive() && depositMacro.update()) updateRobot();
             robot.linearSlides.stopLifts();
-            shimmyMacro = new ShimmyMacro(robot.drive, robot.localization, leftFirst);
-            shimmyMacro.start();
-            while (opModeIsActive() && shimmyMacro.update()) updateRobot();
-            shimmyMacro.stop();
             robot.verticalDeposit.release();
             leftFirst = !leftFirst;
+
+
+            if (true) break;
 
         }
 
@@ -377,6 +397,9 @@ public class disabled_RedSpecimenAuto extends LinearOpMode {
         );
         robot.overheadSampleData.setFilterLength(overheadFilterLength);
 
+        // disable sample orientation processor
+        robot.visionPortal.setProcessorEnabled(robot.sampleOrientationProcessor, false);
+
         // Horizontal arm slightly up, claw closed
         robot.horizontalIntake.setClawPosition(HClawConstants.GRAB_POSITION);
         robot.horizontalIntake.setWristAngle(0);
@@ -411,6 +434,12 @@ public class disabled_RedSpecimenAuto extends LinearOpMode {
     private void updateRobot() {
         robot.update();
         robot.overheadSampleData.updateFilterData(robot.overheadCamera.getSamplePositions(), robot.overheadCamera.getSampleAngles(), robot.overheadCamera.getClosestSample()); // Can return null
+
+        // write mag position to static class
+        double position = robot.clipbot.getMagazineFeederPosition();
+        AutoToTeleopData.magazinePositionInches = position;
+        AutoToTeleopData.magazineClipInventory = clipInventory;
+        AutoToTeleopData.magazineReadRequired = true;
     }
 
     public static double thing = 0.25;  // delay between klip and raise
@@ -551,7 +580,7 @@ public class disabled_RedSpecimenAuto extends LinearOpMode {
                 MLoaderConstants.maxClosedPosition
         );
         MoveMLoader loaderRelease = new MoveMLoader(
-                loaderClose.getEndTime() + 1,
+                loaderClose.getEndTime()+0.5,
                 MLoaderConstants.partialClosedPosition
         );
         MoveMLoader loaderClose2 = new MoveMLoader(
@@ -561,14 +590,6 @@ public class disabled_RedSpecimenAuto extends LinearOpMode {
         MoveMLoader loaderRelease2 = new MoveMLoader(
                 loaderClose2.getEndTime()+0.5,
                 MLoaderConstants.partialClosedPosition
-        );
-        MoveMLoader loaderClose3 = new MoveMLoader(
-                loaderRelease2.getEndTime(),
-                MLoaderConstants.maxClosedPosition
-        );
-        MoveMLoader loaderRelease3 = new MoveMLoader(
-                loaderClose3.getEndTime()+0.5,
-                loaderFeedingPosition
         );
 
 
@@ -648,7 +669,7 @@ public class disabled_RedSpecimenAuto extends LinearOpMode {
         );
 
         // Advance feeder by one clip
-        double ti = Math.max(loaderRelease3.getEndTime(), holdLiftDown.getEndTime()) + feederDelayTime;
+        double ti = Math.max(loaderRelease2.getEndTime(), holdLiftDown.getEndTime()) + feederDelayTime;
         LinearMFeeder advanceFeeder = new LinearMFeeder(new TimeSpan(ti, ti+advanceTime),
                 currentFeederPosition,
                 targetFeederPosition
@@ -683,9 +704,9 @@ public class disabled_RedSpecimenAuto extends LinearOpMode {
         // Score specimen
         TranslationConstants.MAX_ACCELERATION = previousAcceleration/3;
         CRSplineTranslation splineScoreSpikeMark = new CRSplineTranslation(holdLiftDown.getEndTime()-1.75,
-                new TranslationState(48.75, -72+24),
-                new TranslationState(7,-46),
-                new TranslationState(-2, -24-9+2)
+                new TranslationState(48.75, -48),
+                new TranslationState(-2,-28),
+                new TranslationState(-2, -31)
         );
         TranslationConstants.MAX_ACCELERATION = previousAcceleration;
 
@@ -805,8 +826,6 @@ public class disabled_RedSpecimenAuto extends LinearOpMode {
                 loaderRelease,
                 loaderClose2,
                 loaderRelease2,
-                loaderClose3,
-                loaderRelease3,
                 loaderApplyPressure
         );
 

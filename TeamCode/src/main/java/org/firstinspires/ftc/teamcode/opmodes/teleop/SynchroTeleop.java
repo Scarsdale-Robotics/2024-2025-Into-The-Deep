@@ -123,7 +123,8 @@ public class SynchroTeleop extends LinearOpMode {
                 initServo(hardwareMap, "magazineLoader2"),
                 initServo(hardwareMap, "klipper"),
                 initMotor(hardwareMap, "magazineFeeder", Motor.GoBILDA.RPM_312),
-                telemetry
+                telemetry,
+                this
         );
 
         overheadCamera = new OverheadCameraSubsystem(

@@ -80,19 +80,6 @@ public class AutonomousRobot {
 //        HardwareRobot hardwareRobot = new HardwareRobot(hardwareMap); // TODO refer above
 
 
-//        this.drive = null;
-//        this.localization = null; //
-//        this.horizontalIntake = null;
-//        this.verticalDeposit = null;
-//        this.overheadCamera = null; //
-//        this.linearSlides = null;
-//        this.clipbot = null; //
-//        this.limelightSubsystem = null; //
-//        this.visionPortal = null;
-//        this.sampleOrientationProcessor = null;
-//        this.limelightDetectorProcessor = null;
-//        this.clawVacancyProcessor = null;
-
         // init horizontal intake
         Servo leftHorizontalArm = hardwareMap.get(ServoImplEx.class, "leftHorizontalArm");
         Servo rightHorizontalArm = hardwareMap.get(ServoImplEx.class, "rightHorizontalArm");
@@ -253,7 +240,8 @@ public class AutonomousRobot {
                 magazineLoader2,
                 initServo(hardwareMap, "klipper"),
                 magazineFeeder,
-                telemetry
+                telemetry,
+                opMode
         );
 
 
@@ -271,8 +259,8 @@ public class AutonomousRobot {
                 .build();
 
         visionPortal.setProcessorEnabled(sampleOrientationProcessor, true);
-        visionPortal.setProcessorEnabled(limelightDetectorProcessor, true);
-        visionPortal.setProcessorEnabled(clawVacancyProcessor, true);
+        visionPortal.setProcessorEnabled(limelightDetectorProcessor, false);
+        visionPortal.setProcessorEnabled(clawVacancyProcessor, false);
 
         return visionPortal;
     }

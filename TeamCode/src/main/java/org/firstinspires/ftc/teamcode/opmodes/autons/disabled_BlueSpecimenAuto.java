@@ -7,6 +7,7 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 import org.firstinspires.ftc.teamcode.cvprocessors.SampleOrientationProcessor;
+import org.firstinspires.ftc.teamcode.opmodes.AutoToTeleopData;
 import org.firstinspires.ftc.teamcode.opmodes.algorithms.SampleDataBufferFilter;
 import org.firstinspires.ftc.teamcode.synchropather.AutonomousRobot;
 import org.firstinspires.ftc.teamcode.synchropather.macros.EducatedSearchMacro;
@@ -73,8 +74,6 @@ import org.firstinspires.ftc.teamcode.synchropather.systems.vClaw.VClawState;
 import org.firstinspires.ftc.teamcode.synchropather.systems.vClaw.movements.MoveVClaw;
 import org.firstinspires.ftc.teamcode.synchropather.systems.vClaw.movements.ReleaseVClaw;
 
-import java.io.FileWriter;
-import java.io.IOException;
 import java.util.List;
 
 @Config
@@ -153,17 +152,19 @@ public class disabled_BlueSpecimenAuto extends LinearOpMode {
     public static double verticalLiftDownDeadtime = 0.23;
 
 
-    // Auto -> teleop transition
-    public static String filePath = "../magazine_position.txt";
-
-
     @Override
     public void runOpMode() throws InterruptedException {
         initSubsystems();
-//
-//        initPreloadSequence();
+
+        initPreloadSequence();
 
         waitForStart();
+
+
+        // enable processors
+        robot.visionPortal.setProcessorEnabled(robot.sampleOrientationProcessor, true);
+        robot.visionPortal.setProcessorEnabled(robot.limelightDetectorProcessor, true);
+        robot.visionPortal.setProcessorEnabled(robot.clawVacancyProcessor, true);
 
 
         /// Score preload and one spike mark
@@ -394,51 +395,51 @@ public class disabled_BlueSpecimenAuto extends LinearOpMode {
                 this,
                 SampleDataBufferFilter.SampleTargetingMethod.TRANSLATION
         );
-//        robot.overheadSampleData.setFilterLength(overheadFilterLength);
+        robot.overheadSampleData.setFilterLength(overheadFilterLength);
 
-//        // Horizontal arm slightly up, claw closed
-//        robot.horizontalIntake.setClawPosition(HClawConstants.GRAB_POSITION);
-//        robot.horizontalIntake.setWristAngle(0);
-//        robot.horizontalIntake.setArmPosition(0.9);
-//
-//        // Vertical arm ready to deposit, vertical claw grabbing
-//        robot.verticalDeposit.setArmPosition(VArmConstants.armLeftPreDepositPosition);
-//        robot.verticalDeposit.setClawPosition(VClawConstants.GRAB_POSITION);
-//
-//        // Klipper up
-//        robot.clipbot.setKlipperPosition(KlipperConstants.openPosition);
-//
-//        // init limelight actions
-//        EnableLimelight enableLimelight = new EnableLimelight(new TimeSpan(0,10), LimelightPipeline.SAMPLE_DETECTOR);
-//        LimelightPlan enableLimelightPlan = new LimelightPlan(robot.limelightSubsystem, enableLimelight);
-//        this.enableLimelightAction = new Synchronizer(enableLimelightPlan);
-//        this.enableLimelightAction.start();
-//
-//        DisableLimelight disableLimelight = new DisableLimelight(new TimeSpan(0,10));
-//        LimelightPlan disableLimelightPlan = new LimelightPlan(robot.limelightSubsystem, disableLimelight);
-//        this.disableLimelightAction = new Synchronizer(disableLimelightPlan);
-//        this.disableLimelightAction.start();
-//
-//        // init sample orientation processor
-//        if (robot.teamColor.equals(AutonomousRobot.TeamColor.BLUE)) {
-//            SampleOrientationProcessor.colorType = SampleOrientationProcessor.SampleColor.BLUE;
-//        } else {
-//            SampleOrientationProcessor.colorType = SampleOrientationProcessor.SampleColor.RED;
-//        }
+        // disable sample orientation processor
+        robot.visionPortal.setProcessorEnabled(robot.sampleOrientationProcessor, false);
+
+        // Horizontal arm slightly up, claw closed
+        robot.horizontalIntake.setClawPosition(HClawConstants.GRAB_POSITION);
+        robot.horizontalIntake.setWristAngle(0);
+        robot.horizontalIntake.setArmPosition(0.9);
+
+        // Vertical arm ready to deposit, vertical claw grabbing
+        robot.verticalDeposit.setArmPosition(VArmConstants.armLeftPreDepositPosition);
+        robot.verticalDeposit.setClawPosition(VClawConstants.GRAB_POSITION);
+
+        // Klipper up
+        robot.clipbot.setKlipperPosition(KlipperConstants.openPosition);
+
+        // init limelight actions
+        EnableLimelight enableLimelight = new EnableLimelight(new TimeSpan(0,10), LimelightPipeline.SAMPLE_DETECTOR);
+        LimelightPlan enableLimelightPlan = new LimelightPlan(robot.limelightSubsystem, enableLimelight);
+        this.enableLimelightAction = new Synchronizer(enableLimelightPlan);
+        this.enableLimelightAction.start();
+
+        DisableLimelight disableLimelight = new DisableLimelight(new TimeSpan(0,10));
+        LimelightPlan disableLimelightPlan = new LimelightPlan(robot.limelightSubsystem, disableLimelight);
+        this.disableLimelightAction = new Synchronizer(disableLimelightPlan);
+        this.disableLimelightAction.start();
+
+        // init sample orientation processor
+        if (robot.teamColor.equals(AutonomousRobot.TeamColor.BLUE)) {
+            SampleOrientationProcessor.colorType = SampleOrientationProcessor.SampleColor.BLUE;
+        } else {
+            SampleOrientationProcessor.colorType = SampleOrientationProcessor.SampleColor.RED;
+        }
     }
 
     private void updateRobot() {
         robot.update();
         robot.overheadSampleData.updateFilterData(robot.overheadCamera.getSamplePositions(), robot.overheadCamera.getSampleAngles(), robot.overheadCamera.getClosestSample()); // Can return null
 
-        // write mag position to text file
-        try (FileWriter writer = new FileWriter(filePath, false)) { // 'false' ensures overwriting
-            writer.write((int)MFeederConstants.inchesToTicks(robot.clipbot.getMagazineFeederPosition()+MFeederConstants.ZERO_HOME));
-            writer.write(System.lineSeparator());
-        } catch (IOException e) {
-            telemetry.addData("FILE ERROR! FILE ERROR! FILE ERROR! ","");
-            telemetry.update();
-        }
+        // write mag position to static class
+        double position = robot.clipbot.getMagazineFeederPosition();
+        AutoToTeleopData.magazinePositionInches = position;
+        AutoToTeleopData.magazineClipInventory = clipInventory;
+        AutoToTeleopData.magazineReadRequired = true;
     }
 
     public static double thing = 0.25;  // delay between klip and raise
