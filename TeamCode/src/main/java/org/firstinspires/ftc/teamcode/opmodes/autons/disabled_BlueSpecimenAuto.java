@@ -73,6 +73,8 @@ import org.firstinspires.ftc.teamcode.synchropather.systems.vClaw.VClawState;
 import org.firstinspires.ftc.teamcode.synchropather.systems.vClaw.movements.MoveVClaw;
 import org.firstinspires.ftc.teamcode.synchropather.systems.vClaw.movements.ReleaseVClaw;
 
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.List;
 
 @Config
@@ -125,7 +127,7 @@ public class disabled_BlueSpecimenAuto extends LinearOpMode {
     public static double minSampleX = -2;
     public static double maxSampleX = 4;
 
-    public static double advanceTime = 1.0;
+    public static double advanceTime = 1.1;
 
 
     // Deposit
@@ -151,11 +153,15 @@ public class disabled_BlueSpecimenAuto extends LinearOpMode {
     public static double verticalLiftDownDeadtime = 0.23;
 
 
+    // Auto -> teleop transition
+    public static String filePath = "../magazine_position.txt";
+
+
     @Override
     public void runOpMode() throws InterruptedException {
         initSubsystems();
-
-        initPreloadSequence();
+//
+//        initPreloadSequence();
 
         waitForStart();
 
@@ -292,17 +298,30 @@ public class disabled_BlueSpecimenAuto extends LinearOpMode {
             // TODO: Consider standard end pos to prevent spec attach conflict
 
 
+            // move right
+            LinearTranslation linearTranslation = new LinearTranslation(0,
+                    new TranslationState(robot.localization.getPose()),
+                    new TranslationState(5,-24-9+2)
+            );
+            TranslationPlan translationPlan = new TranslationPlan(robot.drive, robot.localization, linearTranslation);
+            LinearRotation rotationStill = new LinearRotation(0, new RotationState(Math.PI/2), new RotationState(Math.PI/2));
+            RotationPlan rotationPlan = new RotationPlan(robot.drive, robot.localization, rotationStill);
+            shimmyMacro = new Synchronizer(translationPlan, rotationPlan);
+            shimmyMacro.start();
+            while (opModeIsActive() && shimmyMacro.update()) updateRobot();
+            shimmyMacro.stop();
+
+
             // deposit
             initDepositMacro();
             depositMacro.start();
             while (opModeIsActive() && depositMacro.update()) updateRobot();
             robot.linearSlides.stopLifts();
-            shimmyMacro = new ShimmyMacro(robot.drive, robot.localization, leftFirst);
-            shimmyMacro.start();
-            while (opModeIsActive() && shimmyMacro.update()) updateRobot();
-            shimmyMacro.stop();
             robot.verticalDeposit.release();
             leftFirst = !leftFirst;
+
+
+            if (true) break;
 
         }
 
@@ -375,42 +394,51 @@ public class disabled_BlueSpecimenAuto extends LinearOpMode {
                 this,
                 SampleDataBufferFilter.SampleTargetingMethod.TRANSLATION
         );
-        robot.overheadSampleData.setFilterLength(overheadFilterLength);
+//        robot.overheadSampleData.setFilterLength(overheadFilterLength);
 
-        // Horizontal arm slightly up, claw closed
-        robot.horizontalIntake.setClawPosition(HClawConstants.GRAB_POSITION);
-        robot.horizontalIntake.setWristAngle(0);
-        robot.horizontalIntake.setArmPosition(0.9);
-
-        // Vertical arm ready to deposit, vertical claw grabbing
-        robot.verticalDeposit.setArmPosition(VArmConstants.armLeftPreDepositPosition);
-        robot.verticalDeposit.setClawPosition(VClawConstants.GRAB_POSITION);
-
-        // Klipper up
-        robot.clipbot.setKlipperPosition(KlipperConstants.openPosition);
-
-        // init limelight actions
-        EnableLimelight enableLimelight = new EnableLimelight(new TimeSpan(0,10), LimelightPipeline.SAMPLE_DETECTOR);
-        LimelightPlan enableLimelightPlan = new LimelightPlan(robot.limelightSubsystem, enableLimelight);
-        this.enableLimelightAction = new Synchronizer(enableLimelightPlan);
-        this.enableLimelightAction.start();
-
-        DisableLimelight disableLimelight = new DisableLimelight(new TimeSpan(0,10));
-        LimelightPlan disableLimelightPlan = new LimelightPlan(robot.limelightSubsystem, disableLimelight);
-        this.disableLimelightAction = new Synchronizer(disableLimelightPlan);
-        this.disableLimelightAction.start();
-
-        // init sample orientation processor
-        if (robot.teamColor.equals(AutonomousRobot.TeamColor.BLUE)) {
-            SampleOrientationProcessor.colorType = SampleOrientationProcessor.SampleColor.BLUE;
-        } else {
-            SampleOrientationProcessor.colorType = SampleOrientationProcessor.SampleColor.RED;
-        }
+//        // Horizontal arm slightly up, claw closed
+//        robot.horizontalIntake.setClawPosition(HClawConstants.GRAB_POSITION);
+//        robot.horizontalIntake.setWristAngle(0);
+//        robot.horizontalIntake.setArmPosition(0.9);
+//
+//        // Vertical arm ready to deposit, vertical claw grabbing
+//        robot.verticalDeposit.setArmPosition(VArmConstants.armLeftPreDepositPosition);
+//        robot.verticalDeposit.setClawPosition(VClawConstants.GRAB_POSITION);
+//
+//        // Klipper up
+//        robot.clipbot.setKlipperPosition(KlipperConstants.openPosition);
+//
+//        // init limelight actions
+//        EnableLimelight enableLimelight = new EnableLimelight(new TimeSpan(0,10), LimelightPipeline.SAMPLE_DETECTOR);
+//        LimelightPlan enableLimelightPlan = new LimelightPlan(robot.limelightSubsystem, enableLimelight);
+//        this.enableLimelightAction = new Synchronizer(enableLimelightPlan);
+//        this.enableLimelightAction.start();
+//
+//        DisableLimelight disableLimelight = new DisableLimelight(new TimeSpan(0,10));
+//        LimelightPlan disableLimelightPlan = new LimelightPlan(robot.limelightSubsystem, disableLimelight);
+//        this.disableLimelightAction = new Synchronizer(disableLimelightPlan);
+//        this.disableLimelightAction.start();
+//
+//        // init sample orientation processor
+//        if (robot.teamColor.equals(AutonomousRobot.TeamColor.BLUE)) {
+//            SampleOrientationProcessor.colorType = SampleOrientationProcessor.SampleColor.BLUE;
+//        } else {
+//            SampleOrientationProcessor.colorType = SampleOrientationProcessor.SampleColor.RED;
+//        }
     }
 
     private void updateRobot() {
         robot.update();
         robot.overheadSampleData.updateFilterData(robot.overheadCamera.getSamplePositions(), robot.overheadCamera.getSampleAngles(), robot.overheadCamera.getClosestSample()); // Can return null
+
+        // write mag position to text file
+        try (FileWriter writer = new FileWriter(filePath, false)) { // 'false' ensures overwriting
+            writer.write((int)MFeederConstants.inchesToTicks(robot.clipbot.getMagazineFeederPosition()+MFeederConstants.ZERO_HOME));
+            writer.write(System.lineSeparator());
+        } catch (IOException e) {
+            telemetry.addData("FILE ERROR! FILE ERROR! FILE ERROR! ","");
+            telemetry.update();
+        }
     }
 
     public static double thing = 0.25;  // delay between klip and raise

@@ -29,7 +29,7 @@ public class MFeederConstants {
     /**
      *  Max magazine feeder acceleration in inches/s^2.
      */
-    public static double MAX_ACCELERATION = 12;
+    public static double MAX_ACCELERATION = 8;
 
     /**
      *  The distance between the end of the feeder and the position of the first clip.

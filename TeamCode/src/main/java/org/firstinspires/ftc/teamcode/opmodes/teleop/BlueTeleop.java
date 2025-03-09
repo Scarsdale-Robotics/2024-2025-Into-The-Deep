@@ -41,9 +41,6 @@ import org.firstinspires.ftc.teamcode.synchropather.systems.lift.LiftConstants;
 import org.firstinspires.ftc.teamcode.synchropather.systems.lift.LiftPlan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.lift.LiftState;
 import org.firstinspires.ftc.teamcode.synchropather.systems.lift.movements.LinearLift;
-import org.firstinspires.ftc.teamcode.synchropather.systems.limelight.LimelightPipeline;
-import org.firstinspires.ftc.teamcode.synchropather.systems.limelight.LimelightPlan;
-import org.firstinspires.ftc.teamcode.synchropather.systems.limelight.movements.EnableLimelight;
 import org.firstinspires.ftc.teamcode.synchropather.systems.mFeeder.MFeederConstants;
 import org.firstinspires.ftc.teamcode.synchropather.systems.mFeeder.MFeederPlan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.mFeeder.MFeederState;
@@ -67,14 +64,22 @@ import org.firstinspires.ftc.teamcode.synchropather.systems.vClaw.VClawConstants
 import org.firstinspires.ftc.teamcode.synchropather.systems.vClaw.VClawPlan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.vClaw.VClawState;
 import org.firstinspires.ftc.teamcode.synchropather.systems.vClaw.movements.MoveVClaw;
+import org.firstinspires.ftc.teamcode.synchropather.systems.vClaw.movements.ReleaseVClaw;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayDeque;
 
 @Config
 @TeleOp(name="Blue Teleop")
 public class BlueTeleop extends LinearOpMode {
 
-    private Synchronizer pickupMacro, makerMacro, depositMacro;
+    private Synchronizer pickupMacro, makerMacro, preDepositMacro, depositMacro;
 
     private AutonomousRobot robot;
     private ArrayDeque<Double> loopTicks;
@@ -101,7 +106,7 @@ public class BlueTeleop extends LinearOpMode {
     private int clipInventory = 6;
     private boolean inventoryStocked = true;
 
-    public static double klipperWaitTime = 0.3;
+    public static double klipperWaitTime = 0.4;
     public static double feederDelayTime = -0.09;
     public static double holdLiftDownPosition = -1;
 
@@ -146,11 +151,16 @@ public class BlueTeleop extends LinearOpMode {
 
     boolean makerMacroRunning = false;
     boolean specimenMade = false;
+    boolean toggleSquareG1 = false;
     boolean toggleSquareG2 = false;
+
+    boolean preDepositMacroRunning = false;
+    boolean preDepositWaiting = false;
+    boolean toggleTriangleG1 = false;
 
     boolean depositMacroRunning = false;
     boolean deposited = true;
-    boolean toggleTriangleG1 = false;
+    boolean toggleCrossG1 = false;
 
     double lastLiftPower = 0;
     double lastExtendoPower = 0;
@@ -173,6 +183,11 @@ public class BlueTeleop extends LinearOpMode {
 
 
 
+    // Auto -> teleop transition
+    public static String filePath = "../magazine_position.txt";
+
+
+
     @Override
     public void runOpMode() throws InterruptedException {
         initialize();
@@ -185,6 +200,7 @@ public class BlueTeleop extends LinearOpMode {
         telemetry.update();
 
         waitForStart();
+        initServos();
 
 
 
@@ -197,13 +213,15 @@ public class BlueTeleop extends LinearOpMode {
 
 
             /// Claim drive control by pressing both joysticks
-            if (gamepad1.left_stick_button && gamepad1.right_stick_button) {
-                if (!gamepad1HasDriveControl && clipInventory==7) {
-                    clipInventory = 6;
+            if (!intakeMacroRunning && !makerMacroRunning && !preDepositMacroRunning && !depositMacroRunning && !magazineRepositionMacroRunning) {
+                if (gamepad1.left_stick_button && gamepad1.right_stick_button) {
+                    if (!gamepad1HasDriveControl && clipInventory == 7) {
+                        clipInventory = 6;
+                    }
+                    gamepad1HasDriveControl = true;
+                } else if (gamepad2.left_stick_button && gamepad2.right_stick_button) {
+                    gamepad1HasDriveControl = false;
                 }
-                gamepad1HasDriveControl = true;
-            } else if (gamepad2.left_stick_button && gamepad2.right_stick_button) {
-                gamepad1HasDriveControl = false;
             }
 
 
@@ -359,7 +377,8 @@ public class BlueTeleop extends LinearOpMode {
 
         /// gamepad 1 manual control lift with triggers
         double totalFirstGamepadTrigger = gamepad1.right_trigger - gamepad1.left_trigger;
-        if ((totalFirstGamepadTrigger!=0 || lastLiftPower!=0) && !(makerMacroRunning || depositMacroRunning)) {
+        boolean driverControllingLift = gamepad1.right_trigger!=0 || gamepad1.left_trigger!=0;
+        if ((totalFirstGamepadTrigger!=0 || lastLiftPower!=0) && !makerMacroRunning && (!depositMacroRunning || gamepad1.left_bumper)) {
             robot.linearSlides.setLiftPowers(totalFirstGamepadTrigger);
             lastLiftPower = totalFirstGamepadTrigger;
         }
@@ -448,11 +467,13 @@ public class BlueTeleop extends LinearOpMode {
             robot.horizontalIntake.setArmPosition(clawCheckPosition);
             robot.horizontalIntake.setWristAngle(0);
         }
-        if (gamepad2.triangle && !toggleTriangleG2 && intookSample) {
+        if (gamepad2.triangle && !toggleTriangleG2) {
             robot.horizontalIntake.setClawPosition(HClawConstants.RELEASE_POSITION);
             robot.horizontalIntake.setArmPosition(clawCheckPosition);
             robot.horizontalIntake.setWristAngle(0);
-            intookSample = false;
+            if (intookSample) {
+                intookSample = false;
+            }
         }
         if (!gamepad2.triangle) toggleTriangleG2 = false;
 
@@ -469,16 +490,20 @@ public class BlueTeleop extends LinearOpMode {
 
 
         /// gamepad 2 square activates maker macro
-        if (gamepad2.square && !toggleSquareG2 && (intookSample && !specimenMade || gamepad2.left_bumper) && !makerMacroRunning && deposited && !depositMacroRunning && inventoryStocked && clipInventory>0) {
-            if (gamepad2.left_bumper) {
-                // Only do klipper
-                initAlternateMakerMacro();
-            } else {
-                // Do transfer and klipper
-                initMakerMacro();
-            }
+        if (gamepad2.square && !toggleSquareG2 && (intookSample && !specimenMade || gamepad2.left_bumper) && !makerMacroRunning && (gamepad2.left_bumper || (deposited && !preDepositMacroRunning && !depositMacroRunning)) && inventoryStocked && clipInventory>0) {
+            // Do transfer and klipper
+            initMakerMacro();
             makerMacro.start();
             toggleSquareG2 = true;
+            makerMacroRunning = true;
+            specimenMade = false;
+        }
+        // gamepad 1 has alternate command
+        if (gamepad1.left_bumper && gamepad1.square && !toggleSquareG1 && !makerMacroRunning && deposited && !preDepositMacroRunning && !depositMacroRunning && inventoryStocked && clipInventory>0) {
+            // Only do klipper
+            initAlternateMakerMacro();
+            makerMacro.start();
+            toggleSquareG1 = true;
             makerMacroRunning = true;
             specimenMade = false;
         }
@@ -516,40 +541,58 @@ public class BlueTeleop extends LinearOpMode {
 
 
 
-        /// gamepad 1 triangle activates deposit macro
-        if (gamepad1.triangle && !toggleTriangleG1 && specimenMade && !depositMacroRunning) {
-            initDepositMacro();
-            depositMacro.start();
+        /// gamepad 1 triangle runs pre deposit macro
+        if (gamepad1.triangle && !toggleTriangleG1 && specimenMade && !preDepositMacroRunning && !depositMacroRunning) {
+            initPreDepositMacro();
+            preDepositMacro.start();
             toggleTriangleG1 = true;
-            depositMacroRunning = true;
+            preDepositMacroRunning = true;
             deposited = false;
+            preDepositWaiting = false;
         }
         // run synchronizer
-        if (depositMacroRunning) {
-            if (!depositMacro.update()) {
-                depositMacroRunning = false;
-                deposited = true;
-                depositReadyToRelease = true;
+        if (preDepositMacroRunning) {
+            if (!preDepositMacro.update()) {
+                preDepositMacroRunning = false;
+                preDepositWaiting = true;
                 specimenMade = false;
-                robot.linearSlides.stopLifts();
             }
         }
-        // second press cancels it
-        if (gamepad1.triangle && !toggleTriangleG1 && depositMacroRunning) {
-            depositMacro.stop();
-            depositMacroRunning = false;
-            toggleTriangleG1 = true;
-            deposited = false;
+        if (preDepositWaiting && !driverControllingLift) {
+            preDepositMacro.update(MovementType.LIFT);
+        }
+        // to cancel deposit
+        if (gamepad1.triangle && !toggleTriangleG1 && preDepositWaiting) {
+            preDepositWaiting = false;
+            deposited = true;
+            robot.linearSlides.stopLifts();
+            robot.verticalDeposit.release();
         }
         if (!gamepad1.triangle) toggleTriangleG1 = false;
 
 
 
-        /// gamepad 1 cross can decide when to release specimen
-        if (depositReadyToRelease && gamepad1.cross) {
-            robot.verticalDeposit.release();
-            depositReadyToRelease = false;
+
+
+        /// gamepad 1 cross activates deposit macro
+        if (gamepad1.cross && !toggleCrossG1 && preDepositWaiting && !preDepositMacroRunning && !depositMacroRunning) {
+            initDepositMacro();
+            depositMacro.start();
+            toggleCrossG1 = true;
+            depositMacroRunning = true;
         }
+        // run synchronizer
+        if (depositMacroRunning) {
+            if (!depositMacro.update() && !gamepad1.left_bumper) {
+                depositMacroRunning = false;
+                preDepositWaiting = false;
+                deposited = true;
+                robot.linearSlides.stopLifts();
+                robot.verticalDeposit.release();
+            }
+        }
+        if (!gamepad1.cross) toggleCrossG1 = false;
+
     }
 
 
@@ -620,10 +663,39 @@ public class BlueTeleop extends LinearOpMode {
                 )
         );
         this.sampleData = robot.overheadSampleData;
-        OverheadCameraSubsystem.CLAW_OFFSET[0] = -2.6;
+        OverheadCameraSubsystem.CLAW_OFFSET[0] = -2.8;
         SampleDataBufferFilter.FILTER_ERROR_TOLERANCE = 0.15;
         SampleOrientationProcessor.colorType = SampleOrientationProcessor.SampleColor.BLUE;
 
+//        // check to see if there is a magazine position to read
+//        File file = new File(filePath);
+//
+//        // Step 1: Check if file exists and has exactly one line
+//        try {
+//            long lineCount = Files.lines(Paths.get(filePath)).count(); // Count lines
+//
+//            if (lineCount == 2) {
+//                // Step 2: Read the integer value
+//                try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+//                    String line = reader.readLine(); // Read the single line
+//                    double feederPosition = Integer.parseInt(line.trim()); // Convert to integer
+//                    double inInches = MFeederConstants.ticksToInches(feederPosition) - MFeederConstants.ZERO_HOME;
+//                    MFeederConstants.ZERO_HOME = -inInches;
+//
+//                    // Step 3: Clear the file
+//                    try (FileWriter writer = new FileWriter(file, false)) { // Overwrite file
+//                        writer.write(""); // Writing an empty string clears the file
+//                    }
+//                } catch (NumberFormatException e) {
+//                    throw new RuntimeException("NUMBER NOT INTEGER! NUMBER NOT INTEGER! NUMBER NOT INTEGER! NUMBER NOT INTEGER! ");
+//                }
+//            }
+//        } catch (IOException e) {
+//            throw new RuntimeException("FILE ERROR! FILE ERROR! FILE ERROR! ");
+//        }
+    }
+
+    private void initServos() {
         robot.verticalDeposit.setArmPosition(0.5);
         robot.verticalDeposit.setClawPosition(VClawConstants.RELEASE_POSITION);
         robot.horizontalIntake.setArmPosition(0.9);
@@ -1114,7 +1186,7 @@ public class BlueTeleop extends LinearOpMode {
 
 
 
-    private void initDepositMacro() {
+    private void initPreDepositMacro() {
 
         // Score specimen
         LinearVArm vArmToPreDepositCycle = new LinearVArm(0,
@@ -1124,10 +1196,36 @@ public class BlueTeleop extends LinearOpMode {
 
         LinearLift liftToPreDepositCycle = new LinearLift(vArmToPreDepositCycle.getStartTime(),
                 new LiftState(0),
+                new LiftState(7)
+        );
+
+
+
+        // Create Plans
+        LiftPlan liftPlan = new LiftPlan(robot.linearSlides,
+                liftToPreDepositCycle
+        );
+        VArmPlan vArmPlan = new VArmPlan(robot.verticalDeposit,
+                vArmToPreDepositCycle
+        );
+
+
+        // Synchronizer
+        this.preDepositMacro = new Synchronizer(
+                liftPlan,
+                vArmPlan
+        );
+    }
+
+
+    private void initDepositMacro() {
+
+        LinearLift liftToPreDepositCycle = new LinearLift(0,
+                new LiftState(7),
                 new LiftState(LiftConstants.preDepositPosition)
         );
 
-        LinearVArm vArmToDepositCycle = new LinearVArm(liftToPreDepositCycle.getEndTime(),
+        LinearVArm vArmToDepositCycle = new LinearVArm(liftToPreDepositCycle.getEndTime()+0.1,
                 new VArmState(VArmConstants.armLeftPreDepositPosition),
                 new VArmState(VArmConstants.armLeftDepositPosition)
         );
@@ -1137,15 +1235,20 @@ public class BlueTeleop extends LinearOpMode {
                 new LiftState(LiftConstants.depositPosition)
         );
 
+        LinearLift liftEndStill = new LinearLift(new TimeSpan(liftToDepositCycle.getEndTime(), liftToDepositCycle.getEndTime()+0.25),
+                new LiftState(LiftConstants.depositPosition),
+                new LiftState(LiftConstants.depositPosition)
+        );
+
 
 
         // Create Plans
         LiftPlan liftPlan = new LiftPlan(robot.linearSlides,
                 liftToPreDepositCycle,
-                liftToDepositCycle
+                liftToDepositCycle,
+                liftEndStill
         );
         VArmPlan vArmPlan = new VArmPlan(robot.verticalDeposit,
-                vArmToPreDepositCycle,
                 vArmToDepositCycle
         );
 

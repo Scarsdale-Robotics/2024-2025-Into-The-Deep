@@ -1,6 +1,6 @@
 package org.firstinspires.ftc.teamcode.synchropather;
 
-import static org.firstinspires.ftc.teamcode.Auxiliary.initMotor;
+
 import static org.firstinspires.ftc.teamcode.Auxiliary.initServo;
 
 import android.util.Size;
@@ -79,6 +79,19 @@ public class AutonomousRobot {
         this.teamColor = teamColor;
 //        HardwareRobot hardwareRobot = new HardwareRobot(hardwareMap); // TODO refer above
 
+
+//        this.drive = null;
+//        this.localization = null; //
+//        this.horizontalIntake = null;
+//        this.verticalDeposit = null;
+//        this.overheadCamera = null; //
+//        this.linearSlides = null;
+//        this.clipbot = null; //
+//        this.limelightSubsystem = null; //
+//        this.visionPortal = null;
+//        this.sampleOrientationProcessor = null;
+//        this.limelightDetectorProcessor = null;
+//        this.clawVacancyProcessor = null;
 
         // init horizontal intake
         Servo leftHorizontalArm = hardwareMap.get(ServoImplEx.class, "leftHorizontalArm");

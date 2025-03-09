@@ -9,7 +9,7 @@ import com.acmerobotics.dashboard.config.Config;
 public class ExtendoConstants {
 
     // Transfer position
-    public static double transferPosition = 2.5;
+    public static double transferPosition = 2.75;
     public static double pullInSamplePosition = 0;
 
 
@@ -45,6 +45,6 @@ public class ExtendoConstants {
     /**
      *  Max extendo extension length in inches.
      */
-    public static double MAX_EXTENSION = ticksToInches(3350)-4;
+    public static double MAX_EXTENSION = ticksToInches(3350)-7;
 
 }

@@ -3,7 +3,6 @@ package org.firstinspires.ftc.teamcode.opmodes.teleop;
 import com.acmerobotics.dashboard.config.Config;
 import com.arcrobotics.ftclib.geometry.Pose2d;
 import com.arcrobotics.ftclib.geometry.Rotation2d;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -42,9 +41,6 @@ import org.firstinspires.ftc.teamcode.synchropather.systems.lift.LiftConstants;
 import org.firstinspires.ftc.teamcode.synchropather.systems.lift.LiftPlan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.lift.LiftState;
 import org.firstinspires.ftc.teamcode.synchropather.systems.lift.movements.LinearLift;
-import org.firstinspires.ftc.teamcode.synchropather.systems.limelight.LimelightPipeline;
-import org.firstinspires.ftc.teamcode.synchropather.systems.limelight.LimelightPlan;
-import org.firstinspires.ftc.teamcode.synchropather.systems.limelight.movements.EnableLimelight;
 import org.firstinspires.ftc.teamcode.synchropather.systems.mFeeder.MFeederConstants;
 import org.firstinspires.ftc.teamcode.synchropather.systems.mFeeder.MFeederPlan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.mFeeder.MFeederState;
@@ -68,15 +64,22 @@ import org.firstinspires.ftc.teamcode.synchropather.systems.vClaw.VClawConstants
 import org.firstinspires.ftc.teamcode.synchropather.systems.vClaw.VClawPlan;
 import org.firstinspires.ftc.teamcode.synchropather.systems.vClaw.VClawState;
 import org.firstinspires.ftc.teamcode.synchropather.systems.vClaw.movements.MoveVClaw;
+import org.firstinspires.ftc.teamcode.synchropather.systems.vClaw.movements.ReleaseVClaw;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayDeque;
 
 @Config
-@Disabled
 @TeleOp(name="Red Teleop")
 public class RedTeleop extends LinearOpMode {
 
-    private Synchronizer pickupMacro, makerMacro, depositMacro;
+    private Synchronizer pickupMacro, makerMacro, preDepositMacro, depositMacro;
 
     private AutonomousRobot robot;
     private ArrayDeque<Double> loopTicks;
@@ -90,7 +93,7 @@ public class RedTeleop extends LinearOpMode {
 
     private SampleDataBufferFilter sampleData;
 
-    public static double armDownPosition = 1.025;
+    public static double armDownPosition = 1.04;
 
     public static double gamepad1DriveSpeed = 1;
 
@@ -100,10 +103,10 @@ public class RedTeleop extends LinearOpMode {
 
 
     // For clipbot subsystem
-    private int clipInventory = MFeederConstants.RELOAD_CAPACITY;
+    private int clipInventory = 6;
     private boolean inventoryStocked = true;
 
-    public static double klipperWaitTime = 0.3;
+    public static double klipperWaitTime = 0.4;
     public static double feederDelayTime = -0.09;
     public static double holdLiftDownPosition = -1;
 
@@ -148,14 +151,21 @@ public class RedTeleop extends LinearOpMode {
 
     boolean makerMacroRunning = false;
     boolean specimenMade = false;
+    boolean toggleSquareG1 = false;
     boolean toggleSquareG2 = false;
+
+    boolean preDepositMacroRunning = false;
+    boolean preDepositWaiting = false;
+    boolean toggleTriangleG1 = false;
 
     boolean depositMacroRunning = false;
     boolean deposited = true;
-    boolean toggleTriangleG1 = false;
+    boolean toggleCrossG1 = false;
 
     double lastLiftPower = 0;
     double lastExtendoPower = 0;
+    public static double extendo_approach_kP = 0.5;
+    public static double extendo_overshoot_kP = 0.5;
 
 
     // magazine mode
@@ -165,6 +175,16 @@ public class RedTeleop extends LinearOpMode {
     private boolean toggleGamepad2DpadRight = false;
     private double magazineIntakePosition = 0;
     public static double magazineIntakeDescentSpeed = 0.01;
+
+
+    // reset commands
+    private boolean toggleFirstGamepadReset = false;
+    private boolean toggleSecondGamepadReset = false;
+
+
+
+    // Auto -> teleop transition
+    public static String filePath = "../magazine_position.txt";
 
 
 
@@ -180,13 +200,7 @@ public class RedTeleop extends LinearOpMode {
         telemetry.update();
 
         waitForStart();
-
-
-        EnableLimelight enableLimelight = new EnableLimelight(new TimeSpan(0,10), LimelightPipeline.SAMPLE_DETECTOR);
-        LimelightPlan limelightPlan = new LimelightPlan(robot.limelightSubsystem, enableLimelight);
-        Synchronizer limelightAction = new Synchronizer(limelightPlan);
-        limelightAction.start();
-        limelightAction.update();
+        initServos();
 
 
 
@@ -199,10 +213,15 @@ public class RedTeleop extends LinearOpMode {
 
 
             /// Claim drive control by pressing both joysticks
-            if (gamepad1.left_stick_button && gamepad1.right_stick_button) {
-                gamepad1HasDriveControl = true;
-            } else if (gamepad2.left_stick_button && gamepad2.right_stick_button) {
-                gamepad1HasDriveControl = false;
+            if (!intakeMacroRunning && !makerMacroRunning && !preDepositMacroRunning && !depositMacroRunning && !magazineRepositionMacroRunning) {
+                if (gamepad1.left_stick_button && gamepad1.right_stick_button) {
+                    if (!gamepad1HasDriveControl && clipInventory == 7) {
+                        clipInventory = 6;
+                    }
+                    gamepad1HasDriveControl = true;
+                } else if (gamepad2.left_stick_button && gamepad2.right_stick_button) {
+                    gamepad1HasDriveControl = false;
+                }
             }
 
 
@@ -276,6 +295,13 @@ public class RedTeleop extends LinearOpMode {
                 double totalPower = gamepad2.right_trigger - gamepad2.left_trigger;
                 robot.clipbot.setMagazineFeederPower(totalPower);
             }
+            if (gamepad2.right_bumper && !toggleSecondGamepadReset) {
+                MFeederConstants.ZERO_HOME = robot.clipbot.getMagazineFeederPosition() + MFeederConstants.ZERO_HOME + MFeederConstants.INCHES_OFFSET;
+                gamepad2.rumbleBlips(3);
+                clipInventory = MFeederConstants.MAX_CAPACITY;
+                toggleSecondGamepadReset = true;
+            }
+            if (!gamepad2.left_bumper && !gamepad2.right_bumper) toggleSecondGamepadReset = false;
         }
         // Control servos
         else {
@@ -349,39 +375,71 @@ public class RedTeleop extends LinearOpMode {
             robot.clipbot.setMagazineLoaderPosition(loaderPressurePosition);
         }
 
-        /// gamepad 2 manual control extendo and lift
+        /// gamepad 1 manual control lift with triggers
+        double totalFirstGamepadTrigger = gamepad1.right_trigger - gamepad1.left_trigger;
+        boolean driverControllingLift = gamepad1.right_trigger!=0 || gamepad1.left_trigger!=0;
+        if ((totalFirstGamepadTrigger!=0 || lastLiftPower!=0) && !makerMacroRunning && (!depositMacroRunning || gamepad1.left_bumper)) {
+            robot.linearSlides.setLiftPowers(totalFirstGamepadTrigger);
+            lastLiftPower = totalFirstGamepadTrigger;
+        }
+        if (gamepad1.left_bumper && gamepad1.right_bumper && !toggleFirstGamepadReset) {
+            LinearSlidesSubsystem.liftOffset = -(robot.linearSlides.getLeftLiftPosition() - LinearSlidesSubsystem.liftOffset);
+            gamepad1.rumbleBlips(2);
+            toggleFirstGamepadReset = true;
+        }
+        if (!gamepad1.left_bumper && !gamepad1.right_bumper) toggleFirstGamepadReset = false;
+
+
+        /// gamepad 2 has extendo control
         double totalSecondGamepadTrigger = gamepad2.right_trigger - gamepad2.left_trigger;
-        // left bumper = lift control
-        if (gamepad2.left_bumper) {
-            if ((totalSecondGamepadTrigger!=0 || lastLiftPower!=0) && !(makerMacroRunning || depositMacroRunning)) {
-                robot.linearSlides.setLiftPowers(totalSecondGamepadTrigger);
-                lastLiftPower = totalSecondGamepadTrigger;
+        double extendoPosition = robot.linearSlides.getExtendoPosition();
+        double error = ExtendoConstants.MAX_EXTENSION - extendoPosition;
+        double motorPower;
+        boolean driverControlled;
+        if (error < 0) {
+            if (totalSecondGamepadTrigger < 0) {
+                driverControlled = true;
+                motorPower = totalSecondGamepadTrigger;
+            } else {
+                driverControlled = false;
+                motorPower = Math.max(-1, extendo_overshoot_kP*error);
             }
+        } else {
+            driverControlled = true;
+            if (totalSecondGamepadTrigger < 0) {
+                motorPower = totalSecondGamepadTrigger;
+            } else {
+                motorPower = totalSecondGamepadTrigger * Math.min(1, extendo_approach_kP*error);
+            }
+        }
+        if (driverControlled) {
+            if ((motorPower != 0 || lastExtendoPower != 0) && !(intakeMacroRunning || makerMacroRunning)) {
+                robot.linearSlides.setExtendoPower(motorPower);
+                lastExtendoPower = motorPower;
+            }
+        } else {
             if (!(intakeMacroRunning || makerMacroRunning)) {
-                robot.linearSlides.setExtendoPower(0);
-                lastExtendoPower = 0;
+                robot.linearSlides.setExtendoPower(motorPower);
             }
         }
-        // no bumper = extendo control
-        else {
-            if ((totalSecondGamepadTrigger!=0 || lastExtendoPower!=0) && !(intakeMacroRunning || makerMacroRunning)) {
-                robot.linearSlides.setExtendoPower(totalSecondGamepadTrigger);
-                lastExtendoPower = totalSecondGamepadTrigger;
-            }
-            if (!(makerMacroRunning || depositMacroRunning)) {
-                robot.linearSlides.setLiftPowers(0);
-                lastLiftPower = 0;
-            }
+        // reset position is both bumpers
+        if (gamepad2.left_bumper && gamepad2.right_bumper && !toggleSecondGamepadReset) {
+            LinearSlidesSubsystem.extendoOffset = -(robot.linearSlides.getExtendoPosition() - LinearSlidesSubsystem.extendoOffset);
+            gamepad2.rumbleBlips(1);
+            toggleSecondGamepadReset = true;
         }
+        if (!gamepad2.left_bumper && !gamepad2.right_bumper) toggleSecondGamepadReset = false;
 
 
         /// update sample data from overhead camera
         sampleData.updateFilterData(overheadCamera.getSamplePositions(), overheadCamera.getSampleAngles(), overheadCamera.getClosestSample()); // Can return null
 
 
-
+        /**
+         * PRIMARY CONTROLS
+         */
         /// gamepad 2 triangle activates pickup
-        if (gamepad2.triangle && !toggleTriangleG2 && sampleData.isFilterFull() && !intakeMacroRunning) {
+        if (gamepad2.triangle && !toggleTriangleG2 && sampleData.isFilterFull() && !intakeMacroRunning && !intookSample) {
             initPickupMacro(new ExtendoState(0));
             pickupMacro.start();
             toggleTriangleG2 = true;
@@ -413,17 +471,39 @@ public class RedTeleop extends LinearOpMode {
             robot.horizontalIntake.setClawPosition(HClawConstants.RELEASE_POSITION);
             robot.horizontalIntake.setArmPosition(clawCheckPosition);
             robot.horizontalIntake.setWristAngle(0);
+            if (intookSample) {
+                intookSample = false;
+            }
         }
         if (!gamepad2.triangle) toggleTriangleG2 = false;
 
 
+        telemetry.addData("toggleSquareG2", toggleSquareG2);
+        telemetry.addData("intookSample", intookSample);
+        telemetry.addData("specimenMade", specimenMade);
+        telemetry.addData("makerMacroRunning", makerMacroRunning);
+        telemetry.addData("deposited", deposited);
+        telemetry.addData("depositMacroRunning", depositMacroRunning);
+        telemetry.addData("inventoryStocked", inventoryStocked);
+        telemetry.addData("clipInventory", clipInventory);
+        telemetry.update();
 
 
         /// gamepad 2 square activates maker macro
-        if (gamepad2.square && !toggleSquareG2 && intookSample && !makerMacroRunning && deposited && inventoryStocked && clipInventory>0) {
+        if (gamepad2.square && !toggleSquareG2 && (intookSample && !specimenMade || gamepad2.left_bumper) && !makerMacroRunning && (gamepad2.left_bumper || (deposited && !preDepositMacroRunning && !depositMacroRunning)) && inventoryStocked && clipInventory>0) {
+            // Do transfer and klipper
             initMakerMacro();
             makerMacro.start();
             toggleSquareG2 = true;
+            makerMacroRunning = true;
+            specimenMade = false;
+        }
+        // gamepad 1 has alternate command
+        if (gamepad1.left_bumper && gamepad1.square && !toggleSquareG1 && !makerMacroRunning && deposited && !preDepositMacroRunning && !depositMacroRunning && inventoryStocked && clipInventory>0) {
+            // Only do klipper
+            initAlternateMakerMacro();
+            makerMacro.start();
+            toggleSquareG1 = true;
             makerMacroRunning = true;
             specimenMade = false;
         }
@@ -442,9 +522,6 @@ public class RedTeleop extends LinearOpMode {
                 robot.clipbot.setMagazineFeederPower(0);
                 robot.linearSlides.stopLifts();
                 robot.linearSlides.stopExtendo();
-            } else {
-                HWristState wristState = (HWristState) makerMacro.getState(MovementType.HORIZONTAL_WRIST);
-                telemetry.addData("wristState", wristState);
             }
         }
         // second press cancels it
@@ -455,46 +532,67 @@ public class RedTeleop extends LinearOpMode {
             makerMacroRunning = false;
             toggleSquareG2 = true;
             specimenMade = false;
+            robot.horizontalIntake.setClawPosition(HClawConstants.RELEASE_POSITION);
+            robot.horizontalIntake.setArmPosition(clawCheckPosition);
+            robot.horizontalIntake.setWristAngle(0);
         }
-        if (makerMacro!=null && !makerMacroRunning) makerMacro.update(MovementType.MAGAZINE_FEEDER);
         if (!gamepad2.square) toggleSquareG2 = false;
 
 
 
 
-        /// gamepad 1 triangle activates deposit macro
-        if (gamepad1.triangle && !toggleTriangleG1 && specimenMade && !depositMacroRunning) {
-            initDepositMacro();
-            depositMacro.start();
+        /// gamepad 1 triangle runs pre deposit macro
+        if (gamepad1.triangle && !toggleTriangleG1 && specimenMade && !preDepositMacroRunning && !depositMacroRunning) {
+            initPreDepositMacro();
+            preDepositMacro.start();
             toggleTriangleG1 = true;
-            depositMacroRunning = true;
+            preDepositMacroRunning = true;
             deposited = false;
+            preDepositWaiting = false;
         }
         // run synchronizer
-        if (depositMacroRunning) {
-            if (!depositMacro.update()) {
-                depositMacroRunning = false;
-                deposited = true;
-                depositReadyToRelease = true;
+        if (preDepositMacroRunning) {
+            if (!preDepositMacro.update()) {
+                preDepositMacroRunning = false;
+                preDepositWaiting = true;
                 specimenMade = false;
-                robot.linearSlides.stopLifts();
             }
         }
-        // second press cancels it
-        if (gamepad1.triangle && !toggleTriangleG1 && depositMacroRunning) {
-            depositMacro.stop();
-            depositMacroRunning = false;
-            toggleTriangleG1 = true;
-            deposited = false;
+        if (preDepositWaiting && !driverControllingLift) {
+            preDepositMacro.update(MovementType.LIFT);
+        }
+        // to cancel deposit
+        if (gamepad1.triangle && !toggleTriangleG1 && preDepositWaiting) {
+            preDepositWaiting = false;
+            deposited = true;
+            robot.linearSlides.stopLifts();
+            robot.verticalDeposit.release();
         }
         if (!gamepad1.triangle) toggleTriangleG1 = false;
 
 
-        /// gamepad 1 cross can decide when to release specimen
-        if (depositReadyToRelease && gamepad1.cross) {
-            robot.verticalDeposit.release();
-            depositReadyToRelease = false;
+
+
+
+        /// gamepad 1 cross activates deposit macro
+        if (gamepad1.cross && !toggleCrossG1 && preDepositWaiting && !preDepositMacroRunning && !depositMacroRunning) {
+            initDepositMacro();
+            depositMacro.start();
+            toggleCrossG1 = true;
+            depositMacroRunning = true;
         }
+        // run synchronizer
+        if (depositMacroRunning) {
+            if (!depositMacro.update() && !gamepad1.left_bumper) {
+                depositMacroRunning = false;
+                preDepositWaiting = false;
+                deposited = true;
+                robot.linearSlides.stopLifts();
+                robot.verticalDeposit.release();
+            }
+        }
+        if (!gamepad1.cross) toggleCrossG1 = false;
+
     }
 
 
@@ -565,10 +663,39 @@ public class RedTeleop extends LinearOpMode {
                 )
         );
         this.sampleData = robot.overheadSampleData;
-        OverheadCameraSubsystem.CLAW_OFFSET[0] = -2.6;
+        OverheadCameraSubsystem.CLAW_OFFSET[0] = -2.8;
         SampleDataBufferFilter.FILTER_ERROR_TOLERANCE = 0.15;
         SampleOrientationProcessor.colorType = SampleOrientationProcessor.SampleColor.RED;
 
+//        // check to see if there is a magazine position to read
+//        File file = new File(filePath);
+//
+//        // Step 1: Check if file exists and has exactly one line
+//        try {
+//            long lineCount = Files.lines(Paths.get(filePath)).count(); // Count lines
+//
+//            if (lineCount == 2) {
+//                // Step 2: Read the integer value
+//                try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+//                    String line = reader.readLine(); // Read the single line
+//                    double feederPosition = Integer.parseInt(line.trim()); // Convert to integer
+//                    double inInches = MFeederConstants.ticksToInches(feederPosition) - MFeederConstants.ZERO_HOME;
+//                    MFeederConstants.ZERO_HOME = -inInches;
+//
+//                    // Step 3: Clear the file
+//                    try (FileWriter writer = new FileWriter(file, false)) { // Overwrite file
+//                        writer.write(""); // Writing an empty string clears the file
+//                    }
+//                } catch (NumberFormatException e) {
+//                    throw new RuntimeException("NUMBER NOT INTEGER! NUMBER NOT INTEGER! NUMBER NOT INTEGER! NUMBER NOT INTEGER! ");
+//                }
+//            }
+//        } catch (IOException e) {
+//            throw new RuntimeException("FILE ERROR! FILE ERROR! FILE ERROR! ");
+//        }
+    }
+
+    private void initServos() {
         robot.verticalDeposit.setArmPosition(0.5);
         robot.verticalDeposit.setClawPosition(VClawConstants.RELEASE_POSITION);
         robot.horizontalIntake.setArmPosition(0.9);
@@ -940,10 +1067,126 @@ public class RedTeleop extends LinearOpMode {
 
     }
 
+    private void initAlternateMakerMacro() {
+
+        //// CLIPBOT
+        // Get target states
+        double maxClips = MFeederConstants.MAX_CAPACITY;
+        MFeederState currentFeederPosition = new MFeederState(
+                robot.clipbot.getMagazineFeederPosition()
+        );
+        MFeederState targetFeederPosition = new MFeederState(
+                (maxClips - (clipInventory-1)) * MFeederConstants.INCHES_PER_CLIP
+        );
+
+        /// Movements
+        // Hold lift down
+        LinearLift holdLiftDown = new LinearLift(0,
+                new LiftState(LiftConstants.transferPosition),
+                new LiftState(holdLiftDownPosition)
+        );
+
+        // Stationary deposit arm
+        LinearVArm lowerVArm = new LinearVArm(holdLiftDown.getEndTime()-0.38,
+                new VArmState(VArmConstants.armLeftTransferPosition-0.1),
+                new VArmState(VArmConstants.armLeftClipperPosition)
+        );
+
+        // Stationary deposit arm
+        LinearVArm pressVArm = new LinearVArm(holdLiftDown.getEndTime(),
+                new VArmState(VArmConstants.armLeftClipperPosition),
+                new VArmState(VArmConstants.armLeftClipperPosition)
+        );
+
+        // Advance feeder by one clip
+        LinearMFeeder advanceFeeder;
+
+
+        // Feeder plan
+        MFeederPlan mFeederPlan;
+        if (clipInventory-1==0) {
+            advanceFeeder = new LinearMFeeder(holdLiftDown.getEndTime() + feederDelayTime,
+                    currentFeederPosition,
+                    new MFeederState(targetFeederPosition.getPosition()+0.1)
+            );
+            LinearMFeeder resetFeeder = new LinearMFeeder(advanceFeeder.getEndTime(),
+                    new MFeederState(targetFeederPosition.getPosition()+0.1),
+                    new MFeederState(-3*MFeederConstants.ZERO_HOME)
+            );
+            mFeederPlan = new MFeederPlan(robot.clipbot,
+                    advanceFeeder,
+                    resetFeeder
+            );
+            inventoryStocked = false;
+        } else {
+            advanceFeeder = new LinearMFeeder(holdLiftDown.getEndTime() + feederDelayTime,
+                    currentFeederPosition,
+                    targetFeederPosition
+            );
+            mFeederPlan = new MFeederPlan(robot.clipbot,
+                    advanceFeeder
+            );
+        }
+
+        MoveMLoader loosenLoader = new MoveMLoader(advanceFeeder.getStartTime()-0.25,
+                new MLoaderState(loaderFeedingPosition)
+        );
+
+        MoveMLoader tightenLoader = new MoveMLoader(advanceFeeder.getEndTime()+0.25,
+                new MLoaderState(loaderPressurePosition)
+        );
+
+        // Klipper action
+        MoveKlipper initKlipper = new MoveKlipper(0, KlipperConstants.openPosition);
+        MoveKlipper klipSpecimen = new MoveKlipper(advanceFeeder.getEndTime()+klipperWaitTime, KlipperConstants.closedPosition);
+        MoveKlipper unklipSpecimen = new MoveKlipper(klipSpecimen.getEndTime(), 0.7);
 
 
 
-    private void initDepositMacro() {
+
+
+
+
+
+
+
+
+
+
+        // Create Plans
+        LiftPlan liftPlan = new LiftPlan(robot.linearSlides,
+                holdLiftDown
+        );
+        VArmPlan vArmPlan = new VArmPlan(robot.verticalDeposit,
+                lowerVArm,
+                pressVArm
+        );
+        MLoaderPlan mLoaderPlan = new MLoaderPlan(robot.clipbot,
+                loosenLoader,
+                tightenLoader
+        );
+
+        KlipperPlan klipperPlan = new KlipperPlan(robot.clipbot,
+                initKlipper,
+                klipSpecimen,
+                unklipSpecimen
+        );
+
+        // Synchronizer
+        this.makerMacro = new Synchronizer(
+                liftPlan,
+                vArmPlan,
+                mFeederPlan,
+                mLoaderPlan,
+                klipperPlan
+        );
+
+    }
+
+
+
+
+    private void initPreDepositMacro() {
 
         // Score specimen
         LinearVArm vArmToPreDepositCycle = new LinearVArm(0,
@@ -953,10 +1196,36 @@ public class RedTeleop extends LinearOpMode {
 
         LinearLift liftToPreDepositCycle = new LinearLift(vArmToPreDepositCycle.getStartTime(),
                 new LiftState(0),
+                new LiftState(7)
+        );
+
+
+
+        // Create Plans
+        LiftPlan liftPlan = new LiftPlan(robot.linearSlides,
+                liftToPreDepositCycle
+        );
+        VArmPlan vArmPlan = new VArmPlan(robot.verticalDeposit,
+                vArmToPreDepositCycle
+        );
+
+
+        // Synchronizer
+        this.preDepositMacro = new Synchronizer(
+                liftPlan,
+                vArmPlan
+        );
+    }
+
+
+    private void initDepositMacro() {
+
+        LinearLift liftToPreDepositCycle = new LinearLift(0,
+                new LiftState(7),
                 new LiftState(LiftConstants.preDepositPosition)
         );
 
-        LinearVArm vArmToDepositCycle = new LinearVArm(liftToPreDepositCycle.getEndTime(),
+        LinearVArm vArmToDepositCycle = new LinearVArm(liftToPreDepositCycle.getEndTime()+0.1,
                 new VArmState(VArmConstants.armLeftPreDepositPosition),
                 new VArmState(VArmConstants.armLeftDepositPosition)
         );
@@ -966,15 +1235,20 @@ public class RedTeleop extends LinearOpMode {
                 new LiftState(LiftConstants.depositPosition)
         );
 
+        LinearLift liftEndStill = new LinearLift(new TimeSpan(liftToDepositCycle.getEndTime(), liftToDepositCycle.getEndTime()+0.25),
+                new LiftState(LiftConstants.depositPosition),
+                new LiftState(LiftConstants.depositPosition)
+        );
+
 
 
         // Create Plans
         LiftPlan liftPlan = new LiftPlan(robot.linearSlides,
                 liftToPreDepositCycle,
-                liftToDepositCycle
+                liftToDepositCycle,
+                liftEndStill
         );
         VArmPlan vArmPlan = new VArmPlan(robot.verticalDeposit,
-                vArmToPreDepositCycle,
                 vArmToDepositCycle
         );
 

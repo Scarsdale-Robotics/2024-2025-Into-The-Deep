@@ -19,7 +19,7 @@ public class ShimmyMacro extends Synchronizer {
 
     public ShimmyMacro(DriveSubsystem drive, LocalizationSubsystem localization, boolean leftFirst) {
         LinearTranslation shimmyRight, shimmyLeft;
-        int magnitude = 2;
+        int magnitude = 5;
         if (leftFirst) {
             shimmyLeft = new LinearTranslation(0,
                     new TranslationState(localization.getPose()),
