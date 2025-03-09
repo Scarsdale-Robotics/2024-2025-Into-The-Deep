@@ -13,15 +13,17 @@ import org.firstinspires.ftc.teamcode.synchropather.systems.elbow.ElbowConstants
 
 @TeleOp(name = "ViirTeleop")
 //hello just random stuff i do here to practice, i know a lot more than i can write trust
-
-//don't merge changes to sync macro or main, private branch.
+//TODO: fix telemetry, elbow and claw change booleans
+//TODO: add realign macro and reset heading macro, add lift stuff.
+//TODO: implement control theory in some code (error and stuff)
+//IMPORTANT: don't merge changes to sync macro or main, private branch.
 public class viir_Practice extends LinearOpMode {
     public static double clawClosed = ClawConstants.CLOSED_POSITION;
     public static double clawOpen = ClawConstants.OPEN_POSITION;
     public static double elbowUp = ElbowConstants.UP_POSITION;
     public static double elbowDown = ElbowConstants.DOWN_POSITION;
     public static double elbowPos = elbowUp;
-    public static double clawPos = elbowDown;
+    public static double clawPos = clawClosed;
     private RobotSystem robot;
 
     @Override
@@ -41,6 +43,8 @@ public class viir_Practice extends LinearOpMode {
             //toggle boolean for displaying telemetry, drive powers (idk what scale the gamepad stuff is on), buffer for reducing sense
             boolean displayTelemetry = false;
             boolean isClawOpen = false;
+            boolean isElbowDown = false;
+            boolean senseChangeActivated = false;
             double strafe = -gamepad1.left_stick_x * speed;
             double forward = gamepad1.left_stick_y * speed;
             double turn = gamepad1.right_stick_x * speed;
@@ -57,6 +61,18 @@ public class viir_Practice extends LinearOpMode {
                 telemetry.addData("Viir is a ", viir);
                 telemetry.update();
             }
+            if (gamepad1.x && !isElbowDown) {
+                isElbowDown = true;
+            }
+            if (isElbowDown) {
+                elbowPos = elbowDown;
+                robot.inDep.setElbowPosition(elbowPos);
+            }
+            if (gamepad1.x && isElbowDown) {
+                isElbowDown = false;
+                elbowPos = elbowUp;
+                robot.inDep.setElbowPosition(elbowPos);
+            }
             if (gamepad1.circle && !isClawOpen) {
                 isClawOpen = true;
             }
@@ -69,23 +85,25 @@ public class viir_Practice extends LinearOpMode {
                 clawPos = clawClosed;
                 robot.inDep.setClawPosition(clawPos);
             }
-            if (!gamepad1.square) {
+            if (gamepad1.square && displayTelemetry) {
                 displayTelemetry = false;
             }
             //field centric drive: includes angles for more accuracy with regards to human perspective
             //get H - get heading
             robot.drive.driveFieldCentric(strafe , forward, turn, Math.toDegrees(robot.localization.getH()));
-            boolean senseChangeActivated = false;
             if (gamepad1.circle && !senseChangeActivated) {
                 senseChangeActivated = true;
             }
             if (senseChangeActivated) {
-                strafe = -gamepad1.left_stick_x + buffer;
-                turn = gamepad1.right_stick_x - buffer;
-                forward = gamepad1.left_stick_y - buffer;
+                strafe = -gamepad1.left_stick_x * speed + buffer;
+                turn = gamepad1.right_stick_x * speed - buffer;
+                forward = gamepad1.left_stick_y * speed - buffer;
             }
             if (senseChangeActivated && gamepad1.circle) {
                 senseChangeActivated = false;
+                strafe = -gamepad1.left_stick_x * speed;
+                turn = gamepad1.right_stick_x * speed;
+                forward = gamepad1.left_stick_y * speed;
             }
             boolean speedUpToggled = false;
             if (gamepad1.a && !speedUpToggled) {
@@ -94,8 +112,9 @@ public class viir_Practice extends LinearOpMode {
             if (speedUpToggled) {
                 speed = 1;
             }
-            if (!gamepad1.a) {
+            if (gamepad1.a & speedUpToggled) {
                 speedUpToggled = false;
+                speed = 0.9;
             }
 
         }
