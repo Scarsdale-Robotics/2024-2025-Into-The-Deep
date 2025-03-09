@@ -8,13 +8,24 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import org.firstinspires.ftc.teamcode.HardwareRobot;
 import org.firstinspires.ftc.teamcode.RobotSystem;
 import org.firstinspires.ftc.teamcode.subsystems.DriveSubsystem;
+import org.firstinspires.ftc.teamcode.synchropather.systems.claw.ClawConstants;
+import org.firstinspires.ftc.teamcode.synchropather.systems.elbow.ElbowConstants;
+
 @TeleOp(name = "ViirTeleop")
 //hello just random stuff i do here to practice, i know a lot more than i can write trust
 
-//don't merge changes, private branch.
+//don't merge changes to sync macro or main, private branch.
 public class viir_Practice extends LinearOpMode {
+    public static double clawClosed = ClawConstants.CLOSED_POSITION;
+    public static double clawOpen = ClawConstants.OPEN_POSITION;
+    public static double elbowUp = ElbowConstants.UP_POSITION;
+    public static double elbowDown = ElbowConstants.DOWN_POSITION;
+    public static double elbowPos = elbowUp;
+    public static double clawPos = elbowDown;
+
     @Override
     public void runOpMode() throws InterruptedException {
+        //init
         RobotSystem robot = new RobotSystem(hardwareMap, new Pose2d(0, 0, new Rotation2d(Math.toRadians(-90))), false, this);
 
         //telemetry stufff (find out meaning of multipletelemetry)
@@ -24,6 +35,7 @@ public class viir_Practice extends LinearOpMode {
             robot.localization.update();
             robot.logOdometry();
             double speed = 0.9;
+            //toggle boolean for displaying telemetry, drive powers (idk what scale the gamepad stuff is on), buffer for reducing sense
             boolean displayTelemetry = false;
             double strafe = -gamepad1.left_stick_x * speed;
             double forward = gamepad1.left_stick_y * speed;
@@ -36,11 +48,15 @@ public class viir_Practice extends LinearOpMode {
                 telemetry.addData("Strafe: ", strafe);
                 telemetry.addData("Turn: ", turn);
                 telemetry.addData("Forward: ", forward);
+                telemetry.addData("Speed: ", speed);
+                telemetry.addData("Buffer for sense change: ", buffer);
                 telemetry.update();
             }
             if (!gamepad1.square) {
                 displayTelemetry = false;
             }
+            //field centric drive: includes angles for more accuracy with regards to human perspective
+            //get H - get heading
             robot.drive.driveFieldCentric(strafe , forward, turn, Math.toDegrees(robot.localization.getH()));
             boolean senseChangeActivated = false;
             if (gamepad1.circle && !senseChangeActivated) {
