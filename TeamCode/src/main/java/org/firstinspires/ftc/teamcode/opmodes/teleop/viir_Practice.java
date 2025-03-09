@@ -22,21 +22,25 @@ public class viir_Practice extends LinearOpMode {
     public static double elbowDown = ElbowConstants.DOWN_POSITION;
     public static double elbowPos = elbowUp;
     public static double clawPos = elbowDown;
+    private RobotSystem robot;
 
     @Override
     public void runOpMode() throws InterruptedException {
         //init
-        RobotSystem robot = new RobotSystem(hardwareMap, new Pose2d(0, 0, new Rotation2d(Math.toRadians(-90))), false, this);
+        this.robot = new RobotSystem(hardwareMap, new Pose2d(0, 0, new Rotation2d(Math.toRadians(-90))), false, this);
 
         //telemetry stufff (find out meaning of multipletelemetry)
-
+        robot.inDep.setClawPosition(clawPos);
+        robot.inDep.setElbowPosition(elbowPos);
         waitForStart();
         while (opModeIsActive()) {
+            String viir = "Sigma Sigma boy";
             robot.localization.update();
             robot.logOdometry();
             double speed = 0.9;
             //toggle boolean for displaying telemetry, drive powers (idk what scale the gamepad stuff is on), buffer for reducing sense
             boolean displayTelemetry = false;
+            boolean isClawOpen = false;
             double strafe = -gamepad1.left_stick_x * speed;
             double forward = gamepad1.left_stick_y * speed;
             double turn = gamepad1.right_stick_x * speed;
@@ -50,7 +54,20 @@ public class viir_Practice extends LinearOpMode {
                 telemetry.addData("Forward: ", forward);
                 telemetry.addData("Speed: ", speed);
                 telemetry.addData("Buffer for sense change: ", buffer);
+                telemetry.addData("Viir is a ", viir);
                 telemetry.update();
+            }
+            if (gamepad1.circle && !isClawOpen) {
+                isClawOpen = true;
+            }
+            if (isClawOpen) {
+                clawPos = clawOpen;
+                robot.inDep.setClawPosition(clawPos);
+            }
+            if (gamepad1.circle && isClawOpen) {
+                isClawOpen = false;
+                clawPos = clawClosed;
+                robot.inDep.setClawPosition(clawPos);
             }
             if (!gamepad1.square) {
                 displayTelemetry = false;
@@ -80,6 +97,7 @@ public class viir_Practice extends LinearOpMode {
             if (!gamepad1.a) {
                 speedUpToggled = false;
             }
+
         }
     }
 }
