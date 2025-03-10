@@ -173,8 +173,8 @@ public class SpecimenAuto extends LinearOpMode {
 
 
         LinearTranslation alignClipsVertically = new LinearTranslation(intakeClipsTranslation.getEndTime()+5,
-                new TranslationState(47.75, -72+9+4),
-                new TranslationState(47.75, -72+9+1.5)
+                new TranslationState(48.75, -72+9+4),
+                new TranslationState(48.75, -72+9+2)
         );
 
         // Partially lift intake
@@ -183,20 +183,15 @@ public class SpecimenAuto extends LinearOpMode {
                 MIntakeConstants.partiallyUpPosition
         );
 
-        LinearTranslation alignClipsHorizontally = new LinearTranslation(intakePartiallyUp.getEndTime(),
-                new TranslationState(47.75, -72+9+1.5),
-                new TranslationState(48.75, -72+9+1.5)
-        );
-
         // Lift clips
         MoveMIntake intakeUp = new MoveMIntake(
-                alignClipsHorizontally.getEndTime()+1,
+                intakePartiallyUp.getEndTime()+1,
                 MIntakeConstants.upPosition
         );
 
         // Move forward toward spike mark samples
         LinearTranslation approachSpikeMark = new LinearTranslation(intakeUp.getEndTime()+0.2,
-                new TranslationState(48.75, -72+9+1.5),
+                new TranslationState(48.75, -72+9+2),
                 new TranslationState(48.75, -72+18)
         );
 
@@ -246,7 +241,6 @@ public class SpecimenAuto extends LinearOpMode {
                 scorePreload,
                 intakeClipsTranslation,
                 alignClipsVertically,
-                alignClipsHorizontally,
                 approachSpikeMark
         );
         RotationPlan rotationPlan = new RotationPlan(robot.drive, robot.localization,

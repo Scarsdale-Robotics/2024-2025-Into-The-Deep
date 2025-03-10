@@ -492,7 +492,7 @@ public class RedTeleop extends LinearOpMode {
 
 
         /// gamepad 2 square activates maker macro
-        if (gamepad2.square && !toggleSquareG2 && (intookSample && !specimenMade || gamepad2.left_bumper) && !makerMacroRunning && (gamepad2.left_bumper || (deposited && !preDepositMacroRunning && !depositMacroRunning)) && inventoryStocked && clipInventory>0) {
+        if (gamepad2.square && !toggleSquareG2 && ((intookSample && !specimenMade && !makerMacroRunning && deposited && !preDepositMacroRunning && !depositMacroRunning) || gamepad2.left_bumper) && inventoryStocked && clipInventory>0) {
             // Do transfer and klipper
             initMakerMacro();
             makerMacro.start();
