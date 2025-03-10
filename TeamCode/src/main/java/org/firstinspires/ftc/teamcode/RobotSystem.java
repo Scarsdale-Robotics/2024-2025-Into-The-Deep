@@ -4,7 +4,6 @@ import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.arcrobotics.ftclib.geometry.Pose2d;
-import com.arcrobotics.ftclib.geometry.Rotation2d;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
@@ -15,10 +14,10 @@ import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 import org.firstinspires.ftc.teamcode.opmodes.calibration.Drawing;
 import org.firstinspires.ftc.teamcode.subsystems.CVSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.DriveSubsystem;
-import org.firstinspires.ftc.teamcode.subsystems.InDepSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.LocalizationSubsystem;
-import org.firstinspires.ftc.teamcode.synchropather.systems.claw.ClawConstants;
-import org.firstinspires.ftc.teamcode.synchropather.systems.elbow.ElbowConstants;
+import org.firstinspires.ftc.teamcode.subsystems.indep.InDepSubsystem;
+//import org.firstinspires.ftc.teamcode.synchropather.systems.claw.ClawConstants;
+//import org.firstinspires.ftc.teamcode.synchropather.systems.elbow.ElbowConstants;
 
 public class RobotSystem {
 
@@ -30,11 +29,11 @@ public class RobotSystem {
     public final LocalizationSubsystem localization;
     public final InDepSubsystem inDep;
 
-    public static double clawOpen = ClawConstants.OPEN_POSITION;
-    public static double clawClosed = ClawConstants.CLOSED_POSITION;
-
-    public static double elbowUp = ElbowConstants.UP_POSITION;
-    public static double elbowDown = ElbowConstants.DOWN_POSITION;
+//    public static double clawOpen = ClawConstants.OPEN_POSITION;
+//    public static double clawClosed = ClawConstants.CLOSED_POSITION;
+//
+//    public static double elbowUp = ElbowConstants.UP_POSITION;
+//    public static double elbowDown = ElbowConstants.DOWN_POSITION;
 
     public RobotSystem(HardwareMap hardwareMap, Pose2d initialPose, boolean isRedTeam, LinearOpMode opMode) {
         this.opMode = opMode;
@@ -47,7 +46,6 @@ public class RobotSystem {
                 telemetry);
         this.localization = new LocalizationSubsystem(
                 initialPose,
-                cv,
                 hardwareRobot.pinpoint,
                 opMode
                 ,telemetry
@@ -58,15 +56,16 @@ public class RobotSystem {
                 hardwareRobot.leftBack,
                 hardwareRobot.rightBack
         );
-        this.inDep = new InDepSubsystem(
-                hardwareRobot,
-                opMode,
-                drive,
-                cv
-        );
+//        this.inDep = new InDepSubsystem(
+//                hardwareRobot,
+//                opMode,
+//                drive,
+//                cv
+//        );
+        this.inDep = null;
 
-        this.inDep.setClawPosition(clawClosed);
-        this.inDep.setElbowPosition(elbowUp-0.04);
+//        this.inDep.setClawPosition(clawClosed);
+//        this.inDep.setElbowPosition(elbowUp-0.04);
 
         Pose2D initialPose2D = new Pose2D(DistanceUnit.INCH, initialPose.getX(), initialPose.getY(), AngleUnit.RADIANS, initialPose.getHeading());
         while (opMode.opModeInInit()) {

@@ -39,6 +39,11 @@ public class Synchronizer {
 		this.running = false;
 	}
 
+	protected void setPlans(Plan... plans) {
+		if (running) throw new RuntimeException("Synchronizer: tried calling setPlans() while synchronizer was running!");
+		this.plans = plans;
+	}
+
 	/**
 	 * Resets the elapsed time to zero and starts the timer.
 	 */
@@ -72,6 +77,37 @@ public class Synchronizer {
 		for (Plan plan : plans) {
 			plan.setTarget(elapsedTime);
 			plan.loop();
+		}
+		return elapsedTime < getDuration();
+	}
+
+	public boolean update(MovementType movementType) {
+		if (!running) throw new RuntimeException("Synchronizer: tried calling update() before calling start()!");
+		double elapsedTime = runtime.seconds() - startTime;
+		for (Plan plan : plans) {
+			if (plan.movementType.equals(movementType)) {
+				plan.setTarget(elapsedTime);
+				plan.loop();
+			}
+		}
+		return elapsedTime < getDuration();
+	}
+
+	public boolean updateExcluding(MovementType... movementTypes) {
+		if (!running) throw new RuntimeException("Synchronizer: tried calling update() before calling start()!");
+		double elapsedTime = runtime.seconds() - startTime;
+		for (Plan plan : plans) {
+			boolean valid = true;
+			for (MovementType movementType : movementTypes) {
+				if (plan.movementType.equals(movementType)) {
+					valid = false;
+					break;
+				}
+			}
+			if (valid) {
+				plan.setTarget(elapsedTime);
+				plan.loop();
+			}
 		}
 		return elapsedTime < getDuration();
 	}

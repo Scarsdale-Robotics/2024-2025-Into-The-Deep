@@ -1,8 +1,10 @@
 package org.firstinspires.ftc.teamcode.synchropather.systems.lift;
 
 import com.acmerobotics.dashboard.config.Config;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
-import org.firstinspires.ftc.teamcode.RobotSystem;
+import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.teamcode.synchropather.subsystemclasses.LinearSlidesSubsystem;
 import org.firstinspires.ftc.teamcode.synchropather.systems.MovementType;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.superclasses.Movement;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.superclasses.Plan;
@@ -13,28 +15,46 @@ import java.util.ArrayList;
 public class LiftPlan extends Plan<LiftState> {
     // Feedforward constants
     //TODO: TUNE
-    public static double kS = 0;
+    public static double kG = 0.1; // Gravity feedforward
     public static double kV = 1;
-    public static double kA = 0;
+    public static double kA = 0.075;
 
-    // Positional PD constants
+    // Positional SQUID constants
     //TODO: TUNE
-    public static double kP = 16;
-    public static double kD = 0.1;
+    public static double kSQU = 8;
+    public static double kI = 0.0;
+    public static double kD = 0;
+
+    public static double POWER_CACHE_THRESHOLD = 0.1;
+
+    private double lintedt = 0;
+    private double rintedt = 0;
 
     private final ArrayList<Double> leHistory;
     private final ArrayList<Double> reHistory;
-    private RobotSystem robot;
+    private final ArrayList<Double> dtHistory;
+    private final LinearSlidesSubsystem linearSlides;
 
-    public LiftPlan(RobotSystem robot, Movement... movements) {
+    private ElapsedTime runtime;
+    private final Telemetry telemetry;
+    private double lastLeftMotorOutput;
+    private double lastRightMotorOutput;
+
+    public LiftPlan(LinearSlidesSubsystem linearSlides, Movement... movements) {
         super(MovementType.LIFT, movements);
-        this.robot = robot;
+        this.linearSlides = linearSlides;
         this.leHistory = new ArrayList<>();
         this.reHistory = new ArrayList<>();
-//        robot.telemetry.addData("[SYNCHROPATHER] LiftPlan leftHeight", 0);
-//        robot.telemetry.addData("[SYNCHROPATHER] LiftPlan rightHeight", 0);
-//        robot.telemetry.addData("[SYNCHROPATHER] LiftPlan desiredState.getHeight()", 0);
-//        robot.telemetry.update();
+        this.dtHistory = new ArrayList<>();
+        this.telemetry = linearSlides.telemetry;
+        this.lastLeftMotorOutput = Double.MIN_VALUE;
+        this.lastRightMotorOutput = Double.MIN_VALUE;
+        if (telemetry!=null) {
+            telemetry.addData("[SYNCHROPATHER] LiftPlan leftHeight", 0);
+            telemetry.addData("[SYNCHROPATHER] LiftPlan rightHeight", 0);
+            telemetry.addData("[SYNCHROPATHER] LiftPlan desiredState.getHeight()", 0);
+            telemetry.update();
+        }
     }
 
     public void loop() {
@@ -46,8 +66,8 @@ public class LiftPlan extends Plan<LiftState> {
         double da = desiredAcceleration.getHeight();
 
         // Current state
-        double leftHeight = robot.inDep.getLeftLiftPosition();
-        double rightHeight = robot.inDep.getRightLiftPosition();
+        double leftHeight = linearSlides.getLeftLiftPosition();
+        double rightHeight = linearSlides.getRightLiftPosition();
         // lift subsystem get height here instead
         LiftState currentLeftState = new LiftState(leftHeight); // motor position --> height idk
         LiftState currentRightState = new LiftState(rightHeight); // motor position --> height idk
@@ -57,48 +77,130 @@ public class LiftPlan extends Plan<LiftState> {
         LiftState rightError = desiredState.minus(currentRightState);
         double le = leftError.getHeight();
         double re = rightError.getHeight();
+        leHistory.add(le);
+        reHistory.add(re);
+        if (leHistory.size() > 5) leHistory.remove(0);
+        if (reHistory.size() > 5) reHistory.remove(0);
+
+        // Get delta time
+        double deltaTime;
+        boolean runtimeWasNull = false;
+        if (runtime==null) {
+            runtime = new ElapsedTime(0);
+            deltaTime = 0;
+            runtimeWasNull = true;
+        } else {
+            deltaTime = runtime.seconds();
+            runtime.reset();
+            dtHistory.add(deltaTime);
+            if (dtHistory.size()>5) dtHistory.remove(0);
+        }
+
+        // Error integrals
+        if (!runtimeWasNull) {
+            lintedt += deltaTime * le;
+            rintedt += deltaTime * re;
+        }
+        if (leHistory.size() > 1) {
+            if (leHistory.get(leHistory.size() - 2) * le <= 0) {
+                // flush integral stack
+                lintedt = 0;
+            }
+        }
+        if (reHistory.size() > 1) {
+            if (reHistory.get(reHistory.size() - 2) * re <= 0) {
+                // flush integral stack
+                rintedt = 0;
+            }
+        }
+        if (kI != 0) {
+            // Limit integrator to prevent windup
+            double integralPowerThreshold = 0.25;
+            double integralThresholdBound = Math.abs(integralPowerThreshold * LiftConstants.MAX_MOTOR_VELOCITY / kI);
+            lintedt = bound(lintedt, -integralThresholdBound, integralThresholdBound);
+            rintedt = bound(rintedt, -integralThresholdBound, integralThresholdBound);
+        }
 
         // Error derivatives
         double ldedt = 0;
         double rdedt = 0;
-        leHistory.add(le);
-        reHistory.add(re);
-        if (leHistory.size()>5) leHistory.remove(0);
-        if (reHistory.size()>5) reHistory.remove(0);
-        if (leHistory.size()==5) ldedt = robot.localization.stencil(leHistory); // this is pos2D but still works (same formula)
-        if (reHistory.size()==5) rdedt = robot.localization.stencil(reHistory); // this is pos2D but still works (same formula)
+        if (dtHistory.size()==5) {
+            if (leHistory.size() == 5) {
+                ldedt = stencil(leHistory);
+            }
+            if (reHistory.size() == 5) {
+                rdedt = stencil(reHistory);
+            }
+        }
 
         // Control output
         double lu = 0;
         double ru = 0;
 
-        // Lift PD
-        lu += (kP*le + kD*ldedt) / LiftConstants.MAX_VELOCITY;
-        ru += (kP*re + kD*rdedt) / LiftConstants.MAX_VELOCITY;
+        // Lift SQUID
+        double lsqu = Math.signum(le)*Math.sqrt(Math.abs(le));
+        double rsqu = Math.signum(re)*Math.sqrt(Math.abs(re));
+        lu += (kSQU*lsqu + kI*lintedt + kD*ldedt) / LiftConstants.MAX_MOTOR_VELOCITY;
+        ru += (kSQU*rsqu + kI*rintedt + kD*rdedt) / LiftConstants.MAX_MOTOR_VELOCITY;
 
         // Feedforward
-        double fu = (kS*Math.signum(dv) + kV*dv + kA*da) / LiftConstants.MAX_VELOCITY;
+        double fu = kG*Math.abs(Math.signum(desiredState.getHeight())) + (kV*dv + kA*da) / LiftConstants.MAX_MOTOR_VELOCITY;
         lu += fu;
         ru += fu;
 
         // Set drive powers
-        robot.inDep.setLeftLiftPower(lu);
-        robot.inDep.setRightLiftPower(ru);
+        if (Math.abs(lu - lastLeftMotorOutput) >= POWER_CACHE_THRESHOLD || (approxEquiv(lu,0) && !approxEquiv(lastLeftMotorOutput,0))) {
+            linearSlides.setLeftLiftPower(lu);
+            lastLeftMotorOutput = lu;
+        }
+        if (Math.abs(ru - lastRightMotorOutput) >= POWER_CACHE_THRESHOLD || (approxEquiv(ru,0) && !approxEquiv(lastRightMotorOutput,0))) {
+            linearSlides.setRightLiftPower(ru);
+            lastRightMotorOutput = ru;
+        }
 
-        robot.telemetry.addData("[SYNCHROPATHER] LiftPlan leftHeight", leftHeight);
-        robot.telemetry.addData("[SYNCHROPATHER] LiftPlan rightHeight", rightHeight);
-        robot.telemetry.addData("[SYNCHROPATHER] LiftPlan desiredState.getHeight()", desiredState.getHeight());
-        robot.telemetry.update();
+        telemetry.addData("[SYNCHROPATHER] LiftPlan leftHeight", leftHeight);
+        telemetry.addData("[SYNCHROPATHER] LiftPlan rightHeight", rightHeight);
+        telemetry.addData("[SYNCHROPATHER] LiftPlan leftError", le);
+        telemetry.addData("[SYNCHROPATHER] LiftPlan rightError", re);
+        telemetry.addData("[SYNCHROPATHER] LiftPlan desiredState.getHeight()", desiredState.getHeight());
+        telemetry.addData("[SYNCHROPATHER] LiftPlan ldedt", ldedt);
+        telemetry.addData("[SYNCHROPATHER] LiftPlan rdedt", rdedt);
+        telemetry.addData("[SYNCHROPATHER] LiftPlan lintedt", lintedt);
+        telemetry.addData("[SYNCHROPATHER] LiftPlan rintedt", rintedt);
+        telemetry.addData("[SYNCHROPATHER] LiftPlan fu", fu);
+        telemetry.addData("[SYNCHROPATHER] LiftPlan dv", dv);
+        telemetry.addData("[SYNCHROPATHER] LiftPlan da", da);
+        telemetry.update();
 
     }
 
     @Override
     public void stop() {
-        robot.inDep.setLeftLiftPower(0);
-        robot.inDep.setRightLiftPower(0);
+        linearSlides.stopLifts();
     }
 
-    public void setRobot(RobotSystem robot) {
-        this.robot = robot;
+    /**
+     * @param a The process value array.
+     * @return Approximated derivative according to the Five-Point stencil.
+     */
+    public double stencil(ArrayList<Double> a) {
+        double averageDeltaTime = dtHistory.stream().mapToDouble(aa -> aa).average().orElse(0);
+        return (-a.get(4) + 8*a.get(3) - 8*a.get(1) + a.get(0)) /
+                (12 * averageDeltaTime);
+    }
+
+    /**
+     * Clips the input x between a given lower and upper bound.
+     * @param x
+     * @param lower
+     * @param upper
+     * @return the clipped value of x.
+     */
+    private static double bound(double x, double lower, double upper) {
+        return Math.max(lower, Math.min(upper, x));
+    }
+
+    private boolean approxEquiv(double a, double b) {
+        return Math.abs(a-b) <= POWER_CACHE_THRESHOLD;
     }
 }

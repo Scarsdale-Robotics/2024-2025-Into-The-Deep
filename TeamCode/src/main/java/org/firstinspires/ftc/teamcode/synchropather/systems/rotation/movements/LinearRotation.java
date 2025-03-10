@@ -2,7 +2,7 @@ package org.firstinspires.ftc.teamcode.synchropather.systems.rotation.movements;
 
 import org.firstinspires.ftc.teamcode.synchropather.systems.MovementType;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.TimeSpan;
-import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.calculators.StretchedDisplacementCalculator;
+import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.motion_profiles.SymmetricMotionProfile1D;
 import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.superclasses.Movement;
 import org.firstinspires.ftc.teamcode.synchropather.systems.rotation.RotationConstants;
 import org.firstinspires.ftc.teamcode.synchropather.systems.rotation.RotationState;
@@ -14,7 +14,7 @@ public class LinearRotation extends Movement {
 	
 	private double distance, minDuration;
 	private RotationState start, end;
-	private StretchedDisplacementCalculator calculator;
+	private SymmetricMotionProfile1D motionProfile;
 
 	/**
 	 * Creates a new LinearRotation object with a given start and end RotationState allotted for the given TimeSpan.
@@ -53,7 +53,7 @@ public class LinearRotation extends Movement {
 	 */
 	@Override
 	public RotationState getState(double elapsedTime) {
-		double t = distance!=0 ? calculator.getDisplacement(elapsedTime) / distance : 0;
+		double t = distance!=0 ? motionProfile.getDisplacement(elapsedTime) / distance : 0;
 
 		double q0 = 1 - t;
 		double q1 = t;
@@ -68,7 +68,7 @@ public class LinearRotation extends Movement {
 	@Override
 	public RotationState getVelocity(double elapsedTime) {
 		double sign = end.minus(start).sign();
-		double speed = calculator.getVelocity(elapsedTime);
+		double speed = motionProfile.getVelocity(elapsedTime);
 
 		// scaled velocity vector
 		return new RotationState(sign * speed);
@@ -80,7 +80,7 @@ public class LinearRotation extends Movement {
 	@Override
 	public RotationState getAcceleration(double elapsedTime) {
 		double sign = end.minus(start).sign();
-		double speed = calculator.getAcceleration(elapsedTime);
+		double speed = motionProfile.getAcceleration(elapsedTime);
 
 		// scaled acceleration vector
 		return new RotationState(sign * speed);
@@ -116,18 +116,17 @@ public class LinearRotation extends Movement {
 	private void init(boolean startTimeConstructor, double startTime) {
 		distance = end.minus(start).abs();
 
-		double MAV = RotationConstants.MAX_ANGULAR_VELOCITY;
-		double MAA = RotationConstants.MAX_ANGULAR_ACCELERATION;
+		double v_max = RotationConstants.MAX_ANGULAR_VELOCITY;
+		double a_max = RotationConstants.MAX_ANGULAR_ACCELERATION;
 
 		if (startTimeConstructor) {
-			minDuration = StretchedDisplacementCalculator.findMinDuration(distance, MAV, MAA);
-			timeSpan = new TimeSpan(startTime, startTime + minDuration);
+			motionProfile = new SymmetricMotionProfile1D(distance, startTime, v_max, a_max);
+			timeSpan = motionProfile.getTimeSpan();
+		} else {
+			motionProfile = new SymmetricMotionProfile1D(distance, timeSpan, v_max, a_max);
 		}
 		
-		// create calculator object
-		calculator = new StretchedDisplacementCalculator(distance, timeSpan, MAV, MAA);
-		
-		minDuration = calculator.getMinDuration();
+		minDuration = motionProfile.getMinDuration();
 	}
 
 }

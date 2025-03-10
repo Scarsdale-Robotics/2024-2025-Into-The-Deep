@@ -8,13 +8,41 @@ import com.acmerobotics.dashboard.config.Config;
 @Config
 public class LiftConstants {
 
+
+    public static double specMakerPosition = 0.0;
+    public static double transferPosition = 8.75;
+    public static double preDepositPosition = 11.75;
+    public static double depositPosition = 6;
+
     /**
-     *  Max lift velocity in ticks/s.
+     *  Conversion factor
      */
-    public static double MAX_VELOCITY = 2200;
+    public static double TICKS_PER_INCH = 42.202;
+
+    private static double ticksToInches(double ticks) {
+        return ticks / TICKS_PER_INCH;
+    }
+
     /**
-     *  Max lift acceleration in ticks/s^2.
+     *  Max lift velocity in inches/s.
      */
-    public static double MAX_ACCELERATION = 2200;
+    public static double MAX_MOTOR_VELOCITY = 51;
+
+    public static double MAX_PATHING_VELOCITY = 40;
+
+    /**
+     *  Max lift acceleration in inches/s^2.
+     */
+    public static double MAX_ACCELERATION = ticksToInches(6000);
+
+    /**
+     *  Max lift deceleration in inches/s^2.
+     */
+    public static double MAX_DECELERATION = ticksToInches(3000);
+
+    /**
+     * Maximum lift height in inches.
+     */
+    public static double MAX_HEIGHT = 27.25;
 
 }

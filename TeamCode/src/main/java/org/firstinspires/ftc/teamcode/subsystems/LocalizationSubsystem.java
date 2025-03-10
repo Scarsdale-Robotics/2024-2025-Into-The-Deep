@@ -26,9 +26,6 @@ public class LocalizationSubsystem extends SubsystemBase {
     // KALMAN FILTER //
     ///////////////////
 
-    // Sensor toggles.
-    private boolean cameraEnabled = true;
-
     // Model covariance for translation
     private static final double Q_translation = 0.01849838438;
     // Model covariance for heading
@@ -59,7 +56,7 @@ public class LocalizationSubsystem extends SubsystemBase {
     // PINPOINT //
     //////////////
 
-    private static final double xOffset = 144.0, yOffset = -120.0;
+    private static final double xOffset = 92.0, yOffset = 48.0;
     private static final double ENCODER_CPR = 4096; // Optii v1
     private static final double ODOM_DIAMETER = 35.0; // mm
     private static final double TICKS_PER_MM = ENCODER_CPR / (Math.PI * ODOM_DIAMETER);
@@ -67,12 +64,6 @@ public class LocalizationSubsystem extends SubsystemBase {
     public GoBildaPinpointDriver pinpoint;
 
     private Pose2d lastOdometryPose;
-
-
-    ////////////
-    // CAMERA //
-    ////////////
-    private final CVSubsystem cv;
 
 
     //////////
@@ -84,7 +75,7 @@ public class LocalizationSubsystem extends SubsystemBase {
     private double deltaTime;
     private double averageDeltaTime;
 
-    private Telemetry telemetry = null;
+    private Telemetry telemetry;
 
 
 
@@ -94,12 +85,10 @@ public class LocalizationSubsystem extends SubsystemBase {
     /**
      * Creates a new LocalizationSubsystem object with the given parameters.
      * @param initialPose The robot's starting pose.
-     * @param cv The CVSubsystem of the robot.
      * @param telemetry The opmode's Telemetry object.
      */
     public LocalizationSubsystem(
             Pose2d initialPose,
-            CVSubsystem cv,
             GoBildaPinpointDriver pinpoint,
             LinearOpMode opMode,
             Telemetry telemetry) {
@@ -124,35 +113,6 @@ public class LocalizationSubsystem extends SubsystemBase {
         this.vh = 0;
 
 
-        // Init pinpoint
-        this.pinpoint = pinpoint;
-        this.pinpoint.setOffsets(xOffset, yOffset);
-        this.pinpoint.setEncoderResolution(TICKS_PER_MM);
-        this.pinpoint.resetPosAndIMU();
-        while (this.pinpoint.getDeviceStatus() != GoBildaPinpointDriver.DeviceStatus.READY && opMode.opModeInInit()) {
-            this.pinpoint.update();
-            this.telemetry.addData("[L. SUB STATUS]", "init pinpoint");
-            this.telemetry.addData("[PP STATUS]", this.pinpoint.getDeviceStatus());
-            this.telemetry.update();
-        }
-        this.telemetry.addData("[L. SUB STATUS]", "finished pp");
-        Pose2D initialPose2D = new Pose2D(DistanceUnit.INCH, initialPose.getX(), initialPose.getY(), AngleUnit.RADIANS, initialPose.getHeading());
-        this.pinpoint.update();
-        this.pinpoint.setPosition(initialPose2D);
-        this.pinpoint.update();
-        this.telemetry.addData("initialPose2D.getH(AngleUnit.RADIANS)", initialPose2D.getHeading(AngleUnit.RADIANS));
-        this.telemetry.addData("this.pinpoint.getPosX()", this.pinpoint.getPosX());
-        this.telemetry.addData("this.pinpoint.getPosY()", this.pinpoint.getPosY());
-        this.telemetry.addData("this.pinpoint.getHeading()", this.pinpoint.getHeading());
-        this.telemetry.update();
-        this.lastOdometryPose = initialPose;
-
-
-        // Store camera
-        this.cv = cv;
-        enableCamera();
-
-
         // Init time
         this.runtime = new ElapsedTime();
         this.runtime.reset();
@@ -162,26 +122,56 @@ public class LocalizationSubsystem extends SubsystemBase {
         this.dtHistory.add(1d);
         this.averageDeltaTime = 1;
 
-    }
 
+        // Init pinpoint
+        this.pinpoint = pinpoint;
+        this.pinpoint.setOffsets(xOffset, yOffset);
+        this.pinpoint.setEncoderResolution(TICKS_PER_MM);
 
+        // wait for pinpoint to be ready
+        this.telemetry.addData("[LOCALIZATION]", "initializing pinpoint");
+        this.telemetry.update();
+        while ((opMode.opModeIsActive() || opMode.opModeInInit())
+                && this.pinpoint.getDeviceStatus() != GoBildaPinpointDriver.DeviceStatus.READY) {
+            this.pinpoint.update();
+            this.telemetry.addData("[PP STATUS]", this.pinpoint.getDeviceStatus());
+            this.telemetry.update();
+        }
+        this.telemetry.addData("[PP STATUS]", this.pinpoint.getDeviceStatus());
+        this.telemetry.update();
+        this.pinpoint.update();
 
-    ////////////////////
-    // SENSOR TOGGLES //
-    ////////////////////
+        // set pinpoint initial position
+        this.telemetry.addData("[LOCALIZATION]", "setting pinpoint initial position");
+        this.telemetry.update();
+        Pose2D initialPose2D = new Pose2D(DistanceUnit.INCH, initialPose.getX(), initialPose.getY(), AngleUnit.RADIANS, initialPose.getHeading());
+        double initialX = initialPose.getX();
+        double initialY = initialPose.getY();
+        double initialH = initialPose.getHeading();
+        Pose2D ppPose = this.pinpoint.getPosition();
+        double ppX = ppPose.getX(DistanceUnit.INCH);
+        double ppY = ppPose.getY(DistanceUnit.INCH);
+        double ppH = ppPose.getHeading(AngleUnit.RADIANS);
+        while ((opMode.opModeIsActive() || opMode.opModeInInit())
+                && !(equal(ppX,initialX) && equal(ppY,initialY) && equal(ppH,initialH))) {
+            this.pinpoint.setPosition(initialPose2D);
+            this.pinpoint.update();
+            ppPose = this.pinpoint.getPosition();
+            ppX = ppPose.getX(DistanceUnit.INCH);
+            ppY = ppPose.getY(DistanceUnit.INCH);
+            ppH = ppPose.getHeading(AngleUnit.RADIANS);
 
-    /**
-     * Disables the camera/AprilTag sensor.
-     */
-    public void disableCamera() {
-        cameraEnabled = false;
-    }
+            // Telemetry
+            this.telemetry.addData("[LOCALIZATION] ppX", ppX);
+            this.telemetry.addData("[LOCALIZATION] ppY", ppY);
+            this.telemetry.addData("[LOCALIZATION] ppH", ppH);
+            this.telemetry.addData("[LOCALIZATION] initialH", initialH);
+            this.telemetry.update();
+        }
+        this.telemetry.addData("[L. SUB STATUS]", "finished initializing pinpoint");
+        this.telemetry.update();
+        this.lastOdometryPose = initialPose;
 
-    /**
-     * Enables the camera/AprilTag sensor.
-     */
-    public void enableCamera() {
-        cameraEnabled = true;
     }
 
 
@@ -309,50 +299,6 @@ public class LocalizationSubsystem extends SubsystemBase {
     }
 
     /**
-     * Update step for the heading Kalman Filter.
-     */
-    private void updateHeadingKF(CVSubsystem.PoseEstimation cameraEstimation) {
-        Pose2d cameraPose = cameraEstimation.pose;
-        cameraEstimation.headingCovariance += 0.25*Math.pow(normalizeAngle(cameraPose.getHeading() - h), 2);
-
-        // Update heading
-        double R_camera_heading = cameraEstimation.headingCovariance;
-        double K_heading = P_heading / (P_heading + R_camera_heading);
-        h += K_heading * (normalizeAngle(cameraPose.getHeading() - h));
-        h = normalizeAngle(h);
-        P_heading = (1 - K_heading) * P_heading;
-
-        // Telemetry
-        if (telemetry!=null) {
-            telemetry.addData("Apriltag H", Math.toDegrees(cameraPose.getHeading()) + "°");
-        }
-
-        // Update MT2 heading.
-        cv.updateHeading(h);
-    }
-
-    /**
-     * Update step for the translation Kalman Filter.
-     */
-    private void updateTranslationKF(CVSubsystem.PoseEstimation cameraEstimation) {
-        Pose2d cameraPose = cameraEstimation.pose;
-        cameraEstimation.translationCovariance += Math.pow(Math.hypot(cameraPose.getX() - x, cameraPose.getY() - y), 2);
-
-        // Update translation
-        double R_camera_translation = cameraEstimation.translationCovariance;
-        double K_translation = P_translation / (P_translation + R_camera_translation);
-        x += K_translation * (cameraPose.getX() - x);
-        y += K_translation * (cameraPose.getY() - y);
-        P_translation = (1 - K_translation) * P_translation;
-
-        // Telemetry
-        if (telemetry!=null) {
-            telemetry.addData("AprilTag X", cameraPose.getX());
-            telemetry.addData("Apriltag Y", cameraPose.getY());
-        }
-    }
-
-    /**
      * @param a The process value array.
      * @return Approximated derivative according to the Five-Point stencil.
      */
@@ -391,16 +337,9 @@ public class LocalizationSubsystem extends SubsystemBase {
      * Update the pose and velocity.
      */
     public void update() {
-        // Get AprilTag result
-        CVSubsystem.PoseEstimation cameraEstimation = null;
-        if (cameraEnabled) cameraEstimation = cv.getPoseEstimation();
-
         // Kalman Filter steps
         predictKF();
-        if (cameraEstimation != null) {
-            updateHeadingKF(cameraEstimation);
-            updateTranslationKF(cameraEstimation);
-        }
+        // no update step, we're not using apriltags
 
         // Calculate velocity
         updateVelocity();
@@ -426,6 +365,17 @@ public class LocalizationSubsystem extends SubsystemBase {
         while (radians > Math.PI) radians -= 2*Math.PI;
         while (radians <= -Math.PI) radians += 2*Math.PI;
         return radians;
+    }
+
+    /**
+     * Determines whether the two inputs are approximately equal to each other
+     * within an epsilon of 1e-3
+     * @param a
+     * @param b
+     * @return Math.abs(a-b) <= 1e-3
+     */
+    private static boolean equal(double a, double b) {
+        return Math.abs(a-b) <= 1e-3;
     }
 
 }

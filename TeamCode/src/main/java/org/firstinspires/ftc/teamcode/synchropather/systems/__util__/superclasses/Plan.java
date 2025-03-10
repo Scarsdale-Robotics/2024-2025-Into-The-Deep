@@ -65,10 +65,10 @@ public abstract class Plan<T extends RobotState> {
 		// throw error if there are overlaps
 		double s = movement.getStartTime(), e = movement.getEndTime();
 		if (index > 0 && s < movements.get(index-1).getEndTime()) {
-			throw new RuntimeException(String.format("Movement %s overlaps with an earlier movement", movement.getDisplayName()));
+			throw new RuntimeException(String.format("Movement %s (index %s) overlaps with an earlier movement", movement.getDisplayName(), index));
 		}
 		if (index < movements.size() && movements.get(index).getStartTime() < e) {
-			throw new RuntimeException(String.format("Movement %s overlaps with a later movement", movement.getDisplayName()));
+			throw new RuntimeException(String.format("Movement %s (index %s) overlaps with a later movement", movement.getDisplayName(), index));
 		}
 
 		return index;
