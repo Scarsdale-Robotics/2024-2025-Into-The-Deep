@@ -14,7 +14,6 @@ import org.firstinspires.ftc.teamcode.synchropather.systems.elbow.ElbowConstants
 @TeleOp(name = "ViirTeleop")
 //hello just random stuff i do here to practice, i know a lot more than i can write trust.
 //upate 3/9 on way back from bus: we clutched up. i learned odometry, localization, and cv in one bus reide les goooo
-//TODO: PUSH COMMIT WHEN GET HOME AND CHECKOUT TO SYNCHRONIZER-MACRO BRANCH AFTER DONE
 //TODO: Viir's code: add lift stuff.
 //TODO: Viir's code: implement control theory in some code (error and stuff) for running more complicated macros
 //IMPORTANT: don't merge changes to sync macro or main, private branch.
@@ -115,8 +114,11 @@ public class viir_Practice extends LinearOpMode {
             }
             if (gamepad1.dpad_up) {
                 resetServos();
-                telemetry.addData("Reset of Claw and Elbow Successful.", random);
+                telemetry.addLine("Reset of Claw and Elbow Successful.");
                 telemetry.update();
+            }
+            if(gamepad1.left_bumper) {
+                hangSpec();
             }
         }
     }
@@ -132,5 +134,18 @@ public class viir_Practice extends LinearOpMode {
         elbowPos = elbowUp;
         robot.inDep.setClawPosition(clawPos);
         robot.inDep.setElbowPosition(elbowPos);
+    }
+    public void hangSpec() {
+        resetServos();
+        realignMacro();
+        telemetry.addLine("Servos Reset, Heading Realigned, starting hang.");
+        telemetry.update();
+        sleep(500);
+        clawPos = clawOpen;
+        elbowPos = elbowDown;
+        robot.inDep.setClawPosition(clawPos);
+        robot.inDep.setElbowPosition(elbowPos);
+        sleep(500);
+        telemetry.addLine("Spec Hang Macro Successful");
     }
 }
