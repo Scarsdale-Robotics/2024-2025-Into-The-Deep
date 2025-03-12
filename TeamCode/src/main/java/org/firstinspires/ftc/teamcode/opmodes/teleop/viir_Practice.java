@@ -36,6 +36,8 @@ public class viir_Practice extends LinearOpMode {
         robot.inDep.setElbowPosition(elbowPos);
         waitForStart();
         while (opModeIsActive()) {
+            robot.inDep.setClawPosition(clawPos);
+            robot.inDep.setElbowPosition(elbowPos);
             String viir = "Sigma Sigma boy";
             robot.localization.update();
             robot.logOdometry();
@@ -44,7 +46,6 @@ public class viir_Practice extends LinearOpMode {
             boolean displayTelemetry = false;
             boolean isClawOpen = false;
             boolean isElbowDown = false;
-            double random = 0.234;
             boolean senseChangeActivated = false;
             double strafe = -gamepad1.left_stick_x * speed;
             double forward = gamepad1.left_stick_y * speed;
@@ -62,24 +63,20 @@ public class viir_Practice extends LinearOpMode {
             }
             if (isElbowDown) {
                 elbowPos = elbowDown;
-                robot.inDep.setElbowPosition(elbowPos);
             }
             if (gamepad1.x && isElbowDown) {
                 isElbowDown = false;
                 elbowPos = elbowUp;
-                robot.inDep.setElbowPosition(elbowPos);
             }
             if (gamepad1.circle) {
                 isClawOpen = true;
             }
             if (isClawOpen) {
                 clawPos = clawOpen;
-                robot.inDep.setClawPosition(clawPos);
             }
             if (gamepad1.circle && isClawOpen) {
                 isClawOpen = false;
                 clawPos = clawClosed;
-                robot.inDep.setClawPosition(clawPos);
             }
             //field centric drive: includes angles for more accuracy with regards to human perspective
             //get H - get heading
@@ -120,6 +117,12 @@ public class viir_Practice extends LinearOpMode {
             if(gamepad1.left_bumper) {
                 hangSpec();
             }
+            while (!gamepad1.circle || !gamepad1.x) {
+                clawPos = clawClosed;
+                elbowPos = elbowUp;
+            }
+            double rightPowerLift = gamepad1.right_trigger;
+            double leftPowerLift = gamepad1.left_trigger;
         }
     }
     public void realignMacro() {
@@ -132,8 +135,6 @@ public class viir_Practice extends LinearOpMode {
     public void resetServos() {
         clawPos = clawClosed;
         elbowPos = elbowUp;
-        robot.inDep.setClawPosition(clawPos);
-        robot.inDep.setElbowPosition(elbowPos);
     }
     public void hangSpec() {
         resetServos();
@@ -143,8 +144,6 @@ public class viir_Practice extends LinearOpMode {
         sleep(500);
         clawPos = clawOpen;
         elbowPos = elbowDown;
-        robot.inDep.setClawPosition(clawPos);
-        robot.inDep.setElbowPosition(elbowPos);
         sleep(500);
         telemetry.addLine("Spec Hang Macro Successful");
     }
