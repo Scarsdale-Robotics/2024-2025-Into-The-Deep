@@ -1,8 +1,14 @@
 package org.firstinspires.ftc.teamcode.synchropather.systems.__util__;
 
 import org.firstinspires.ftc.teamcode.opmodes.teleop.TeleopWithNewSynchropather;
+import org.firstinspires.ftc.teamcode.synchropather.systems.claw.ClawConstants;
+import org.firstinspires.ftc.teamcode.synchropather.systems.elbow.ElbowConstants;
 
 public class Command {
+    public double clawOpen = ClawConstants.OPEN_POSITION;
+    public double clawClosed = ClawConstants.CLOSED_POSITION;
+    public double elbowUp = ElbowConstants.UP_POSITION;
+    public double elbowDown = ElbowConstants.DOWN_POSITION;
     public double speed;
     public String Action1;
     public String Action2;
@@ -11,7 +17,9 @@ public class Command {
     public String Action5;
 
     public void evalCommand () {
+        if (Action1 == "ElbowUp") {
 
+        }
     }
     public void stopCommand() {
 

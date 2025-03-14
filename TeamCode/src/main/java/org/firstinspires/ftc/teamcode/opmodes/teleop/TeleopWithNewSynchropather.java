@@ -17,7 +17,7 @@ public class TeleopWithNewSynchropather extends LinearOpMode {
     private RobotSystem robot;
     public void runOpMode() {
         /**regular initalization...i also don't know what the difference
-         *    between robotsystem and autonomousrobot is so ill use robotsys for now
+         *    between robotsystem and autonomous robot is so ill use robotsys for now
          */
         this.robot = new RobotSystem(hardwareMap, new Pose2d(0, 0, new Rotation2d(Math.toRadians(-90))), false, this);
         robot.logOdometry();
@@ -25,6 +25,7 @@ public class TeleopWithNewSynchropather extends LinearOpMode {
         waitForStart();
     while (opModeIsActive()) {
         double defaultSpeed = 0.5;
+        boolean
         //regular field centric drive, doesnt really matter
         //i also keep forgetting strafe is inverted smh
         //also confused about fieldcentric vs fieldcentricpowers....
@@ -44,7 +45,6 @@ public class TeleopWithNewSynchropather extends LinearOpMode {
         double turn = gamepad1.right_stick_x * defaultSpeed;
         double forward = gamepad1.left_stick_y * defaultSpeed;
         robot.drive.driveFieldCentricPowers(strafe, forward, turn, Math.toDegrees(robot.localization.getH()));
-
     }
 
 
