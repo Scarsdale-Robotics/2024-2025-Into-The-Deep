@@ -7,12 +7,13 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 //creating different hardawarerobot systems and changing robotsystem for different initializations
 //part of transition between modes
 public class HardwareMode1 {
+    //motors for default drive, odometry, cv mode
+    //separate hardwarerobot classes will be added for other modes.
         public final MotorEx leftFront;
         public final MotorEx rightFront;
         public final MotorEx leftBack;
         public final MotorEx rightBack;
         public HardwareMode1(HardwareMap hardwareMap) {
-
             ////////////
             // WHEELS //
             ////////////

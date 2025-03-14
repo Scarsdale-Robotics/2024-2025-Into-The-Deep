@@ -8,6 +8,8 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.teamcode.RobotSystem;
+import org.firstinspires.ftc.teamcode.synchropather.systems.__util__.Command;
+
 @TeleOp(name = "sigma")
 //IMPORTANT - I was being lazy and didnt want to merge with the 4 other branches that have Krakens code
 //so, this is for the old robot. sry if that creates any problems
@@ -21,15 +23,28 @@ public class TeleopWithNewSynchropather extends LinearOpMode {
         robot.logOdometry();
         robot.localization.update();
         waitForStart();
-        double speed = 1;
     while (opModeIsActive()) {
+        double defaultSpeed = 0.5;
         //regular field centric drive, doesnt really matter
         //i also keep forgetting strafe is inverted smh
-        double strafe = -gamepad1.left_stick_x;
-        double turn = gamepad1.right_stick_x;
-        double forward = gamepad1.left_stick_y;
-        robot.drive.driveFieldCentricPowers(strafe, forward, turn, Math.toDegrees(robot.localization.getH()));
         //also confused about fieldcentric vs fieldcentricpowers....
+        if (gamepad1.a) {
+            Command hangSpecimen = new Command(1,
+                    "LogOdometry",
+                    "ElbowUp",
+                    "DriveForward",
+                    "ElbowDown",
+                    "ClawOpen",
+                    true
+            );
+            hangSpecimen.evalCommand();
+            defaultSpeed = hangSpecimen.speed;
+        }
+        double strafe = -gamepad1.left_stick_x * defaultSpeed;
+        double turn = gamepad1.right_stick_x * defaultSpeed;
+        double forward = gamepad1.left_stick_y * defaultSpeed;
+        robot.drive.driveFieldCentricPowers(strafe, forward, turn, Math.toDegrees(robot.localization.getH()));
+
     }
 
 
