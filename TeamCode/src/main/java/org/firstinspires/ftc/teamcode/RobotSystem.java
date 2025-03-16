@@ -21,8 +21,6 @@ import org.firstinspires.ftc.teamcode.synchropather.systems.claw.ClawConstants;
 import org.firstinspires.ftc.teamcode.synchropather.systems.elbow.ElbowConstants;
 
 public class RobotSystem {
-
-    public final LinearOpMode opMode;
     public final Telemetry telemetry;
 
     public final DriveSubsystem drive;
@@ -37,7 +35,6 @@ public class RobotSystem {
     public static double elbowDown = ElbowConstants.DOWN_POSITION;
 
     public RobotSystem(HardwareMap hardwareMap, Pose2d initialPose, boolean isRedTeam, LinearOpMode opMode) {
-        this.opMode = opMode;
         this.telemetry = new MultipleTelemetry(opMode.telemetry, FtcDashboard.getInstance().getTelemetry());
         HardwareRobot hardwareRobot = new HardwareRobot(hardwareMap);
         this.cv = new CVSubsystem(
