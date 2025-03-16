@@ -20,6 +20,7 @@ public class TeleopWithNewSynchropather extends LinearOpMode {
     public void runOpMode() {
         robot = new RobotSystem(hardwareMap, new Pose2d(0, 0, new Rotation2d(Math.toRadians(-90))), false, this);
         command = new Command(robot);
+        Command.resetCommand();
         /**regular initalization...i also don't know what the difference
          *    between robotsystem and autonomous robot is so ill use robotsys for now
          */
@@ -36,7 +37,8 @@ public class TeleopWithNewSynchropather extends LinearOpMode {
         double forward = gamepad1.left_stick_y * defaultSpeed;
         robot.drive.driveFieldCentricPowers(strafe, forward, turn, Math.toDegrees(robot.localization.getH()));
         if(gamepad1.a) {
-            Command.Add("EU", "null", "null", "null", "null");
+            Command.Add("EU", "null", "null", "ull", "null");
+
         }
         command.evalCommand();
         }

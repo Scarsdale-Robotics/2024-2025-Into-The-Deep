@@ -32,56 +32,71 @@ public class Command {
             startCommand();
         }
     }
+    public static void resetCommand() {
+        commandList = null;
+    }
     public void startCommand() {
         switch (commandList[1]) {
             case "EU":
                 robot.inDep.setElbowPosition(elbowUp);
+
                 break;
             case "ED":
                 robot.inDep.setElbowPosition(elbowDown);
+
                 break;
             case "null":
                 nullVar = 0.3;
+
                 break;
         }
         switch (commandList[2]) {
             case "EU":
                 robot.inDep.setElbowPosition(elbowUp);
+
                 break;
             case "ED":
                 robot.inDep.setElbowPosition(elbowDown);
+
                 break;
             case "null":
                 nullVar = 0.3;
+
                 break;
         }
         switch (commandList[3]) {
             case "EU":
                 robot.inDep.setElbowPosition(elbowUp);
+
                 break;
             case "ED":
                 robot.inDep.setElbowPosition(elbowDown);
+
                 break;
             case "null":
                 nullVar = 0.3;
+
                 break;
         }
         switch (commandList[4]) {
             case "EU":
                 robot.inDep.setElbowPosition(elbowUp);
+
                 break;
             case "ED":
                 robot.inDep.setElbowPosition(elbowDown);
+
                 break;
             case "null":
                 nullVar = 0.3;
+
                 break;
         }
+        resetCommand();
     }
     public void initMode() {
 
     }
-
     public void switchMode() {
 
     }
@@ -90,7 +105,7 @@ public class Command {
 
     }
 
-    boolean isCommandFileRunning;
+
 
     public void resetTags() {
         //ill add this later, gotta study now :(
