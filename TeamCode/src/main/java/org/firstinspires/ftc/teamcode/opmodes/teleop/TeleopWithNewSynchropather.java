@@ -27,10 +27,10 @@ public class TeleopWithNewSynchropather extends LinearOpMode {
     while (opModeIsActive()) {
         double defaultSpeed = 0.5;
         //regular field centric drive.
-        double strafe = -gamepad1.left_stick_x * defaultSpeed;
-        double turn = gamepad1.right_stick_x * defaultSpeed;
-        double forward = gamepad1.left_stick_y * defaultSpeed;
-        robot.drive.driveFieldCentricPowers(strafe, forward, turn, Math.toDegrees(robot.localization.getH()));
+        double strafe = gamepad1.left_stick_x;
+        double turn = gamepad1.right_stick_x;
+        double forward = -gamepad1.left_stick_y;
+        robot.drive.driveFieldCentricPowers(strafe * defaultSpeed, forward* defaultSpeed, turn* defaultSpeed, Math.toDegrees(robot.localization.getH()));
         //example implementation
         if(gamepad1.a) {
             //add actions to 5-line string, populating the commandlist array

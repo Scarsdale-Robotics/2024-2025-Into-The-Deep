@@ -51,8 +51,8 @@ public class viir_Practice extends LinearOpMode {
             boolean toggleLiftDownMacro = false;
             boolean isElbowDown = false;
             boolean senseChangeActivated = false;
-            double strafe = -gamepad1.left_stick_x * speed;
-            double forward = gamepad1.left_stick_y * speed;
+            double strafe = gamepad1.left_stick_x * speed;
+            double forward = -gamepad1.left_stick_y * speed;
             double turn = gamepad1.right_stick_x * speed;
             double buffer = 0.2;
             telemetry.addData("Strafe: ", strafe);
