@@ -19,30 +19,10 @@ public class HardwareRobot {
     public final MotorEx leftBack;
     public final MotorEx rightBack;
 
-    public final MotorEx leftLift;
-    public final MotorEx rightLift;
-
     public final GoBildaPinpointDriver pinpoint;
 
     public final Limelight3A limelight;
     public final WebcamName cameraName;
-
-    public final Servo elbow;
-    public final Servo claw;  // claw open/close servo
-    public final Servo wrist;
-
-    public final Servo intakePivot;
-    public final Servo intakeWrist;
-    public final Servo intakeClaw;
-    public final Servo depositWrist;
-    public final Servo depositClaw;
-    public final Servo clipIntake;
-    public final Servo clipPusher;
-    public final Servo maker;
-    public final Servo leftDepositLift;
-    public final Servo rightDepositLift;
-    public final Servo leftIntakeLift;
-    public final Servo rightIntakeLift;
 
 
     public HardwareRobot(HardwareMap hardwareMap) {
@@ -89,21 +69,6 @@ public class HardwareRobot {
         // LIFT //
         //////////
 
-        leftLift = new MotorEx(hardwareMap, "leftLift", Motor.GoBILDA.RPM_312);
-        leftLift.motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        leftLift.motor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        leftLift.setRunMode(Motor.RunMode.RawPower);
-        leftLift.motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        leftLift.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
-        leftLift.setInverted(false);
-
-        rightLift = new MotorEx(hardwareMap, "rightLift", Motor.GoBILDA.RPM_312);
-        rightLift.motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        rightLift.motor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        rightLift.setRunMode(Motor.RunMode.RawPower);
-        rightLift.motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        rightLift.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
-        rightLift.setInverted(true);
 
 
         //////////////
@@ -116,37 +81,11 @@ public class HardwareRobot {
         ////////////
         // SERVOS //
         ////////////
-        elbow = hardwareMap.get(ServoImplEx.class, "elbow");
-        claw = hardwareMap.get(ServoImplEx.class, "claw");
-        wrist = hardwareMap.get(ServoImplEx.class, "wrist");
-
-
         ////////////
         // CAMERA //
         ////////////
         limelight = hardwareMap.get(Limelight3A.class, "limelight");
         cameraName = hardwareMap.get(WebcamName.class, "Webcam 1");
 
-
-
-        //////////
-        // LIFT //
-        //////////
-        leftIntakeLift = hardwareMap.get(ServoImplEx.class, "leftIntakeLift");
-        rightIntakeLift = hardwareMap.get(ServoImplEx.class, "rightIntakeLift");
-        leftDepositLift = hardwareMap.get(ServoImplEx.class, "leftDepositLift");
-        rightDepositLift = hardwareMap.get(ServoImplEx.class, "rightDepositLift");
-
-        ////////////
-        // SERVOS //
-        ////////////
-        intakePivot = hardwareMap.get(ServoImplEx.class, "intakePivot");
-        intakeWrist = hardwareMap.get(ServoImplEx.class, "intakeWrist");
-        intakeClaw = hardwareMap.get(ServoImplEx.class, "intakeClaw");
-        depositClaw = hardwareMap.get(ServoImplEx.class, "depositClaw");
-        depositWrist = hardwareMap.get(ServoImplEx.class, "depositWrist");
-        clipIntake = hardwareMap.get(ServoImplEx.class, "clipIntake");
-        clipPusher = hardwareMap.get(ServoImplEx.class, "clipPusher");
-        maker = hardwareMap.get(ServoImplEx.class, "maker");
     }
 }
