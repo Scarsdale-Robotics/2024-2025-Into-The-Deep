@@ -40,6 +40,7 @@ public class Command {
         commandList = null;
     }
     public void startCommand() {
+        //sample evaluation
         if (isCommandFileRunning) {
             switch (commandList[1]) {
                 case "EU":
@@ -88,19 +89,20 @@ public class Command {
         }
         resetCommand();
     }
+    //mode method for initializing certain servos. (not really necessary)
     public void initMode() {
 
     }
     public void switchMode() {
 
     }
-
+    //method for coordinating actions in commandList
     public void getElapsedTime() {
 
     }
 
 
-
+//buttons and servos are tagged as used or unused.
     public void resetTags() {
         //ill add this later, gotta study now :(
         //I'm starting to think this may be a really good idea.....
