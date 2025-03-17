@@ -15,7 +15,6 @@ import org.firstinspires.ftc.teamcode.opmodes.calibration.Drawing;
 import org.firstinspires.ftc.teamcode.subsystems.CVSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.DriveSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.LocalizationSubsystem;
-import org.firstinspires.ftc.teamcode.subsystems.indep.InDepSubsystem;
 //import org.firstinspires.ftc.teamcode.synchropather.systems.claw.ClawConstants;
 //import org.firstinspires.ftc.teamcode.synchropather.systems.elbow.ElbowConstants;
 
@@ -27,7 +26,7 @@ public class RobotSystem {
     public final DriveSubsystem drive;
     public final CVSubsystem cv;
     public final LocalizationSubsystem localization;
-    public final InDepSubsystem inDep;
+    public final CVSubsystem.InDepSubsystem inDep;
 
 //    public static double clawOpen = ClawConstants.OPEN_POSITION;
 //    public static double clawClosed = ClawConstants.CLOSED_POSITION;
