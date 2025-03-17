@@ -19,6 +19,7 @@ public class Command {
     public double elbowDown = ElbowConstants.DOWN_POSITION;
     public double clawOpen = ClawConstants.OPEN_POSITION;
     public double clawClosed = ClawConstants.CLOSED_POSITION;
+    public static boolean isCommandFileRunning = false;
     public static String[] commandList;
     public RobotSystem robot;
     public Command (RobotSystem robot) {
@@ -28,69 +29,62 @@ public class Command {
         commandList = new String[] {Action1, Action2, Action3, Action4, Action5};
     }
     public void evalCommand () {
-        if (commandList != null) {
+        if (commandList != null && !isCommandFileRunning) {
+            isCommandFileRunning = true;
             startCommand();
         }
     }
     public static void resetCommand() {
+        //add conditions for tags and when to stop/start next command
+        isCommandFileRunning = false;
         commandList = null;
     }
     public void startCommand() {
-        switch (commandList[1]) {
-            case "EU":
-                robot.inDep.setElbowPosition(elbowUp);
-
-                break;
-            case "ED":
-                robot.inDep.setElbowPosition(elbowDown);
-
-                break;
-            case "null":
-                nullVar = 0.3;
-
-                break;
-        }
-        switch (commandList[2]) {
-            case "EU":
-                robot.inDep.setElbowPosition(elbowUp);
-
-                break;
-            case "ED":
-                robot.inDep.setElbowPosition(elbowDown);
-
-                break;
-            case "null":
-                nullVar = 0.3;
-
-                break;
-        }
-        switch (commandList[3]) {
-            case "EU":
-                robot.inDep.setElbowPosition(elbowUp);
-
-                break;
-            case "ED":
-                robot.inDep.setElbowPosition(elbowDown);
-
-                break;
-            case "null":
-                nullVar = 0.3;
-
-                break;
-        }
-        switch (commandList[4]) {
-            case "EU":
-                robot.inDep.setElbowPosition(elbowUp);
-
-                break;
-            case "ED":
-                robot.inDep.setElbowPosition(elbowDown);
-
-                break;
-            case "null":
-                nullVar = 0.3;
-
-                break;
+        if (isCommandFileRunning) {
+            switch (commandList[1]) {
+                case "EU":
+                    robot.inDep.setElbowPosition(elbowUp);
+                    break;
+                case "ED":
+                    robot.inDep.setElbowPosition(elbowDown);
+                    break;
+                case "null":
+                    nullVar = 0.3;
+                    break;
+            }
+            switch (commandList[2]) {
+                case "EU":
+                    robot.inDep.setElbowPosition(elbowUp);
+                    break;
+                case "ED":
+                    robot.inDep.setElbowPosition(elbowDown);
+                    break;
+                case "null":
+                    nullVar = 0.3;
+                    break;
+            }
+            switch (commandList[3]) {
+                case "EU":
+                    robot.inDep.setElbowPosition(elbowUp);
+                    break;
+                case "ED":
+                    robot.inDep.setElbowPosition(elbowDown);
+                    break;
+                case "null":
+                    nullVar = 0.3;
+                    break;
+            }
+            switch (commandList[4]) {
+                case "EU":
+                    robot.inDep.setElbowPosition(elbowUp);
+                    break;
+                case "ED":
+                    robot.inDep.setElbowPosition(elbowDown);
+                    break;
+                case "null":
+                    nullVar = 0.3;
+                    break;
+            }
         }
         resetCommand();
     }

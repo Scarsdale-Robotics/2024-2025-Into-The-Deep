@@ -165,20 +165,17 @@ public class  BlueTeleop extends LinearOpMode {
                 liftTargetPosition = 1350;
                 liftUpMacroRunning = true; // enable lift up macro
                 liftDownMacroRunning = false; // disable lift down macro
-                realignMacro.setRunningFalse();
                 toggleLiftUpMacro = true;
                 elbowPosition = elbowUp;
             }
             if (!gamepad1.square)
                 toggleLiftUpMacro = false;
 
-
             // LIFT DOWN MACRO
             if (gamepad1.circle && !toggleLiftDownMacro) {
                 liftTargetPosition = -10;
                 liftUpMacroRunning = false; // disable lift up macro
                 liftDownMacroRunning = true; // enable lift down macro
-                realignMacro.setRunningFalse();
                 toggleLiftDownMacro = true;
                 elbowPosition = elbowDown - 0.04;
             }
@@ -191,7 +188,6 @@ public class  BlueTeleop extends LinearOpMode {
             if (triggerPressed) {
                 liftUpMacroRunning = false;
                 liftDownMacroRunning = false;
-                realignMacro.setRunningFalse();
             }
             if (liftUpMacroRunning || liftDownMacroRunning) {
                 // A MACRO IS RUNNING
@@ -205,21 +201,13 @@ public class  BlueTeleop extends LinearOpMode {
                 robot.inDep.setRightLiftPower(u_t);
 
                 if (Math.abs(error) < 50) {
-                    if (liftUpMacroRunning) autoClawReleaseAvailable = true;
                     liftUpMacroRunning = false;
                     liftDownMacroRunning = false;
                 }
             }
             else {
-                // TRIGGER CONTROLS
-                // Set powers
                 robot.inDep.setLeftLiftPower(leftPower);
                 robot.inDep.setRightLiftPower(rightPower);
-                if (autoClawReleaseAvailable && robot.inDep.getLeftLiftPosition() < 650) {
-                    claw = false;
-                    robot.inDep.setClawPosition(clawOpen);
-                    autoClawReleaseAvailable = false;
-                }
             }
 
 

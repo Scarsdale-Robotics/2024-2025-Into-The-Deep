@@ -45,6 +45,10 @@ public class viir_Practice extends LinearOpMode {
             //toggle boolean for displaying telemetry, drive powers (idk what scale the gamepad stuff is on), buffer for reducing sense
             boolean displayTelemetry = false;
             boolean isClawOpen = false;
+            boolean toggleLiftUpMacro = false;
+            boolean liftDownMacroRunning = false;
+            boolean liftUpMacroRunning = false;
+            boolean toggleLiftDownMacro = false;
             boolean isElbowDown = false;
             boolean senseChangeActivated = false;
             double strafe = -gamepad1.left_stick_x * speed;
@@ -114,15 +118,64 @@ public class viir_Practice extends LinearOpMode {
                 telemetry.addLine("Reset of Claw and Elbow Successful.");
                 telemetry.update();
             }
-            if(gamepad1.left_bumper) {
-                hangSpec();
-            }
             while (!gamepad1.circle || !gamepad1.x) {
                 clawPos = clawClosed;
                 elbowPos = elbowUp;
             }
-            double rightPowerLift = gamepad1.right_trigger;
-            double leftPowerLift = gamepad1.left_trigger;
+            //define lift powers
+            double rightPowerLift = 0; //individual powers
+            double leftPowerLift = 0;
+            double kP = 0.01; //control theory/law or whatever its called
+            double liftTargetPosition = 0; //macro target pos to get lift to
+            //combine both triggers
+            double triggerPower = gamepad1.right_trigger - gamepad1.left_trigger;
+            //set both to difference
+            rightPowerLift += triggerPower;
+            leftPowerLift += triggerPower;
+            if (gamepad1.dpad_left && !toggleLiftUpMacro) {
+                toggleLiftUpMacro = true;
+                liftTargetPosition = 1350;
+                liftUpMacroRunning = true;
+                liftDownMacroRunning = false;
+                elbowPos = elbowUp;
+            }
+            if (!gamepad1.dpad_left) {
+                toggleLiftUpMacro = false;
+            }
+            if (gamepad1.dpad_right && !toggleLiftDownMacro) {
+                liftTargetPosition = -10; //target pos aka up lift position
+                liftUpMacroRunning = false;
+                toggleLiftDownMacro = true;
+                liftDownMacroRunning = true;
+                elbowPos = elbowDown - 0.04;
+            }
+            if (!gamepad1.dpad_right) {
+                toggleLiftDownMacro = false;
+            }
+            boolean triggerPressed = gamepad1.left_trigger != 0 || gamepad1.right_trigger != 0;
+            if (triggerPressed) {
+                liftUpMacroRunning = false;
+                liftDownMacroRunning = false;
+            }
+            if (liftUpMacroRunning || liftDownMacroRunning) {
+                double liftPosition = robot.inDep.getLeftLiftPosition();
+                double error = liftTargetPosition - liftPosition;
+                double u_t = kP * error; //random calc stuff idk
+                robot.inDep.setLeftLiftPower(u_t);
+                robot.inDep.setRightLiftPower(u_t);
+                if (Math.abs(error) < 50) {
+                    liftUpMacroRunning = false;
+                    liftDownMacroRunning = false;
+                }
+                //above stops the macro if error gets too small (lift is close to target pos)
+            }
+            //otherwise, set the lift positions to the active inputs.
+            //the lift up and lift down macros are for hanging specimens.
+            // to hang spec, lift up macro and then lift down macro.
+            else {
+                robot.inDep.setLeftLiftPower(leftPowerLift);
+                robot.inDep.setRightLiftPower(rightPowerLift);
+            }
         }
     }
     public void realignMacro() {
@@ -135,16 +188,5 @@ public class viir_Practice extends LinearOpMode {
     public void resetServos() {
         clawPos = clawClosed;
         elbowPos = elbowUp;
-    }
-    public void hangSpec() {
-        resetServos();
-        realignMacro();
-        telemetry.addLine("Servos Reset, Heading Realigned, starting hang.");
-        telemetry.update();
-        sleep(500);
-        clawPos = clawOpen;
-        elbowPos = elbowDown;
-        sleep(500);
-        telemetry.addLine("Spec Hang Macro Successful");
     }
 }
