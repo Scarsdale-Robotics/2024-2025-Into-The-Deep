@@ -18,10 +18,10 @@ public class BasicTeleopForTspmo extends LinearOpMode {
         waitForStart();
         while (opModeIsActive()) {
             double speed = 1;
-            double strafe = -gamepad1.left_stick_x;
-            double forward = gamepad1.left_stick_y;
+            double strafe = gamepad1.left_stick_x;
+            double forward = -gamepad1.left_stick_y;
             double turn = gamepad1.right_stick_x;
-            drive.driveRobotCentric(strafe,forward, turn);
+            drive.driveRobotCentric(strafe * speed, forward * speed, turn * speed);
         }
     }
 }
