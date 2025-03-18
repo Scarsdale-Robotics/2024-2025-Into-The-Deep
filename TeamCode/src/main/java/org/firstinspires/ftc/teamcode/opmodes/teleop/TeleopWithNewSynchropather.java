@@ -36,10 +36,11 @@ public class TeleopWithNewSynchropather extends LinearOpMode {
             //add actions to 5-line string, populating the commandlist array
             //evaluate the command, starting and cycling through words with switch loops
             //automatically resets after each eval
-            Command.Add("EU", "null", "null", "ull", "null");
+            Command.Add("EU", "", "", "", "");
             command.evalCommand();
         }
         //this system excludes lift. however, it would be possible to implement lift as well.
+
     }
     }
 }

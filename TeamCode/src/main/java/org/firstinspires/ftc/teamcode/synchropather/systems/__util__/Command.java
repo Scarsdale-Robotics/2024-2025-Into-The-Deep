@@ -14,11 +14,12 @@ import org.firstinspires.ftc.teamcode.synchropather.systems.elbow.ElbowConstants
 
 public class Command {
     public double speed;
-    public double nullVar;
     public double elbowUp = ElbowConstants.UP_POSITION;
     public double elbowDown = ElbowConstants.DOWN_POSITION;
     public double clawOpen = ClawConstants.OPEN_POSITION;
     public double clawClosed = ClawConstants.CLOSED_POSITION;
+    boolean isClawOccupied = false;
+    boolean isElbowOccupied = false;
     public static boolean isCommandFileRunning = false;
     public static String[] commandList;
     public RobotSystem robot;
@@ -40,50 +41,91 @@ public class Command {
         commandList = null;
     }
     public void startCommand() {
+        if (isClawOccupied && isElbowOccupied) {
+            Command.resetCommand();
+            isClawOccupied = false;
+            isElbowOccupied = false;
+        }
         //sample evaluation
         if (isCommandFileRunning) {
             switch (commandList[1]) {
                 case "EU":
                     robot.inDep.setElbowPosition(elbowUp);
+                    isElbowOccupied = true;
+                    break;
+                case "CC":
+                    robot.inDep.setClawPosition(clawClosed);
+                    isClawOccupied = true;
                     break;
                 case "ED":
                     robot.inDep.setElbowPosition(elbowDown);
+                    isElbowOccupied = true;
                     break;
-                case "null":
-                    nullVar = 0.3;
+                case "CO":
+                    robot.inDep.setClawPosition(clawOpen);
+                    isClawOccupied = true;
+                    break;
+                case "":
                     break;
             }
             switch (commandList[2]) {
                 case "EU":
                     robot.inDep.setElbowPosition(elbowUp);
+                    isElbowOccupied = true;
+                    break;
+                case "CC":
+                    robot.inDep.setClawPosition(clawClosed);
+                    isClawOccupied = true;
                     break;
                 case "ED":
                     robot.inDep.setElbowPosition(elbowDown);
+                    isElbowOccupied = true;
                     break;
-                case "null":
-                    nullVar = 0.3;
+                case "CO":
+                    robot.inDep.setClawPosition(clawOpen);
+                    isClawOccupied = true;
+                    break;
+                case "":
                     break;
             }
             switch (commandList[3]) {
                 case "EU":
                     robot.inDep.setElbowPosition(elbowUp);
+                    isElbowOccupied = true;
+                    break;
+                case "CC":
+                    robot.inDep.setClawPosition(clawClosed);
+                    isClawOccupied = true;
                     break;
                 case "ED":
                     robot.inDep.setElbowPosition(elbowDown);
+                    isElbowOccupied = true;
                     break;
-                case "null":
-                    nullVar = 0.3;
+                case "CO":
+                    robot.inDep.setClawPosition(clawOpen);
+                    isClawOccupied = true;
+                    break;
+                case "":
                     break;
             }
             switch (commandList[4]) {
                 case "EU":
                     robot.inDep.setElbowPosition(elbowUp);
+                    isElbowOccupied = true;
+                    break;
+                case "CC":
+                    robot.inDep.setClawPosition(clawClosed);
+                    isClawOccupied = true;
                     break;
                 case "ED":
                     robot.inDep.setElbowPosition(elbowDown);
+                    isElbowOccupied = true;
                     break;
-                case "null":
-                    nullVar = 0.3;
+                case "CO":
+                    robot.inDep.setClawPosition(clawOpen);
+                    isClawOccupied = true;
+                    break;
+                case "":
                     break;
             }
         }

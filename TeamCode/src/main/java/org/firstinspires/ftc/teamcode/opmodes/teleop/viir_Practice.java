@@ -118,7 +118,7 @@ public class viir_Practice extends LinearOpMode {
                 telemetry.addLine("Reset of Claw and Elbow Successful.");
                 telemetry.update();
             }
-            while (!gamepad1.circle || !gamepad1.x) {
+            if (!gamepad1.circle || !gamepad1.x) {
                 clawPos = clawClosed;
                 elbowPos = elbowUp;
             }
